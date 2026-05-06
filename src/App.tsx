@@ -1,0 +1,49 @@
+/**
+ * @license
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+import React from 'react';
+import { Routes, Route } from 'react-router-dom';
+import { Header } from './components/Header';
+import { Footer } from './components/FeaturedAndFooter';
+import { MobileBottomNav } from './components/FooterAndNav';
+import { Home } from './pages/Home';
+import { ProductPage } from './pages/ProductPage';
+import { CartPage } from './pages/CartPage';
+import { AccountPage } from './pages/AccountPage';
+import { CheckoutPage } from './pages/CheckoutPage';
+
+export default function App() {
+  return (
+    <div className="min-h-screen flex flex-col bg-slate-50">
+      {/* Navigation */}
+      <Header />
+      
+      <main className="flex-grow">
+        <Routes>
+          <Route path="/" element={<Home />} />
+          <Route path="/product/:slug" element={<ProductPage />} />
+          <Route path="/category/:slug" element={<Home />} />
+          <Route path="/cart" element={<CartPage />} />
+          <Route path="/checkout" element={<CheckoutPage />} />
+          <Route path="/account" element={<AccountPage />} />
+        </Routes>
+      </main>
+
+      {/* Footer */}
+      <Footer />
+      
+      {/* Mobile-only Bottom Navigation */}
+      <MobileBottomNav />
+
+      {/* Global Toast / Chat placeholder */}
+      <div className="fixed bottom-20 right-4 z-50 md:bottom-8 md:right-8">
+        <button className="bg-brand-primary text-white p-4 rounded-full shadow-lg hover:scale-110 active:scale-95 transition-transform" aria-label="Chat support">
+           <svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
+        </button>
+      </div>
+    </div>
+  );
+}
+

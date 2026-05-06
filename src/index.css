@@ -1,0 +1,43 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  
+  --color-brand-primary: #2563eb; /* blue-600 */
+  --color-brand-secondary: #1e3a8a; /* blue-900 */
+  --color-brand-accent: #ef4444; /* red-500 */
+  --color-brand-slate: #f8fafc; /* slate-50 */
+  
+  --shadow-conversion: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+}
+
+@layer base {
+  body {
+    @apply font-sans bg-white text-slate-900 overflow-x-hidden;
+  }
+  
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-sans font-bold tracking-tight;
+  }
+}
+
+.shoptimizer-card {
+  @apply bg-white rounded-xl border border-slate-100 transition-all duration-200 shadow-sm;
+}
+
+.shoptimizer-card:hover {
+  @apply border-blue-200 shadow-md;
+}
+
+.bg-brand-gradient {
+  background: linear-gradient(135deg, #1e3a8a 0%, #2563eb 100%);
+}
+
+.scroller-hidden::-webkit-scrollbar {
+  display: none;
+}
+.scroller-hidden {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}

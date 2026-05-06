@@ -1,0 +1,191 @@
+/*
+Theme Name: Shoptimizer Child - Dental Pro
+Description: Dental professional mobile-first theme overwrite
+Template: shoptimizer
+*/
+
+/* ==========================================================================
+   1. GLOBAL VARIABLES & TYPOGRAPHY
+   ========================================================================== */
+:root {
+  --dental-brand: #2563eb; /* blue-600 */
+  --dental-brand-hover: #1d4ed8; /* blue-700 */
+  --dental-dark: #1e3a8a; /* blue-900 */
+  --dental-gray: #f1f5f9;  /* slate-100 */
+  --dental-text: #0f172a; /* slate-900 */
+}
+
+body {
+  background-color: #ffffff;
+  color: var(--dental-text);
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+
+/* ==========================================================================
+   2. TOP BAR
+   ========================================================================== */
+.shoptimizer-topbar {
+    background-color: var(--dental-dark) !important;
+    color: #ffffff !important;
+    text-transform: uppercase;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+    padding: 10px 0;
+    border-bottom: none !important;
+}
+
+.shoptimizer-topbar a {
+    color: #ffffff !important;
+}
+
+/* ==========================================================================
+   3. HEADER FIX (From Screenshot)
+   ========================================================================== */
+/* The screenshot shows the logo centered. We force the flex layout */
+.site-header .col-full {
+    display: flex !important;
+    flex-wrap: wrap !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    padding: 15px 20px !important;
+}
+
+/* Logo container styling */
+.site-branding {
+    flex: 0 0 auto !important;
+    width: auto !important;
+    margin-right: 20px !important;
+    margin-bottom: 0 !important;
+    order: 1 !important;
+}
+
+/* Hide default Shoptimizer floating currency widget if breaking layout */
+.wc-aelia-cs-currency-selector-widget {
+    display: none !important; 
+}
+
+/* Search bar forcing into middle */
+.site-search {
+    flex: 1 1 40% !important;
+    order: 2 !important;
+    margin-bottom: 0 !important;
+    padding: 0 20px !important;
+}
+
+/* Make Advanced Woo Search input pill-shaped and gray */
+.aws-container .aws-search-field {
+    background-color: var(--dental-gray) !important;
+    border-radius: 9999px !important;
+    border: none !important;
+    padding: 14px 24px !important;
+    font-size: 14px !important;
+    color: var(--dental-text) !important;
+}
+.aws-container .aws-search-btn {
+    border-radius: 0 9999px 9999px 0 !important;
+}
+
+/* Icons / Account / Cart on right */
+.site-header-cart {
+    flex: 0 0 auto !important;
+    width: auto !important;
+    order: 3 !important;
+    margin-bottom: 0 !important;
+}
+
+/* ==========================================================================
+   4. NAVIGATION MENU
+   ========================================================================== */
+.shoptimizer-primary-navigation {
+    border-top: 1px solid var(--dental-gray);
+    border-bottom: 1px solid var(--dental-gray);
+    background: #ffffff;
+}
+.main-navigation ul.menu > li > a {
+    font-size: 13px !important;
+    font-weight: 600 !important;
+    color: #475569 !important;
+    text-transform: none !important;
+    padding: 15px 20px !important;
+}
+.main-navigation ul.menu > li > a:hover {
+    color: var(--dental-brand) !important;
+}
+
+/* ==========================================================================
+   5. MOBILE FIRST OVERRIDES (Grid & Product Cards)
+   ========================================================================== */
+@media (max-width: 768px) {
+    .site-header .col-full {
+        padding: 10px 15px !important;
+    }
+    .site-search {
+        flex: 1 1 100% !important;
+        order: 4 !important; /* Move search below logo/cart on mobile */
+        margin-top: 15px !important;
+        padding: 0 !important;
+    }
+    
+    /* 2 columns on mobile for products */
+    .woocommerce ul.products {
+        display: grid !important;
+        grid-template-columns: repeat(2, 1fr) !important;
+        gap: 15px !important;
+    }
+    .woocommerce ul.products li.product {
+        width: 100% !important;
+        margin: 0 !important;
+    }
+}
+
+/* Card Styling */
+.woocommerce ul.products li.product {
+    border: 1px solid var(--dental-gray) !important;
+    border-radius: 12px !important;
+    padding: 15px !important;
+    transition: all 0.2s ease-in-out !important;
+    background: #ffffff !important;
+    box-shadow: 0 1px 2px 0 rgba(0,0,0,0.05);
+}
+
+.woocommerce ul.products li.product:hover {
+    border-color: #bfdbfe !important;
+    box-shadow: 0 4px 6px -1px rgba(37,99,235,0.1) !important;
+}
+
+/* Card Title */
+.woocommerce ul.products li.product .woocommerce-loop-product__title {
+    font-size: 13px !important;
+    font-weight: 700 !important;
+    color: var(--dental-text) !important;
+    margin-bottom: 10px !important;
+    line-height: 1.4 !important;
+}
+
+/* Card Price */
+.woocommerce ul.products li.product .price {
+    color: var(--dental-text) !important;
+    font-size: 16px !important;
+    font-weight: 900 !important;
+}
+
+/* Add to Cart button */
+.woocommerce ul.products li.product .button.add_to_cart_button {
+    background-color: var(--dental-brand) !important;
+    color: #ffffff !important;
+    border-radius: 8px !important;
+    padding: 12px !important;
+    font-weight: 600 !important;
+    width: 100% !important;
+    text-align: center !important;
+    margin-top: 10px !important;
+}
+.woocommerce ul.products li.product .button.add_to_cart_button:hover {
+    background-color: var(--dental-brand-hover) !important;
+}
+
+/* Hide standard Shoptimizer border animations and shadows */
+ul.products li.product .product-inner:hover .product-info {
+    transform: none !important;
+}
