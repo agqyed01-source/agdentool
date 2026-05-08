@@ -101,7 +101,7 @@ export const ShopPage = () => {
         category: currentCategorySlug, 
         search: searchQuery || undefined,
         page,
-        per_page: 12,
+        per_page: 18,
         orderby,
         order
       })
@@ -219,7 +219,7 @@ export const ShopPage = () => {
             {/* Toolbar */}
             <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm mb-6 flex flex-col sm:flex-row justify-between items-center gap-4">
               <div className="text-sm text-slate-500 font-medium whitespace-nowrap">
-                Showing {products.length > 0 ? (page - 1) * 12 + 1 : 0}-{Math.min((page - 1) * 12 + products.length, totalCount)} of {totalCount} results
+                Showing {products.length > 0 ? (page - 1) * 18 + 1 : 0}-{Math.min((page - 1) * 18 + products.length, totalCount)} of {totalCount} results
               </div>
               
               <div className="flex items-center gap-4 w-full sm:w-auto justify-between sm:justify-end">
