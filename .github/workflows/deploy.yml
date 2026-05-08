@@ -42,20 +42,36 @@ jobs:
           username: ${{ secrets.VPS_USERNAME }}
           key: ${{ secrets.VPS_SSH_KEY }}
           script: |
+            # Add common Node.js paths to PATH
+            export PATH=$PATH:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:$HOME/bin:$HOME/.local/bin
+
             # Load NVM or other Node environment managers if they exist
             export NVM_DIR="$HOME/.nvm"
             [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
-            [ -s "$HOME/.bashrc" ] && source "$HOME/.bashrc"
-            [ -s "$HOME/.profile" ] && source "$HOME/.profile"
-            
+
+            # Try to find Node/npm if still not in path
+            if ! command -v npm &> /dev/null; then
+              # Check common 1Panel or system Node paths
+              POSSIBLE_PATHS=("/usr/local/node/bin" "/usr/local/bin" "/opt/node/bin" "/opt/1panel/node/bin")
+              for p in "${POSSIBLE_PATHS[@]}"; do
+                if [ -d "$p" ]; then
+                  export PATH="$p:$PATH"
+                  break
+                fi
+              done
+            fi
+
             cd /opt/1panel/www/sites/agdentool
             
-            # Ensure npm is available
+            # Final check for npm
             if ! command -v npm &> /dev/null; then
-              echo "Error: npm not found. Please ensure Node.js is installed and in the PATH."
+              echo "Error: npm not found in PATH ($PATH). Please ensure Node.js is installed on your VPS."
               exit 1
             fi
 
+            echo "Using Node: $(node -v)"
+            echo "Using npm from: $(which npm)"
+            
             npm ci --production
             
             # Ensure .env exists
@@ -68,11 +84,11 @@ jobs:
             
             # Install PM2 globally if not installed
             if ! command -v pm2 &> /dev/null; then
-              npm install -g pm2
+              npm install -g pm2 || echo "PM2 install failed, checking if already available..."
             fi
             
-            # Use absolute path to pm2 if just installed globally
-            PM2_BIN=$(which pm2 || echo "$HOME/.npm-global/bin/pm2")
+            # Use absolute path to pm2 or try to find it
+            PM2_BIN=$(which pm2 || echo "$(npm config get prefix)/bin/pm2" || echo "$HOME/.npm-global/bin/pm2")
             
             # Restart or start the app with PM2
             $PM2_BIN restart my-app || $PM2_BIN start npm --name "my-app" -- run start
