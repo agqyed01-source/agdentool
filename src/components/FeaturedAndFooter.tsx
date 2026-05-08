@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Microscope, Activity, Scissors, Zap, Shield, ClipboardCheck } from 'lucide-react';
+import { Microscope, Activity, Scissors, Zap, Shield, ClipboardCheck, MessageCircle } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { wooApi, WooCategory } from '../services/woo';
 
@@ -95,8 +95,10 @@ export const Footer = () => {
              <h4 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-6">Expert Help</h4>
              <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
                 <p className="text-xs font-bold text-slate-900 mb-1">Clinic Concierge</p>
-                <p className="text-[10px] text-slate-500 mb-3">Speak to a specialist for bulk pricing.</p>
-                <button className="w-full bg-brand-primary text-white py-2 rounded-lg text-xs font-bold shadow-sm">Schedule Call</button>
+                <p className="text-[10px] text-slate-500 mb-3">Message a specialist for bulk pricing or support.</p>
+                <a href="https://wa.me/message/" target="_blank" rel="noopener noreferrer" className="w-full bg-[#25D366] text-white py-2 rounded-lg text-xs font-bold shadow-sm flex items-center justify-center gap-1 hover:bg-[#128C7E] transition-colors">
+                  <MessageCircle size={14} /> Message on WhatsApp
+                </a>
              </div>
           </div>
         </div>

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
-import { Search, ShoppingBag, Menu, Phone, User, X, Loader2 } from "lucide-react";
+import { Search, ShoppingBag, Menu, Phone, User, X, Loader2, MessageCircle } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { wooApi, WooProduct, WooUser } from "../services/woo";
@@ -113,9 +113,9 @@ export const Header = () => {
             </span>
           </div>
           <div className="flex gap-4 items-center">
-            <span className="flex items-center gap-1">
-              📞 +1 (800) DENTAL-PRO
-            </span>
+            <a href="https://wa.me/message/" target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 hover:text-white/80 transition-colors">
+              <MessageCircle size={14} /> WhatsApp Us
+            </a>
           </div>
         </div>
       </div>
@@ -448,10 +448,12 @@ export const Header = () => {
                 ))}
                 <hr className="border-slate-100" />
                 <a
-                  href="#"
-                  className="text-base font-normal flex items-center gap-2"
+                  href="https://wa.me/message/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-base font-normal flex items-center gap-2 hover:text-[#25D366] transition-colors"
                 >
-                  <Phone size={18} /> 1-800-DENTAL-PRO
+                  <MessageCircle size={18} /> Chat on WhatsApp
                 </a>
                 <Link
                   to="/account"
