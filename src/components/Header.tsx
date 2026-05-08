@@ -159,7 +159,7 @@ export const Header = () => {
           </Link>
 
           {/* Search Bar - High Density */}
-          <div className="hidden md:flex flex-grow max-w-xl relative search-dropdown-container">
+          <div className="hidden md:flex flex-grow max-w-2xl xl:max-w-3xl relative search-dropdown-container">
             <form onSubmit={handleSearch} className="w-full">
               <input
                 type="text"
