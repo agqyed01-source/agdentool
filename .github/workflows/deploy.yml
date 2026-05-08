@@ -71,11 +71,20 @@ jobs:
 
             cd /opt/1panel/www/sites/agdentool
             
-            # Final check for npm
+            # Final check for npm, if still not found, try to install it using nvm
             if ! command -v npm &> /dev/null; then
               echo "Error: npm not found in PATH ($PATH)."
-              echo "Available paths checked. Please ensure Node.js is installed on your VPS and accessible to the SSH user."
-              echo "Try running 'which npm' on your VPS and adding that path to the script."
+              echo "Trying to automatically install Node.js via NVM..."
+              curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.7/install.sh | bash || true
+              export NVM_DIR="$HOME/.nvm"
+              [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+              nvm install 20
+              nvm alias default 20
+              nvm use 20
+            fi
+
+            if ! command -v npm &> /dev/null; then
+              echo "Failed to install Node.js automatically. Please SSH into your VPS and install Node.js manually."
               exit 1
             fi
 
