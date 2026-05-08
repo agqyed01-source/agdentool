@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Seo } from '../components/Seo';
 import { wooApi, WooCart } from '../services/woo';
-import { Lock, CreditCard } from 'lucide-react';
+import { Lock, CreditCard, Loader2 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 import Select from 'react-select';
@@ -45,20 +45,50 @@ export const CheckoutPage = () => {
 
   useEffect(() => {
     wooApi.getCart().then(setCart);
+    wooApi.getCurrentUser().then(user => {
+      if (user) {
+        // If logged in, we check if we should override local billing with profile billing
+        setBilling(prev => {
+          // If local billing is mostly empty, or if we want to sync with profile
+          // A good compromise: use profile if local is empty OR if we are doing a "fresh" load
+          const isLocalEmpty = !prev.address_1 && !prev.city;
+          
+          if (isLocalEmpty || !localStorage.getItem(SAVED_BILLING_KEY)) {
+            return {
+              ...prev,
+              first_name: user.first_name || prev.first_name || '',
+              last_name: user.last_name || prev.last_name || '',
+              email: user.email || prev.email || '',
+              phone: user.billing?.phone || prev.phone || '',
+              ...(user.billing || {})
+            };
+          }
+          return prev;
+        });
+      }
+    });
     wooApi.getPaymentGateways().then(data => {
        setGateways(data);
        if (data.length > 0) setSelectedGateway(data[0].id);
     });
     wooApi.getCountries().then(fetchedCountries => {
        setCountries(fetchedCountries);
-       if (billing.country) {
-         const country = fetchedCountries.find((c: any) => c.code === billing.country);
-         if (country && country.states) {
-           setStates(country.states);
-         }
-       }
+       // Re-run state lookup once countries and initial billing are set
+       const currentBilling = billing; // this might be stale in closure, but state setter will handle it
     });
   }, []);
+
+  // Sync states when billing.country changes
+  useEffect(() => {
+    if (countries.length > 0 && billing.country) {
+      const country = countries.find((c: any) => c.code === billing.country);
+      if (country && country.states) {
+        setStates(country.states);
+      } else {
+        setStates([]);
+      }
+    }
+  }, [billing.country, countries]);
 
   const handleApplyCoupon = async () => {
     if (!couponCode.trim()) return;
@@ -216,25 +246,25 @@ export const CheckoutPage = () => {
         <h1 className="text-2xl font-bold">Secure Checkout</h1>
       </div>
 
-      <div className="grid md:grid-cols-2 gap-12 max-w-5xl mx-auto">
+      <div className="grid md:grid-cols-2 gap-12 max-w-7xl mx-auto">
         <div>
           <form id="checkout-form" onSubmit={handleCheckout} className="space-y-6">
             <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
               <h2 className="text-lg font-bold text-slate-900 mb-4 border-b border-slate-100 pb-2">Billing Details</h2>
               <div className="grid grid-cols-2 gap-4">
-                <div className="col-span-2 sm:col-span-1">
+                <div className="col-span-2">
                   <label className="block text-sm font-bold text-slate-700 mb-1">Email</label>
                   <input type="email" required pattern="[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$" title="Please enter a valid email address" value={billing.email} onChange={e => updateBilling('email', e.target.value)} className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-lg outline-none focus:ring-2 focus:ring-brand-primary" />
                 </div>
-                <div className="col-span-2 sm:col-span-1">
+                <div className="col-span-2">
                   <label className="block text-sm font-bold text-slate-700 mb-1">Phone</label>
                   <input type="tel" required pattern="^[+]*[(]{0,1}[0-9]{1,4}[)]{0,1}[-\s\./0-9]*$" title="Please enter a valid phone number" value={billing.phone} onChange={e => updateBilling('phone', e.target.value)} className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-lg outline-none focus:ring-2 focus:ring-brand-primary" />
                 </div>
-                <div>
+                <div className="col-span-2 sm:col-span-1">
                   <label className="block text-sm font-bold text-slate-700 mb-1">First Name</label>
                   <input type="text" required value={billing.first_name} onChange={e => updateBilling('first_name', e.target.value)} className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-lg outline-none focus:ring-2 focus:ring-brand-primary" />
                 </div>
-                <div>
+                <div className="col-span-2 sm:col-span-1">
                   <label className="block text-sm font-bold text-slate-700 mb-1">Last Name</label>
                   <input type="text" required value={billing.last_name} onChange={e => updateBilling('last_name', e.target.value)} className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-lg outline-none focus:ring-2 focus:ring-brand-primary" />
                 </div>
@@ -378,9 +408,9 @@ export const CheckoutPage = () => {
                   type="button" 
                   onClick={handleApplyCoupon}
                   disabled={applyingCoupon || !couponCode.trim()}
-                  className="bg-slate-900 text-white px-4 py-2 rounded-lg font-bold text-sm hover:bg-slate-800 disabled:opacity-50 transition-colors shrink-0"
+                  className="bg-slate-900 text-white px-4 py-2 rounded-lg font-bold text-sm hover:bg-slate-800 disabled:opacity-50 transition-colors shrink-0 flex items-center justify-center gap-2"
                 >
-                  {applyingCoupon ? '...' : 'Apply'}
+                  {applyingCoupon ? <Loader2 size={16} className="animate-spin" /> : 'Apply'}
                 </button>
               </div>
               {couponError && <p className="text-red-500 text-xs mt-2 font-medium">{couponError}</p>}
@@ -390,9 +420,14 @@ export const CheckoutPage = () => {
               type="submit"
               form="checkout-form"
               disabled={loading}
-              className="w-full bg-brand-primary text-white font-bold text-lg py-4 rounded-lg shadow-[0_4px_14px_0_rgba(37,99,235,0.39)] hover:shadow-[0_6px_20px_rgba(37,99,235,0.23)] hover:-translate-y-0.5 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full bg-brand-primary text-white font-bold text-lg py-4 rounded-lg shadow-[0_4px_14px_0_rgba(37,99,235,0.39)] hover:shadow-[0_6px_20px_rgba(37,99,235,0.23)] hover:-translate-y-0.5 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-3"
             >
-              {loading ? 'Processing...' : `Place Order $${cart.totals.total_price}`}
+              {loading ? (
+                <>
+                  <Loader2 size={24} className="animate-spin" />
+                  Processing...
+                </>
+              ) : `Place Order $${cart.totals.total_price}`}
             </button>
           </div>
         </div>

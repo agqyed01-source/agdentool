@@ -3,6 +3,7 @@ import { useParams, Link } from 'react-router-dom';
 import { Seo } from '../components/Seo';
 import { wooApi, WooProduct } from '../services/woo';
 import { ShoppingCart, Star, ShieldCheck, Truck } from 'lucide-react';
+import { ProductReviews } from '../components/ProductReviews';
 
 export const ProductPage = () => {
   const { slug } = useParams<{ slug: string }>();
@@ -10,6 +11,8 @@ export const ProductPage = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [quantity, setQuantity] = useState(1);
+  const [selectedVariations, setSelectedVariations] = useState<Record<string, string>>({});
+  const [activeTab, setActiveTab] = useState<'description' | 'reviews'>('description');
 
   useEffect(() => {
     if (slug) {
@@ -17,6 +20,16 @@ export const ProductPage = () => {
       setError(null);
       wooApi.getProductBySlug(slug).then(data => {
         setProduct(data);
+        // Initialize default variations if any
+        if (data.type === 'variable' && data.attributes) {
+           const initialVars: Record<string, string> = {};
+           data.attributes.filter(attr => attr.variation).forEach(attr => {
+             if (attr.options.length > 0) {
+               initialVars[attr.name] = attr.options[0];
+             }
+           });
+           setSelectedVariations(initialVars);
+        }
         setLoading(false);
       }).catch(err => {
         setError(err.message || 'Failed to load product');
@@ -82,7 +95,7 @@ export const ProductPage = () => {
         <span className="text-slate-900">{product.name}</span>
       </div>
 
-      <div className="grid md:grid-cols-2 gap-12 bg-white p-6 md:p-10 rounded-2xl border border-slate-100 shadow-sm">
+      <div className="grid md:grid-cols-2 gap-12 bg-white p-6 md:p-10 rounded-2xl border border-slate-100 shadow-sm mb-12">
         {/* Product Image Gallery */}
         <div className="aspect-square bg-slate-50 rounded-xl overflow-hidden border border-slate-100 p-8 flex items-center justify-center">
           <img 
@@ -114,8 +127,8 @@ export const ProductPage = () => {
                 <span className="font-bold text-slate-900 ml-1">{product.average_rating}</span>
              </div>
              <span className="text-slate-300">|</span>
-             <a href="#reviews" className="text-sm font-medium text-brand-primary hover:underline">
-               {product.rating_count} Patient Reviews
+             <a href="#reviews" onClick={(e) => { e.preventDefault(); setActiveTab('reviews'); document.getElementById('details-section')?.scrollIntoView({ behavior: 'smooth' }); }} className="text-sm font-medium text-brand-primary hover:underline">
+               {product.rating_count} Clinic Reviews
              </a>
           </div>
 
@@ -127,9 +140,35 @@ export const ProductPage = () => {
           </div>
 
           <div 
-            className="prose prose-sm text-slate-600 mb-8"
-            dangerouslySetInnerHTML={{ __html: product.description }} 
+            className="prose prose-sm text-slate-600 mb-6"
+            dangerouslySetInnerHTML={{ __html: product.short_description || product.description }} 
           />
+
+          {/* Product Attributes / Variations */}
+          {product.type === 'variable' && product.attributes && product.attributes.length > 0 && (
+            <div className="mb-6 space-y-5">
+              {product.attributes.filter(attr => attr.variation).map(attr => (
+                <div key={attr.id || attr.name} className="flex flex-col">
+                  <label className="text-sm font-semibold text-slate-900 mb-3">{attr.name}: <span className="font-normal text-slate-500">{selectedVariations[attr.name]}</span></label>
+                  <div className="flex flex-wrap gap-2">
+                     {attr.options.map(opt => (
+                       <button
+                         key={opt}
+                         onClick={() => setSelectedVariations(prev => ({ ...prev, [attr.name]: opt }))}
+                         className={`px-4 py-2 border rounded-lg text-sm font-medium transition-all ${
+                           selectedVariations[attr.name] === opt 
+                             ? 'border-brand-primary bg-brand-primary/5 text-brand-primary' 
+                             : 'border-slate-200 bg-white text-slate-700 hover:border-slate-300 hover:bg-slate-50'
+                         }`}
+                       >
+                         {opt}
+                       </button>
+                     ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
 
           <div className="flex flex-wrap gap-4 mt-auto border-t border-slate-100 pt-8">
             <div className="flex items-center border border-slate-200 rounded-lg bg-white overflow-hidden w-32">
@@ -139,7 +178,7 @@ export const ProductPage = () => {
             </div>
             <button 
               onClick={() => {
-                wooApi.addToCart(product, quantity);
+                wooApi.addToCart(product, quantity, selectedVariations);
                 // Simple feedback
                 const btn = document.getElementById('add-btn');
                 if (btn) {
@@ -166,6 +205,41 @@ export const ProductPage = () => {
              </div>
           </div>
         </div>
+      </div>
+
+      {/* Product Full Details Section */}
+      <div id="details-section" className="bg-white p-6 md:p-10 rounded-2xl border border-slate-100 shadow-sm scroll-mt-24">
+        <div className="flex flex-wrap gap-8 border-b border-slate-200 mb-8">
+          <button
+            onClick={() => setActiveTab('description')}
+            className={`pb-4 text-lg font-bold transition-colors relative ${activeTab === 'description' ? 'text-brand-primary' : 'text-slate-500 hover:text-slate-900'}`}
+          >
+            Product Details
+            {activeTab === 'description' && (
+              <span className="absolute bottom-0 left-0 w-full h-0.5 bg-brand-primary rounded-t-full" />
+            )}
+          </button>
+          <button
+            onClick={() => setActiveTab('reviews')}
+            className={`pb-4 text-lg font-bold transition-colors relative ${activeTab === 'reviews' ? 'text-brand-primary' : 'text-slate-500 hover:text-slate-900'}`}
+          >
+            Clinic Reviews ({product.rating_count})
+            {activeTab === 'reviews' && (
+              <span className="absolute bottom-0 left-0 w-full h-0.5 bg-brand-primary rounded-t-full" />
+            )}
+          </button>
+        </div>
+
+        {activeTab === 'description' && (
+          <div 
+            className="prose prose-slate max-w-none px-2"
+            dangerouslySetInnerHTML={{ __html: product.description }}
+          />
+        )}
+
+        {activeTab === 'reviews' && (
+          <ProductReviews productId={product.id} initialCount={product.rating_count} averageRating={product.average_rating} />
+        )}
       </div>
     </div>
   );
