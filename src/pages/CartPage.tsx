@@ -45,6 +45,12 @@ export const CartPage = () => {
     setCart(newCart);
   };
 
+  const handleUpdateQuantity = async (key: string, newQuantity: number) => {
+    if (newQuantity < 1) return;
+    const newCart = await wooApi.updateCartItemQuantity(key, newQuantity);
+    setCart(newCart);
+  };
+
   if (loading) {
     return <div className="min-h-screen flex items-center justify-center">Loading cart...</div>;
   }
@@ -90,8 +96,21 @@ export const CartPage = () => {
                 </div>
                 <div className="text-sm font-bold text-slate-900 mb-auto">${item.price}</div>
                 <div className="flex justify-between pt-4 mt-auto border-t border-slate-50">
-                  <div className="text-xs text-slate-500 font-bold uppercase">Qty: {item.quantity}</div>
-                  <div className="text-sm font-black text-brand-primary">
+                  <div className="flex items-center gap-3">
+                    <span className="text-xs text-slate-500 font-bold uppercase">Qty:</span>
+                    <div className="flex items-center border border-slate-200 rounded-lg overflow-hidden h-8">
+                      <button 
+                        onClick={() => handleUpdateQuantity(item.key, item.quantity - 1)}
+                        className="px-2 text-slate-500 hover:bg-slate-100 hover:text-slate-900 transition-colors"
+                      >-</button>
+                      <span className="px-2 text-sm font-bold text-slate-900 min-w-[2rem] text-center">{item.quantity}</span>
+                      <button 
+                        onClick={() => handleUpdateQuantity(item.key, item.quantity + 1)}
+                        className="px-2 text-slate-500 hover:bg-slate-100 hover:text-slate-900 transition-colors"
+                      >+</button>
+                    </div>
+                  </div>
+                  <div className="text-sm font-black text-brand-primary flex items-center">
                     ${(parseFloat(item.price) * item.quantity).toFixed(2)}
                   </div>
                 </div>

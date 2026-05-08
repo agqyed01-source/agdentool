@@ -3,8 +3,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React from 'react';
-import { Routes, Route } from 'react-router-dom';
+import React, { useEffect } from 'react';
+import { Routes, Route, useLocation } from 'react-router-dom';
 import { Header } from './components/Header';
 import { Footer } from './components/FeaturedAndFooter';
 import { MobileBottomNav } from './components/FooterAndNav';
@@ -15,9 +15,20 @@ import { AccountPage } from './pages/AccountPage';
 import { CheckoutPage } from './pages/CheckoutPage';
 import { ShopPage } from './pages/ShopPage';
 
+function ScrollToTop() {
+  const { pathname } = useLocation();
+
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [pathname]);
+
+  return null;
+}
+
 export default function App() {
   return (
     <div className="min-h-screen flex flex-col bg-slate-50">
+      <ScrollToTop />
       {/* Navigation */}
       <Header />
       

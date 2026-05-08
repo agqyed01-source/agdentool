@@ -12,16 +12,19 @@ import {
   LayoutDashboard, 
   Settings, 
   CheckCircle2, 
-  AlertCircle 
+  AlertCircle,
+  Ticket,
+  Copy
 } from 'lucide-react';
 
 import Select from 'react-select';
 
-type Tab = 'dashboard' | 'orders' | 'addresses' | 'details';
+type Tab = 'dashboard' | 'orders' | 'addresses' | 'details' | 'coupons';
 
 export const AccountPage = () => {
   const [user, setUser] = useState<WooUser | null>(null);
   const [orders, setOrders] = useState<WooOrder[]>([]);
+  const [coupons, setCoupons] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   
   // Auth Form states
@@ -56,6 +59,7 @@ export const AccountPage = () => {
         setUser(u);
         if (u) {
           wooApi.getOrders().then(setOrders);
+          wooApi.getCoupons().then(setCoupons);
         }
       }
       setLoading(false);
@@ -89,6 +93,7 @@ export const AccountPage = () => {
       }
       setUser(u);
       wooApi.getOrders().then(setOrders);
+      wooApi.getCoupons().then(setCoupons);
       setActiveTab('dashboard');
     } catch (err: any) {
       let msg = err.message || (isLoginView ? 'Login failed' : 'Registration failed');
@@ -407,11 +412,12 @@ export const AccountPage = () => {
         <p className="text-slate-600 leading-relaxed mb-6">
           From your account dashboard you can view your <button onClick={() => setActiveTab('orders')} className="text-brand-primary font-bold hover:underline">recent orders</button>, 
           manage your <button onClick={() => setActiveTab('addresses')} className="text-brand-primary font-bold hover:underline">shipping and billing addresses</button>, 
-          and <button onClick={() => setActiveTab('details')} className="text-brand-primary font-bold hover:underline">edit your password and account details</button>.
+          edit your <button onClick={() => setActiveTab('details')} className="text-brand-primary font-bold hover:underline">password and account details</button>,
+          and view your <button onClick={() => setActiveTab('coupons')} className="text-brand-primary font-bold hover:underline">available coupons</button>.
         </p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <div onClick={() => setActiveTab('orders')} className="bg-white border border-slate-200 p-6 rounded-xl hover:shadow-md transition-all cursor-pointer group">
           <Package className="text-brand-primary mb-4 group-hover:scale-110 transition-transform" size={32} />
           <h3 className="font-bold text-slate-900 mb-1">Recent Orders</h3>
@@ -426,6 +432,11 @@ export const AccountPage = () => {
           <Settings className="text-brand-primary mb-4 group-hover:scale-110 transition-transform" size={32} />
           <h3 className="font-bold text-slate-900 mb-1">Account Details</h3>
           <p className="text-sm text-slate-500">Profile names and email settings.</p>
+        </div>
+        <div onClick={() => setActiveTab('coupons')} className="bg-white border border-slate-200 p-6 rounded-xl hover:shadow-md transition-all cursor-pointer group">
+          <Ticket className="text-brand-primary mb-4 group-hover:scale-110 transition-transform" size={32} />
+          <h3 className="font-bold text-slate-900 mb-1">Coupons</h3>
+          <p className="text-sm text-slate-500">View available discount codes.</p>
         </div>
       </div>
     </div>
@@ -797,6 +808,55 @@ export const AccountPage = () => {
     </div>
   );
 
+  const handleCopyCoupon = (code: string) => {
+    navigator.clipboard.writeText(code);
+    setUpdateMessage({ text: 'Coupon code copied to clipboard!', type: 'success' });
+    setTimeout(() => setUpdateMessage(null), 3000);
+  };
+
+  const renderCoupons = () => (
+    <div className="space-y-6">
+      <h1 className="text-2xl font-bold text-slate-900 mb-6">Available Coupons</h1>
+      
+      {updateMessage && (
+        <div className={`p-4 rounded-xl flex items-center gap-3 font-medium text-sm border ${updateMessage.type === 'success' ? 'bg-emerald-50 text-emerald-700 border-emerald-100' : 'bg-red-50 text-red-700 border-red-100'}`}>
+          {updateMessage.type === 'success' ? <CheckCircle2 size={18} /> : <AlertCircle size={18} />}
+          {updateMessage.text}
+        </div>
+      )}
+
+      {coupons.length === 0 ? (
+        <div className="text-center py-16 bg-slate-50 rounded-2xl border border-slate-100 border-dashed">
+          <Ticket className="mx-auto text-slate-300 mb-4" size={48} />
+          <p className="text-slate-500 font-medium">You don't have any available coupons right now.</p>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {coupons.map((coupon, index) => (
+            <div key={coupon.id || index} className="bg-white border text-center relative border-brand-primary/20 rounded-xl p-6 shadow-sm overflow-hidden flex flex-col items-center justify-center">
+              {/* Decorative elements to look like a ticket */}
+              <div className="absolute top-1/2 left-0 w-3 h-6 bg-slate-50 border-r border-brand-primary/20 -translate-y-1/2 rounded-r-full -ml-[1px]"></div>
+              <div className="absolute top-1/2 right-0 w-3 h-6 bg-slate-50 border-l border-brand-primary/20 -translate-y-1/2 rounded-l-full -mr-[1px]"></div>
+              
+              <div className="text-brand-primary mb-2">
+                <Ticket size={32} />
+              </div>
+              <h3 className="font-bold text-slate-900 text-lg mb-1">{coupon.code}</h3>
+              <p className="text-sm text-slate-500 mb-4">{coupon.description || (coupon.discount_type === 'percent' ? `${parseFloat(coupon.amount)}% off` : `$${parseFloat(coupon.amount)} off`)}</p>
+              
+              <button 
+                onClick={() => handleCopyCoupon(coupon.code)}
+                className="flex items-center gap-2 px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-lg transition-colors text-sm"
+              >
+                <Copy size={16} /> Copy Code
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+
   return (
     <div className="container mx-auto px-4 py-8 md:py-12">
       <Seo title="My Account" description="Manage your Dental Depot account and orders." />
@@ -843,6 +903,12 @@ export const AccountPage = () => {
               >
                 <User size={20} /> Account Details
               </button>
+              <button 
+                onClick={() => setActiveTab('coupons')}
+                className={`flex items-center gap-3 w-full px-4 py-3 font-bold rounded-xl transition-all ${activeTab === 'coupons' ? 'bg-brand-primary text-white shadow-brand-primary/20 shadow-lg' : 'text-slate-600 hover:bg-slate-50'}`}
+              >
+                <Ticket size={20} /> Coupons
+              </button>
               <div className="pt-4 mt-4 border-t border-slate-100">
                 <button onClick={handleLogout} className="flex items-center gap-3 w-full px-4 py-3 text-slate-500 font-bold hover:bg-red-50 hover:text-red-600 rounded-xl transition-all">
                   <LogOut size={20} /> Logout
@@ -870,6 +936,7 @@ export const AccountPage = () => {
           {activeTab === 'orders' && renderOrders()}
           {activeTab === 'addresses' && renderAddresses()}
           {activeTab === 'details' && renderDetails()}
+          {activeTab === 'coupons' && renderCoupons()}
         </div>
       </div>
     </div>

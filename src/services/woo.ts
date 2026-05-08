@@ -438,6 +438,35 @@ export const wooApi = {
     );
   },
 
+  updateCartItemQuantity: async (key: string, quantity: number): Promise<WooCart> => {
+    return new Promise((resolve) =>
+      setTimeout(() => {
+        const item = mockCartState.items.find((i) => i.key === key);
+        if (item) {
+          item.quantity = quantity;
+        }
+        recalculateCart();
+        resolve({ ...mockCartState });
+      }, 300),
+    );
+  },
+
+  getCoupons: async (): Promise<any[]> => {
+    try {
+      const coupons = await fetchWoo("/coupons");
+      if (Array.isArray(coupons)) {
+        return coupons;
+      }
+      return [];
+    } catch (err: any) {
+      console.error("Failed to fetch coupons", err);
+      return [
+        { id: 1, code: 'WELCOME10', discount_type: 'percent', amount: '10.00', description: '10% off for new customers' },
+        { id: 2, code: 'FREESHIP', discount_type: 'fixed_cart', amount: '0.00', description: 'Free shipping on orders over $50' }
+      ];
+    }
+  },
+
   applyCoupon: async (code: string): Promise<WooCart> => {
     try {
       const coupons = await fetchWoo("/coupons", { code });
