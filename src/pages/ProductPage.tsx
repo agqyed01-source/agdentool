@@ -14,11 +14,13 @@ export const ProductPage = () => {
   const [quantity, setQuantity] = useState(1);
   const [selectedVariations, setSelectedVariations] = useState<Record<string, string>>({});
   const [activeTab, setActiveTab] = useState<'description' | 'reviews'>('description');
+  const [selectedImageIndex, setSelectedImageIndex] = useState(0);
 
   useEffect(() => {
     if (slug) {
       setLoading(true);
       setError(null);
+      setSelectedImageIndex(0);
       wooApi.getProductBySlug(slug).then(data => {
         setProduct(data);
         // Initialize default variations if any
@@ -125,13 +127,33 @@ export const ProductPage = () => {
 
       <div className="grid md:grid-cols-2 gap-12 bg-white p-6 md:p-10 rounded-2xl border border-slate-100 shadow-sm mb-12">
         {/* Product Image Gallery */}
-        <div className="aspect-square bg-slate-50 rounded-xl overflow-hidden border border-slate-100 p-8 flex items-center justify-center">
-          <img 
-            src={product.images[0]?.src} 
-            alt={product.images[0]?.alt || decodeHtmlEntities(product.name)} 
-            className="w-full h-full object-contain"
-            referrerPolicy="no-referrer"
-          />
+        <div className="flex flex-col gap-4">
+          <div className="aspect-square bg-slate-50 rounded-xl overflow-hidden border border-slate-100 p-8 flex items-center justify-center">
+            <img 
+              src={product.images[selectedImageIndex]?.src || product.images[0]?.src} 
+              alt={product.images[selectedImageIndex]?.alt || decodeHtmlEntities(product.name)} 
+              className="w-full h-full object-contain"
+              referrerPolicy="no-referrer"
+            />
+          </div>
+          {product.images.length > 1 && (
+            <div className="flex gap-4 overflow-x-auto pb-2 scrollbar-hide">
+              {product.images.map((image, idx) => (
+                <button
+                  key={image.id || idx}
+                  onClick={() => setSelectedImageIndex(idx)}
+                  className={`flex-shrink-0 w-20 h-20 rounded-lg overflow-hidden border-2 transition-all ${selectedImageIndex === idx ? 'border-brand-primary' : 'border-transparent hover:border-slate-300'}`}
+                >
+                  <img
+                    src={image.src}
+                    alt={image.alt || `${decodeHtmlEntities(product.name)} - Image ${idx + 1}`}
+                    className="w-full h-full object-cover"
+                    referrerPolicy="no-referrer"
+                  />
+                </button>
+              ))}
+            </div>
+          )}
         </div>
 
         {/* Product Info */}
