@@ -74,11 +74,22 @@ export const ShopPage = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   
-  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>(() => {
+    const saved = localStorage.getItem('shopViewMode');
+    return (saved === 'grid' || saved === 'list') ? saved : 'grid';
+  });
+
+  const handleViewModeChange = (mode: 'grid' | 'list') => {
+    setViewMode(mode);
+    localStorage.setItem('shopViewMode', mode);
+  };
   const [sortBy, setSortBy] = useState('popularity');
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
-  const [itemsPerPage, setItemsPerPage] = useState(18);
+  const [itemsPerPage, setItemsPerPage] = useState(() => {
+    const saved = localStorage.getItem('shopItemsPerPage');
+    return saved ? Number(saved) : 18;
+  });
   
   const currentCategorySlug = slug && slug !== 'all' ? slug : undefined;
   
@@ -239,7 +250,12 @@ export const ShopPage = () => {
                   <div className="relative">
                     <select 
                       value={itemsPerPage}
-                      onChange={(e) => { setItemsPerPage(Number(e.target.value)); setPage(1); }}
+                      onChange={(e) => { 
+                        const val = Number(e.target.value);
+                        setItemsPerPage(val); 
+                        localStorage.setItem('shopItemsPerPage', String(val));
+                        setPage(1); 
+                      }}
                       className="appearance-none pl-3 pr-8 py-1.5 border border-slate-300 rounded-lg text-sm font-medium text-slate-700 focus:outline-none focus:ring-2 focus:ring-brand-primary/50 focus:border-brand-primary bg-slate-50 w-full sm:w-auto"
                     >
                       <option value={12}>12</option>
@@ -270,13 +286,13 @@ export const ShopPage = () => {
 
                 <div className="flex items-center bg-slate-100 rounded-lg p-1 border border-slate-200 shrink-0">
                   <button 
-                    onClick={() => setViewMode('grid')}
+                    onClick={() => handleViewModeChange('grid')}
                     className={`p-1.5 rounded-md transition-colors ${viewMode === 'grid' ? 'bg-white shadow-sm text-brand-primary' : 'text-slate-400 hover:text-slate-600'}`}
                   >
                     <Grid size={16} />
                   </button>
                   <button 
-                    onClick={() => setViewMode('list')}
+                    onClick={() => handleViewModeChange('list')}
                     className={`p-1.5 rounded-md transition-colors ${viewMode === 'list' ? 'bg-white shadow-sm text-brand-primary' : 'text-slate-400 hover:text-slate-600'}`}
                   >
                     <ListIcon size={16} />
