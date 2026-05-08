@@ -114,6 +114,7 @@ export interface WooCategory {
   slug: string;
   count?: number;
   image?: { src: string };
+  parent?: number;
 }
 
 export interface WooCartItem {
@@ -186,6 +187,8 @@ const mockCategories: WooCategory[] = [
     },
   },
   { id: 12, name: "Diagnostics", slug: "diagnostics", count: 35 },
+  { id: 18, name: "X-Ray", slug: "x-ray", count: 15, parent: 12 },
+  { id: 19, name: "Sensors", slug: "sensors", count: 20, parent: 12 },
   { id: 13, name: "Sterilization", slug: "sterilization", count: 24 },
   { id: 14, name: "Anesthetics", slug: "anesthetics", count: 56 },
   { id: 15, name: "Furniture", slug: "furniture", count: 12 },
@@ -315,8 +318,8 @@ export const wooApi = {
   getCategories: async (): Promise<WooCategory[]> => {
     try {
       const data = await fetchWoo("/products/categories", {
-        hide_empty: "true",
-        per_page: "20",
+        per_page: "100",
+        hide_empty: "false"
       });
       if (!Array.isArray(data)) {
         throw new Error(

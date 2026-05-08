@@ -5,6 +5,64 @@ import { Seo } from "../components/Seo";
 import { wooApi, WooProduct, WooCategory } from "../services/woo";
 import { ProductCard } from "../components/ProductSection";
 
+const CategoryNode = ({ node, depth = 0, currentCategorySlug }: { node: any, depth?: number, currentCategorySlug?: string }) => {
+  const isActive = currentCategorySlug === node.slug;
+  
+  const hasActiveChild = (n: any): boolean => {
+    if (n.slug === currentCategorySlug) return true;
+    if (n.children) {
+      return n.children.some((child: any) => hasActiveChild(child));
+    }
+    return false;
+  };
+  
+  const shouldAutoExpand = hasActiveChild(node);
+  const [isExpanded, setIsExpanded] = useState(shouldAutoExpand || depth === 0);
+  const hasChildren = node.children && node.children.length > 0;
+  
+  return (
+    <React.Fragment>
+      <li className="relative group">
+        <div className="flex items-center">
+          <Link 
+            to={`/category/${node.slug}`}
+            className={`flex-1 flex px-3 py-2 rounded-lg text-sm font-medium transition-colors ${isActive ? 'bg-brand-primary/10 text-brand-primary' : 'text-slate-600 hover:bg-slate-50'}`}
+            style={{ paddingLeft: `${0.75 + depth * 1.5}rem` }}
+          >
+            {depth > 0 && <span className="w-2 h-px bg-slate-300 inline-block mr-2 my-auto -ml-1"></span>}
+            <span className="truncate">{node.name}</span>
+            <span className="text-slate-400 font-normal ml-auto pl-2">({node.count})</span>
+          </Link>
+          {hasChildren && (
+            <button 
+              type="button" 
+              onClick={(e) => { e.preventDefault(); setIsExpanded(!isExpanded); }} 
+              className="p-1.5 ml-1 text-slate-400 hover:text-brand-primary hover:bg-slate-50 rounded"
+              aria-label={isExpanded ? "Collapse category" : "Expand category"}
+            >
+              <ChevronDown size={14} className={`transform transition-transform ${isExpanded ? '' : '-rotate-90'}`} />
+            </button>
+          )}
+        </div>
+      </li>
+      
+      {hasChildren && isExpanded && (
+        <div className="mt-1 space-y-1 relative">
+          <div className="absolute top-0 bottom-0 w-px bg-slate-200" style={{ left: `${0.75 + depth * 1.5 + 0.3}rem` }}></div>
+          {node.children.map((child: any) => (
+            <CategoryNode 
+              key={child.id} 
+              node={child} 
+              depth={depth + 1} 
+              currentCategorySlug={currentCategorySlug} 
+            />
+          ))}
+        </div>
+      )}
+    </React.Fragment>
+  );
+};
+
 export const ShopPage = () => {
   const { slug } = useParams<{ slug?: string }>();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -119,7 +177,7 @@ export const ShopPage = () => {
               <h3 className="font-bold text-slate-900 mb-4 flex items-center gap-2">
                 <Filter size={18} /> Categories
               </h3>
-              <ul className="space-y-2">
+              <ul className="space-y-1">
                 <li>
                   <Link 
                     to="/shop" 
@@ -128,16 +186,30 @@ export const ShopPage = () => {
                     All Products
                   </Link>
                 </li>
-                {categories.map(cat => (
-                  <li key={cat.id}>
-                    <Link 
-                      to={`/category/${cat.slug}`}
-                      className={`block px-3 py-2 rounded-lg text-sm font-medium transition-colors ${currentCategorySlug === cat.slug ? 'bg-brand-primary/10 text-brand-primary' : 'text-slate-600 hover:bg-slate-50'}`}
-                    >
-                      {cat.name} <span className="text-slate-400 font-normal">({cat.count})</span>
-                    </Link>
-                  </li>
-                ))}
+                {(() => {
+                  const buildTree = (cats: WooCategory[]) => {
+                    const tree: (WooCategory & { children?: any[] })[] = [];
+                    const map = new Map<number, any>();
+                    cats.forEach(c => map.set(c.id, { ...c, children: [] }));
+                    
+                    cats.forEach(c => {
+                      if (c.parent && c.parent !== 0 && map.has(c.parent)) {
+                        map.get(c.parent).children.push(map.get(c.id));
+                      } else {
+                        tree.push(map.get(c.id));
+                      }
+                    });
+                    return tree;
+                  };
+
+                  return buildTree(categories).map(node => (
+                    <CategoryNode 
+                      key={node.id} 
+                      node={node} 
+                      currentCategorySlug={currentCategorySlug} 
+                    />
+                  ));
+                })()}
               </ul>
             </div>
           </div>
