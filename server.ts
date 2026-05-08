@@ -373,6 +373,19 @@ async function startServer() {
         return res.status(wooRes.status).json({ error: data.message || 'Error from WooCommerce API' });
       }
 
+      const totalPages = wooRes.headers.get('x-wp-totalpages');
+      const total = wooRes.headers.get('x-wp-total');
+
+      if (req.body.includeHeaders && (totalPages !== null)) {
+        return res.json({ 
+          data: data, 
+          headers: {
+            'x-wp-totalpages': totalPages,
+            'x-wp-total': total
+          }
+        });
+      }
+
       return res.json(data);
     } catch (error: any) {
       console.error('Woo API Error:', error);

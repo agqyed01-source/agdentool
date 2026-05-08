@@ -198,11 +198,12 @@ async function fetchWoo(
   queryParams: Record<string, string> = {},
   method: string = "GET",
   bodyData?: any,
+  includeHeaders: boolean = false
 ) {
   const res = await fetch("/api/woo/fetch", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ endpoint, queryParams, method, bodyData }),
+    body: JSON.stringify({ endpoint, queryParams, method, bodyData, includeHeaders }),
   });
 
   if (!res.ok) {
@@ -217,23 +218,37 @@ export const wooApi = {
   getProducts: async (params?: {
     category?: string;
     search?: string;
-  }): Promise<WooProduct[]> => {
+    page?: number;
+    per_page?: number;
+    orderby?: string;
+    order?: string;
+  }): Promise<{ products: WooProduct[], totalPages: number, total: number }> => {
     try {
       const query: Record<string, string> = {};
       if (params?.search) query.search = params.search;
+      if (params?.page) query.page = params.page.toString();
+      if (params?.per_page) query.per_page = params.per_page.toString();
+      if (params?.orderby) query.orderby = params.orderby;
+      if (params?.order) query.order = params.order;
+
       if (params?.category) {
         // fetch category id by slug first
         const cats = await wooApi.getCategories();
         const cat = cats.find((c) => c.slug === params.category);
         if (cat) query.category = cat.id.toString();
       }
-      const data = await fetchWoo("/products", query);
+      const resData = await fetchWoo("/products", query, "GET", undefined, true);
+      
+      let data = resData.data || resData; // If headers included, result is wrapped in { data, headers }
+      let totalPages = resData.headers ? parseInt(resData.headers['x-wp-totalpages'] || '1') : 1;
+      let total = resData.headers ? parseInt(resData.headers['x-wp-total'] || '0') : data.length;
+
       if (!Array.isArray(data)) {
         throw new Error(
           data.message || "WooCommerce API did not return an array of products",
         );
       }
-      return data;
+      return { products: data, totalPages, total };
     } catch (err: any) {
       console.error(err);
       if (err.message && err.message.includes("not configured")) {
@@ -259,7 +274,22 @@ export const wooApi = {
               p.description.toLowerCase().includes(query),
           );
         }
-        resolve(filtered);
+        
+        // Sorting
+        if (params?.orderby === 'price') {
+          filtered.sort((a, b) => params.order === 'desc' ? parseFloat(b.price) - parseFloat(a.price) : parseFloat(a.price) - parseFloat(b.price));
+        } else if (params?.orderby === 'rating') {
+          filtered.sort((a, b) => parseFloat(b.average_rating) - parseFloat(a.average_rating));
+        }
+        
+        let total = filtered.length;
+        let perPage = params?.per_page || 10;
+        let page = params?.page || 1;
+        let totalPages = Math.ceil(total / perPage);
+        
+        filtered = filtered.slice((page - 1) * perPage, page * perPage);
+        
+        resolve({ products: filtered, totalPages, total });
       }, 500),
     );
   },
@@ -894,26 +924,41 @@ export const wooApi = {
 
   getProductReviews: async (productId: number): Promise<WooReview[]> => {
     try {
-      const data = await fetchWoo(`/products/reviews`, { 
+      const queryParams: Record<string, string> = {
         product: productId.toString(),
-        _t: Date.now().toString() 
+        status: 'all',
+        _t: Date.now().toString()
+      };
+      
+      let data = await fetchWoo(`/products/reviews`, queryParams).catch(async () => {
+        // Fallback to older WooCommerce API endpoint format if /products/reviews fails
+        return fetchWoo(`/products/${productId}/reviews`, { status: 'all', _t: Date.now().toString() });
       });
+
+      if (data && typeof data === 'object' && !Array.isArray(data)) {
+        // Sometimes plugins wrap response in { data: [...] } or { reviews: [...] }
+        if (Array.isArray(data.data)) data = data.data;
+        else if (Array.isArray(data.reviews)) data = data.reviews;
+      }
+
       if (Array.isArray(data)) {
          return data.map((r: any) => ({
            id: r.id,
-           product_id: r.product_id,
+           product_id: r.product_id || productId,
            date_created: r.date_created,
-           reviewer: r.reviewer,
-           review: r.review,
-           rating: r.rating,
-           verified: r.verified,
+           reviewer: r.reviewer || r.name,
+           review: r.review || r.comment,
+           rating: r.rating !== undefined ? r.rating : 5,
+           verified: !!r.verified,
            // Handle various image field names from plugins
            images: r.images || r.photo_reviews || r.wc_photo_reviews_images || []
          }));
       }
     } catch (err: any) {
-      console.error(err);
+      console.error('Error fetching reviews:', err);
     }
+    
+    // Fallback to mock data if completely failed
     return new Promise(resolve => setTimeout(() => {
       resolve(mockReviews.filter(r => r.product_id === productId));
     }, 300));

@@ -59,9 +59,9 @@ export const Header = () => {
 
     setIsSearching(true);
     const delayDebounceFn = setTimeout(() => {
-      wooApi.getProducts({ search: query })
+      wooApi.getProducts({ search: query, per_page: 5 })
         .then(res => {
-          setSuggestions(res.slice(0, 5)); // show top 5
+          setSuggestions(res.products);
         })
         .catch(err => console.error("Search suggestions failed:", err))
         .finally(() => setIsSearching(false));
@@ -87,7 +87,7 @@ export const Header = () => {
     if (searchQuery.trim()) {
       setShowSuggestions(false);
       setIsMobileSearchOpen(false);
-      navigate(`/?search=${encodeURIComponent(searchQuery.trim())}`);
+      navigate(`/shop?search=${encodeURIComponent(searchQuery.trim())}`);
     }
   };
 
@@ -258,7 +258,7 @@ export const Header = () => {
       {/* Sub Nav Bar */}
       <nav className="container mx-auto px-4 py-2 hidden md:flex gap-8 text-[13px] font-semibold text-slate-600 overflow-x-auto">
         <Link
-          to="/"
+          to="/shop"
           className="text-brand-primary flex items-center gap-1 shrink-0"
         >
           <span>☰</span> All Categories

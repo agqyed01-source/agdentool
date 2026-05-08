@@ -13,6 +13,7 @@ import { ProductPage } from './pages/ProductPage';
 import { CartPage } from './pages/CartPage';
 import { AccountPage } from './pages/AccountPage';
 import { CheckoutPage } from './pages/CheckoutPage';
+import { ShopPage } from './pages/ShopPage';
 
 export default function App() {
   return (
@@ -23,8 +24,9 @@ export default function App() {
       <main className="flex-grow">
         <Routes>
           <Route path="/" element={<Home />} />
+          <Route path="/shop" element={<ShopPage />} />
           <Route path="/product/:slug" element={<ProductPage />} />
-          <Route path="/category/:slug" element={<Home />} />
+          <Route path="/category/:slug" element={<ShopPage />} />
           <Route path="/cart" element={<CartPage />} />
           <Route path="/checkout" element={<CheckoutPage />} />
           <Route path="/account" element={<AccountPage />} />

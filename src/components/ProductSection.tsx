@@ -21,7 +21,7 @@ export const ShopByCategoryBlock = () => {
           Shop by Category
         </h2>
         <Link
-          to="/category/all"
+          to="/shop"
           className="text-brand-primary text-sm font-bold flex items-center hover:underline"
         >
           View All Categories <span className="ml-1">→</span>
@@ -202,9 +202,9 @@ export const ProductGrid = ({
     setLoading(true);
     setError(null);
     wooApi
-      .getProducts({ category: slug, search: searchQuery })
-      .then((data) => {
-        setProducts(data);
+      .getProducts({ category: slug, search: searchQuery, per_page: 8 })
+      .then((res) => {
+        setProducts(res.products);
         setLoading(false);
       })
       .catch((err) => {
@@ -233,7 +233,7 @@ export const ProductGrid = ({
         </div>
         {!searchQuery && !slug && (
           <Link
-            to="/category/featured"
+            to="/shop"
             className="text-brand-primary font-bold text-sm hover:underline"
           >
             View All Products →
