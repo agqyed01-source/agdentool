@@ -49,23 +49,33 @@ jobs:
             export NVM_DIR="$HOME/.nvm"
             [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
 
-            # Try to find Node/npm if still not in path
+            # Search for npm in common 1Panel and system locations
             if ! command -v npm &> /dev/null; then
-              # Check common 1Panel or system Node paths
-              POSSIBLE_PATHS=("/usr/local/node/bin" "/usr/local/bin" "/opt/node/bin" "/opt/1panel/node/bin")
-              for p in "${POSSIBLE_PATHS[@]}"; do
-                if [ -d "$p" ]; then
-                  export PATH="$p:$PATH"
-                  break
-                fi
-              done
+              echo "Searching for npm in 1Panel apps..."
+              # Search in /opt/1panel/apps for any node/bin directory
+              ONEPANEL_NODE=$(find /opt/1panel/apps -name "npm" -type f -executable 2>/dev/null | head -n 1)
+              if [ -n "$ONEPANEL_NODE" ]; then
+                export PATH="$(dirname "$ONEPANEL_NODE"):$PATH"
+                echo "Found npm at $ONEPANEL_NODE, added to PATH."
+              else
+                # Check other common custom paths
+                POSSIBLE_PATHS=("/usr/local/node/bin" "/usr/local/bin" "/opt/node/bin" "/opt/1panel/node/bin")
+                for p in "${POSSIBLE_PATHS[@]}"; do
+                  if [ -d "$p" ]; then
+                    export PATH="$p:$PATH"
+                    if command -v npm &> /dev/null; then break; fi
+                  fi
+                done
+              fi
             fi
 
             cd /opt/1panel/www/sites/agdentool
             
             # Final check for npm
             if ! command -v npm &> /dev/null; then
-              echo "Error: npm not found in PATH ($PATH). Please ensure Node.js is installed on your VPS."
+              echo "Error: npm not found in PATH ($PATH)."
+              echo "Available paths checked. Please ensure Node.js is installed on your VPS and accessible to the SSH user."
+              echo "Try running 'which npm' on your VPS and adding that path to the script."
               exit 1
             fi
 
