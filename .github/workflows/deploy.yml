@@ -42,10 +42,26 @@ jobs:
           username: ${{ secrets.VPS_USERNAME }}
           key: ${{ secrets.VPS_SSH_KEY }}
           script: |
+            # Load NVM or other Node environment managers if they exist
+            export NVM_DIR="$HOME/.nvm"
+            [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+            [ -s "$HOME/.bashrc" ] && source "$HOME/.bashrc"
+            [ -s "$HOME/.profile" ] && source "$HOME/.profile"
+            
             cd /opt/1panel/www/sites/agdentool
+            
+            # Ensure npm is available
+            if ! command -v npm &> /dev/null; then
+              echo "Error: npm not found. Please ensure Node.js is installed and in the PATH."
+              exit 1
+            fi
+
             npm ci --production
             
-            # Setup environment variables (e.g., VPS_PORT=3001) if not already set system-wide
+            # Ensure .env exists
+            touch .env
+            
+            # Setup environment variables
             if ! grep -q "VPS_PORT=3001" .env; then
               echo "VPS_PORT=3001" >> .env
             fi
@@ -55,6 +71,9 @@ jobs:
               npm install -g pm2
             fi
             
+            # Use absolute path to pm2 if just installed globally
+            PM2_BIN=$(which pm2 || echo "$HOME/.npm-global/bin/pm2")
+            
             # Restart or start the app with PM2
-            pm2 restart my-app || pm2 start npm --name "my-app" -- run start
-            pm2 save
+            $PM2_BIN restart my-app || $PM2_BIN start npm --name "my-app" -- run start
+            $PM2_BIN save
