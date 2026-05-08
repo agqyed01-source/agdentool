@@ -3,6 +3,7 @@ import { ShoppingCart, Heart, Star } from "lucide-react";
 import { motion } from "motion/react";
 import { Link, useParams, useSearchParams } from "react-router-dom";
 import { wooApi, WooProduct, WooCategory } from "../services/woo";
+import { decodeHtmlEntities } from "../utils/format";
 
 export const ShopByCategoryBlock = () => {
   const [categories, setCategories] = useState<WooCategory[]>([]);
@@ -41,13 +42,13 @@ export const ShopByCategoryBlock = () => {
                   cat.image?.src ||
                   "https://images.unsplash.com/photo-1606811841689-23dfddce3e95?auto=format&fit=crop&q=80&w=200"
                 }
-                alt={cat.name}
+                alt={decodeHtmlEntities(cat.name)}
                 className="w-full h-full object-contain group-hover:scale-105 transition-transform"
                 referrerPolicy="no-referrer"
               />
             </div>
             <h3 className="text-brand-primary text-[13px] font-bold text-center mb-1 leading-tight">
-              {cat.name}
+              {decodeHtmlEntities(cat.name)}
             </h3>
             <p className="text-[11px] text-slate-500 font-medium text-center">
               {cat.count || 0}+ Products
@@ -86,7 +87,7 @@ export const CategoryBar = () => {
               key={cat.id}
               className={`text-[13px] font-bold uppercase tracking-wider transition-colors ${slug === cat.slug ? "text-brand-primary" : "text-slate-400 hover:text-brand-primary"}`}
             >
-              {cat.name}
+              {decodeHtmlEntities(cat.name)}
             </Link>
           ))}
         </div>
@@ -114,7 +115,7 @@ export const ProductCard = ({ product }: { product: WooProduct }) => {
         )}
         <img
           src={product.images[0]?.src}
-          alt={product.images[0]?.alt || product.name}
+          alt={product.images[0]?.alt || decodeHtmlEntities(product.name)}
           className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
           referrerPolicy="no-referrer"
         />
@@ -128,11 +129,11 @@ export const ProductCard = ({ product }: { product: WooProduct }) => {
 
       <div className="flex flex-col flex-grow">
         <span className="text-[10px] font-bold text-brand-primary mb-1 uppercase tracking-wider">
-          {product.categories[0]?.name}
+          {decodeHtmlEntities(product.categories[0]?.name)}
         </span>
         <Link to={`/product/${product.slug}`}>
           <h3 className="text-xs font-bold leading-tight mb-2 h-8 line-clamp-2 text-slate-900 group-hover:text-brand-primary transition-colors">
-            {product.name}
+            {decodeHtmlEntities(product.name)}
           </h3>
         </Link>
 

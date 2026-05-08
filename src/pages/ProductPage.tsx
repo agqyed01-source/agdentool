@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { Seo } from '../components/Seo';
 import { wooApi, WooProduct } from '../services/woo';
+import { decodeHtmlEntities } from '../utils/format';
 import { ShoppingCart, Star, ShieldCheck, Truck } from 'lucide-react';
 import { ProductReviews } from '../components/ProductReviews';
 
@@ -86,7 +87,7 @@ export const ProductPage = () => {
   return (
     <div className="container mx-auto px-4 py-8 md:py-12">
       <Seo 
-        title={product.name}
+        title={decodeHtmlEntities(product.name)}
         description={product.short_description.replace(/<[^>]+>/g, '')}
         type="product"
         image={product.images[0]?.src}
@@ -116,10 +117,10 @@ export const ProductPage = () => {
         <Link to="/" className="hover:text-brand-primary">Home</Link>
         <span className="mx-2">/</span>
         <Link to={`/category/${product.categories[0]?.slug}`} className="hover:text-brand-primary">
-          {product.categories[0]?.name}
+          {decodeHtmlEntities(product.categories[0]?.name)}
         </Link>
         <span className="mx-2">/</span>
-        <span className="text-slate-900">{product.name}</span>
+        <span className="text-slate-900">{decodeHtmlEntities(product.name)}</span>
       </div>
 
       <div className="grid md:grid-cols-2 gap-12 bg-white p-6 md:p-10 rounded-2xl border border-slate-100 shadow-sm mb-12">
@@ -127,7 +128,7 @@ export const ProductPage = () => {
         <div className="aspect-square bg-slate-50 rounded-xl overflow-hidden border border-slate-100 p-8 flex items-center justify-center">
           <img 
             src={product.images[0]?.src} 
-            alt={product.images[0]?.alt || product.name} 
+            alt={product.images[0]?.alt || decodeHtmlEntities(product.name)} 
             className="w-full h-full object-contain"
             referrerPolicy="no-referrer"
           />
@@ -136,10 +137,10 @@ export const ProductPage = () => {
         {/* Product Info */}
         <div className="flex flex-col">
           <span className="text-xs font-bold text-brand-primary uppercase tracking-widest mb-2">
-            {product.categories[0]?.name}
+            {decodeHtmlEntities(product.categories[0]?.name)}
           </span>
           <h1 className="text-3xl md:text-4xl font-bold text-slate-900 mb-4 leading-tight">
-            {product.name}
+            {decodeHtmlEntities(product.name)}
           </h1>
 
           <div className="flex items-center gap-4 mb-6">

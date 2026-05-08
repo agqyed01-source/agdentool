@@ -4,6 +4,7 @@ import { Search, Grid, List as ListIcon, ChevronDown, Filter } from "lucide-reac
 import { Seo } from "../components/Seo";
 import { wooApi, WooProduct, WooCategory } from "../services/woo";
 import { ProductCard } from "../components/ProductSection";
+import { decodeHtmlEntities } from "../utils/format";
 
 const CategoryNode = ({ node, depth = 0, currentCategorySlug }: { node: any, depth?: number, currentCategorySlug?: string }) => {
   const isActive = currentCategorySlug === node.slug;
@@ -30,7 +31,7 @@ const CategoryNode = ({ node, depth = 0, currentCategorySlug }: { node: any, dep
             style={{ paddingLeft: `${0.75 + depth * 1.5}rem` }}
           >
             {depth > 0 && <span className="w-2 h-px bg-slate-300 inline-block mr-2 my-auto -ml-1"></span>}
-            <span className="truncate">{node.name}</span>
+            <span className="truncate">{decodeHtmlEntities(node.name)}</span>
             <span className="text-slate-400 font-normal ml-auto pl-2">({node.count})</span>
           </Link>
           {hasChildren && (
@@ -80,6 +81,15 @@ export const ShopPage = () => {
   const [itemsPerPage, setItemsPerPage] = useState(18);
   
   const currentCategorySlug = slug && slug !== 'all' ? slug : undefined;
+  
+  // Find current category name to display properly
+  const findCategoryName = (cats: WooCategory[], targetSlug: string): string | undefined => {
+    for (const cat of cats) {
+      if (cat.slug === targetSlug) return cat.name;
+    }
+    return undefined;
+  };
+  const currentCategoryName = currentCategorySlug ? findCategoryName(categories, currentCategorySlug) : undefined;
 
   const [totalCount, setTotalCount] = useState(0);
 
@@ -138,14 +148,14 @@ export const ShopPage = () => {
   return (
     <>
       <Seo 
-        title={currentCategorySlug ? `Category: ${currentCategorySlug}` : "Shop Products"} 
-        description={currentCategorySlug ? `Shop our premium selection of ${currentCategorySlug} products.` : "Browse our full range of premium products."}
+        title={currentCategoryName ? `Category: ${decodeHtmlEntities(currentCategoryName)}` : "Shop Products"} 
+        description={currentCategoryName ? `Shop our premium selection of ${decodeHtmlEntities(currentCategoryName)} products.` : "Browse our full range of premium products."}
       />
       
       <div className="bg-slate-50 py-6 border-b border-slate-200">
         <div className="container mx-auto px-4">
           <h1 className="text-3xl font-bold text-slate-900 capitalize">
-            {searchQuery ? `Search: "${searchQuery}"` : currentCategorySlug ? currentCategorySlug.replace(/-/g, ' ') : 'All Products'}
+            {searchQuery ? `Search: "${searchQuery}"` : currentCategoryName ? decodeHtmlEntities(currentCategoryName) : 'All Products'}
           </h1>
         </div>
       </div>
@@ -312,8 +322,8 @@ export const ShopPage = () => {
                            <img src={product.images[0]?.src} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" alt="" referrerPolicy="no-referrer" />
                         </Link>
                         <div className="flex-1 flex flex-col">
-                           <span className="text-xs font-bold text-brand-primary uppercase tracking-wider mb-1">{product.categories[0]?.name}</span>
-                           <Link to={`/product/${product.slug}`} className="text-lg font-bold text-slate-900 hover:text-brand-primary mb-2 line-clamp-2">{product.name}</Link>
+                           <span className="text-xs font-bold text-brand-primary uppercase tracking-wider mb-1">{decodeHtmlEntities(product.categories[0]?.name)}</span>
+                           <Link to={`/product/${product.slug}`} className="text-lg font-bold text-slate-900 hover:text-brand-primary mb-2 line-clamp-2">{decodeHtmlEntities(product.name)}</Link>
                            <div dangerouslySetInnerHTML={{ __html: product.short_description || '' }} className="text-sm text-slate-600 mb-4 line-clamp-2" />
                            <div className="mt-auto flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                              <div className="text-xl font-black text-slate-900">
