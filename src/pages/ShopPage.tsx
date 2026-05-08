@@ -77,6 +77,7 @@ export const ShopPage = () => {
   const [sortBy, setSortBy] = useState('popularity');
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(18);
   
   const currentCategorySlug = slug && slug !== 'all' ? slug : undefined;
 
@@ -101,7 +102,7 @@ export const ShopPage = () => {
         category: currentCategorySlug, 
         search: searchQuery || undefined,
         page,
-        per_page: 18,
+        per_page: itemsPerPage,
         orderby,
         order
       })
@@ -116,7 +117,7 @@ export const ShopPage = () => {
         setError(err.message || "Failed to load products");
         setLoading(false);
       });
-  }, [currentCategorySlug, searchQuery, sortBy, page]);
+  }, [currentCategorySlug, searchQuery, sortBy, page, itemsPerPage]);
 
   const handleSearch = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -219,10 +220,27 @@ export const ShopPage = () => {
             {/* Toolbar */}
             <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm mb-6 flex flex-col sm:flex-row justify-between items-center gap-4">
               <div className="text-sm text-slate-500 font-medium whitespace-nowrap">
-                Showing {products.length > 0 ? (page - 1) * 18 + 1 : 0}-{Math.min((page - 1) * 18 + products.length, totalCount)} of {totalCount} results
+                Showing {products.length > 0 ? (page - 1) * itemsPerPage + 1 : 0}-{Math.min((page - 1) * itemsPerPage + products.length, totalCount)} of {totalCount} results
               </div>
               
               <div className="flex items-center gap-4 w-full sm:w-auto justify-between sm:justify-end">
+                <div className="flex items-center gap-2 shrink-0">
+                  <span className="text-sm text-slate-500 font-medium hidden sm:inline">Show:</span>
+                  <div className="relative">
+                    <select 
+                      value={itemsPerPage}
+                      onChange={(e) => { setItemsPerPage(Number(e.target.value)); setPage(1); }}
+                      className="appearance-none pl-3 pr-8 py-1.5 border border-slate-300 rounded-lg text-sm font-medium text-slate-700 focus:outline-none focus:ring-2 focus:ring-brand-primary/50 focus:border-brand-primary bg-slate-50 w-full sm:w-auto"
+                    >
+                      <option value={12}>12</option>
+                      <option value={18}>18</option>
+                      <option value={24}>24</option>
+                      <option value={36}>36</option>
+                    </select>
+                    <ChevronDown size={14} className="absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none text-slate-500" />
+                  </div>
+                </div>
+
                 <div className="flex items-center gap-2 shrink-0">
                   <span className="text-sm text-slate-500 font-medium hidden sm:inline">Sort by:</span>
                   <div className="relative">
