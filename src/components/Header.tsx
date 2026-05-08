@@ -45,7 +45,16 @@ export const Header = () => {
       wooApi.getCurrentUser().then(setUser);
     }, 2000);
 
-    return () => clearInterval(intervalId);
+    const handleToggleSearch = () => {
+      setIsMobileSearchOpen((prev) => !prev);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    };
+    window.addEventListener('toggleMobileSearch', handleToggleSearch);
+
+    return () => {
+      clearInterval(intervalId);
+      window.removeEventListener('toggleMobileSearch', handleToggleSearch);
+    };
   }, []);
 
   // Debounced search for suggestions

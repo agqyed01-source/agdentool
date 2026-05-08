@@ -23,10 +23,10 @@ export const MobileBottomNav = () => {
         <Grid size={20} />
         <span className="text-[10px] font-bold">Catalogue</span>
       </Link>
-      <Link to="/" className="flex flex-col items-center gap-1 p-1 text-slate-400 hover:text-brand-primary">
+      <button onClick={() => window.dispatchEvent(new Event('toggleMobileSearch'))} className="flex flex-col items-center gap-1 p-1 text-slate-400 hover:text-brand-primary">
         <Search size={20} />
         <span className="text-[10px] font-bold">Search</span>
-      </Link>
+      </button>
       <Link to="/cart" className="flex flex-col items-center gap-1 p-1 text-slate-400 hover:text-brand-primary relative">
         {cartCount > 0 && (
           <div className="absolute -top-1 -right-1 bg-brand-primary text-white text-[8px] font-bold w-4 h-4 rounded-full flex items-center justify-center border border-white leading-none">
