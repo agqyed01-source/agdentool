@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { Seo } from '../components/Seo';
 import { wooApi, WooUser, WooOrder } from '../services/woo';
 import { 
@@ -14,7 +15,8 @@ import {
   CheckCircle2, 
   AlertCircle,
   Ticket,
-  Copy
+  Copy,
+  Eye
 } from 'lucide-react';
 
 import Select from 'react-select';
@@ -469,8 +471,13 @@ export const AccountPage = () => {
                 </div>
                 <div className="text-right">
                   <div className="text-xs text-slate-500 font-bold uppercase mb-1">Order # {order.id}</div>
-                  <div className={`inline-flex items-center gap-1 text-xs font-bold px-2 py-1 rounded ${order.status === 'completed' ? 'bg-green-100 text-green-700' : 'bg-blue-100 text-blue-700'}`}>
-                    <Clock size={12} /> {order.status.charAt(0).toUpperCase() + order.status.slice(1)}
+                  <div className="flex flex-col items-end gap-2">
+                    <div className={`inline-flex items-center gap-1 text-xs font-bold px-2 py-1 rounded ${order.status === 'completed' ? 'bg-green-100 text-green-700' : 'bg-blue-100 text-blue-700'}`}>
+                      <Clock size={12} /> {order.status.charAt(0).toUpperCase() + order.status.slice(1)}
+                    </div>
+                    <Link to={`/order/${order.id}`} className="inline-flex items-center gap-1 text-xs font-bold text-brand-primary hover:underline group">
+                      <Eye size={12} className="group-hover:scale-110 transition-transform" /> View Details
+                    </Link>
                   </div>
                 </div>
               </div>

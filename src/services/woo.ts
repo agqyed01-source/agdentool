@@ -738,6 +738,16 @@ export const wooApi = {
     );
   },
 
+  getOrder: async (id: string | number): Promise<WooOrder | null> => {
+    try {
+       const order = await fetchWoo(`/orders/${id}`);
+       return order;
+    } catch (err) {
+       console.error("Failed to fetch order", err);
+       return null;
+    }
+  },
+
   getOrders: async (): Promise<WooOrder[]> => {
     try {
       if (!mockCurrentUser) return [];
