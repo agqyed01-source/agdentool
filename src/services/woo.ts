@@ -860,6 +860,26 @@ export const wooApi = {
     ];
   },
 
+  getShippingZones: async (): Promise<any[]> => {
+    try {
+      const res = await fetchWoo("/shipping/zones");
+      if (Array.isArray(res)) return res;
+      return [];
+    } catch {
+      return [];
+    }
+  },
+
+  getShippingZoneMethods: async (zoneId: number): Promise<any[]> => {
+    try {
+      const res = await fetchWoo(`/shipping/zones/${zoneId}/methods`);
+      if (Array.isArray(res)) return res;
+      return [];
+    } catch {
+      return [];
+    }
+  },
+
   clearCartAndCreateOrder: async (orderData?: any): Promise<WooOrder> => {
     if (mockCartState.items.length === 0) throw new Error("Cart is empty");
     try {
@@ -895,6 +915,7 @@ export const wooApi = {
           product_id: i.id,
           quantity: i.quantity,
         })),
+        shipping_lines: orderData?.shipping_lines || [],
         coupon_lines: (mockCartState.coupons || []).map((c) => ({
           code: c.code,
         })),

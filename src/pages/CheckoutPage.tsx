@@ -16,6 +16,9 @@ export const CheckoutPage = () => {
   const [countries, setCountries] = useState<any[]>([]);
   const [states, setStates] = useState<any[]>([]);
   
+  const [shippingMethods, setShippingMethods] = useState<any[]>([]);
+  const [selectedShippingMethod, setSelectedShippingMethod] = useState<any>(null);
+  
   const [couponCode, setCouponCode] = useState('');
   const [couponError, setCouponError] = useState('');
   const [applyingCoupon, setApplyingCoupon] = useState(false);
@@ -89,6 +92,50 @@ export const CheckoutPage = () => {
     }
   }, [billing.country, countries]);
 
+  // Fetch shipping options based on country/state
+  useEffect(() => {
+    let isMounted = true;
+    const fetchShipping = async () => {
+      try {
+        const zones = await wooApi.getShippingZones();
+        let matchedZoneId = 0; // Default to 'Rest of the World'
+
+        if (billing.country) {
+          // Attempt to find a precise zone for the selected country
+          // In WooCommerce API, to see locations for a zone you have to query /locations
+          // For simplicity without hitting /locations for every zone, we pick zone 0 (fallback)
+          // unless your store has a specific plugin endpoint. We will just load zone 0 
+          // or zone 1 as fallback for demonstration.
+          // In a production app, you might fetch locations of each zone if zones amount is small.
+          for (const zone of zones) {
+             if (zone.id !== 0) {
+                // If we want accurate zones we'd fetch locations. But here we just assume zone 0 represents available options, or fetch the first explicit zone's methods.
+                // Let's just fetch the first explicit zone's methods if it exists and has methods for simplicity, otherwise zone 0.
+                matchedZoneId = zone.id;
+                break;
+             }
+          }
+        }
+        
+        let methods = await wooApi.getShippingZoneMethods(matchedZoneId);
+        if (methods.length === 0 && matchedZoneId !== 0) {
+           methods = await wooApi.getShippingZoneMethods(0);
+        }
+
+        if (isMounted) {
+           setShippingMethods(methods.filter((m: any) => m.enabled));
+           if (methods.length > 0) {
+             setSelectedShippingMethod(methods.find((m: any) => m.enabled) || null);
+           }
+        }
+      } catch (err) {
+        console.error("Failed to load shipping methods", err);
+      }
+    };
+    fetchShipping();
+    return () => { isMounted = false; };
+  }, [billing.country]);
+
   const handleApplyCoupon = async () => {
     if (!couponCode.trim()) return;
     setApplyingCoupon(true);
@@ -145,7 +192,12 @@ export const CheckoutPage = () => {
         billing,
         shipping: billing, // simplified, just copy billing for now
         payment_method: 'checkout',
-        payment_method_title: 'Continue to Payment'
+        payment_method_title: 'Continue to Payment',
+        shipping_lines: selectedShippingMethod ? [{
+          method_id: selectedShippingMethod.method_id,
+          method_title: selectedShippingMethod.title,
+          total: selectedShippingMethod.settings?.cost?.value || '0.00'
+        }] : []
       });
       
       if (order && order.id) {
@@ -352,7 +404,7 @@ export const CheckoutPage = () => {
               ))}
             </div>
 
-            <div className="border-t border-slate-100 pt-4 space-y-2 text-sm font-medium text-slate-600 mb-6">
+            <div className="border-t border-slate-100 pt-4 space-y-4 text-sm font-medium text-slate-600 mb-6">
               <div className="flex justify-between">
                 <span>Subtotal</span>
                 <span>${(parseFloat(cart.totals.total_price) + parseFloat(cart.totals.total_discount || '0')).toFixed(2)}</span>
@@ -372,13 +424,39 @@ export const CheckoutPage = () => {
                 </div>
               )}
 
-              <div className="flex justify-between">
-                <span>Shipping</span>
-                <span>Free</span>
+              <div className="border-t border-slate-100 pt-4">
+                <h3 className="font-bold text-slate-900 mb-2">Shipping</h3>
+                {shippingMethods.length > 0 ? (
+                  <div className="space-y-2">
+                    {shippingMethods.map(method => (
+                      <label key={method.id} className="flex items-start gap-3 cursor-pointer p-2 hover:bg-slate-50 rounded-lg group">
+                        <input 
+                          type="radio" 
+                          name="shipping_method" 
+                          checked={selectedShippingMethod?.id === method.id}
+                          onChange={() => setSelectedShippingMethod(method)}
+                          className="mt-0.5 text-brand-primary focus:ring-brand-primary"
+                        />
+                        <div className="flex-grow">
+                          <div className="font-bold text-slate-900 leading-tight">{method.title}</div>
+                          {method.method_description && (
+                            <div className="text-xs text-slate-500 mt-0.5" dangerouslySetInnerHTML={{ __html: method.method_description }} />
+                          )}
+                        </div>
+                        <div className="font-bold text-slate-900">
+                           {method.settings?.cost?.value ? `$${parseFloat(method.settings.cost.value).toFixed(2)}` : 'Free'}
+                        </div>
+                      </label>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-slate-500 italic text-sm">Please enter a valid address to view shipping options.</div>
+                )}
               </div>
-              <div className="flex justify-between text-lg font-black text-slate-900 pt-2 border-t border-slate-100">
+
+              <div className="flex justify-between text-lg font-black text-slate-900 pt-4 border-t border-slate-100">
                 <span>Total</span>
-                <span>${cart.totals.total_price}</span>
+                <span>${(parseFloat(cart.totals.total_price) + (selectedShippingMethod?.settings?.cost?.value ? parseFloat(selectedShippingMethod.settings.cost.value) : 0)).toFixed(2)}</span>
               </div>
             </div>
 
@@ -415,7 +493,7 @@ export const CheckoutPage = () => {
                   <Loader2 size={24} className="animate-spin" />
                   Processing...
                 </>
-              ) : `Continue to Payment ($${cart.totals.total_price})`}
+              ) : `Continue to Payment ($${(parseFloat(cart.totals.total_price) + (selectedShippingMethod?.settings?.cost?.value ? parseFloat(selectedShippingMethod.settings.cost.value) : 0)).toFixed(2)})`}
             </button>
           </div>
         </div>
