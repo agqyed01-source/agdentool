@@ -87,6 +87,43 @@ If you are hosting this application manually on a Linux server using a process m
    pm2 start npm --name "woo-frontend" -- start
    ```
 
+## WooCommerce Auto-Login Integration (Payment Redirect)
+
+To allow users to automatically log in when redirected to the WooCommerce payment page, you need to add a custom code snippet to your WordPress site (e.g., in your child theme's `functions.php` or a custom plugin). Since the frontend appends a JWT `token` parameter to the payment URL (`&token=...`), your WordPress site must intercept this token, validate it, and log the user in.
+
+Add the following snippet to your WordPress site:
+
+```php
+add_action('init', 'auto_login_via_jwt_token_for_checkout');
+
+function auto_login_via_jwt_token_for_checkout() {
+    if (isset($_GET['token']) && isset($_GET['pay_for_order'])) {
+        $token = sanitize_text_field($_GET['token']);
+        
+        // 1. Decode and validate the JWT token here
+        // (You can use a library like firebase/php-jwt)
+        // $decoded = JWT::decode($token, new Key('YOUR_SECRET_KEY', 'HS256'));
+        // $user_id = $decoded->data->user->id;
+        
+        // Example user ID to log in (REPLACE THIS WITH ID FROM DECODED TOKEN)
+        $user_id = 0; 
+        
+        if ($user_id > 0 && !is_user_logged_in()) {
+            // Set the current user and authentication cookies
+            wp_set_current_user($user_id);
+            wp_set_auth_cookie($user_id);
+            
+            // Remove the token from the URL for security and redirect
+            $redirect_url = remove_query_arg('token');
+            wp_safe_redirect($redirect_url);
+            exit;
+        }
+    }
+}
+```
+
+> **Note:** Ensure you replace the token validation logic with your actual JWT verification process matching the plugin or method you use for headless authentication.
+
 ## Key Technologies
 
 - **Frontend**: React, React Router, Tailwind CSS, Framer Motion (for animations), Lucide React (Icons).

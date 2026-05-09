@@ -44,7 +44,12 @@ export const CheckoutPage = () => {
   }, [billing]);
 
   useEffect(() => {
-    wooApi.getCart().then(setCart);
+    wooApi.getCart().then((c) => {
+      setCart(c);
+      if (c && c.items && c.items.length > 0) {
+        sessionStorage.removeItem('woo_pending_payment_url');
+      }
+    });
     wooApi.getCurrentUser().then(user => {
       if (user) {
         // If logged in, we check if we should override local billing with profile billing
@@ -129,6 +134,15 @@ export const CheckoutPage = () => {
 
   const handleCheckout = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    // If the user already created an order and clicked back from the payment page,
+    // we can securely resume the payment redirection.
+    const pendingUrl = sessionStorage.getItem('woo_pending_payment_url');
+    if (pendingUrl) {
+      window.location.href = pendingUrl;
+      return;
+    }
+
     setLoading(true);
     setError('');
     
@@ -147,8 +161,10 @@ export const CheckoutPage = () => {
          const finalPaymentUrl = order.payment_url ? (token ? `${order.payment_url}&token=${token}` : order.payment_url) : '';
 
          if (order.needs_payment && finalPaymentUrl) {
+           sessionStorage.setItem('woo_pending_payment_url', finalPaymentUrl);
            window.location.href = finalPaymentUrl;
          } else if (finalPaymentUrl && paymentMethod?.id !== 'cod' && paymentMethod?.id !== 'bacs') {
+           sessionStorage.setItem('woo_pending_payment_url', finalPaymentUrl);
            window.location.href = finalPaymentUrl;
          } else {
            setCreatedOrder(order);
