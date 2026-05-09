@@ -8,8 +8,6 @@ import Select from 'react-select';
 
 export const CheckoutPage = () => {
   const [cart, setCart] = useState<WooCart | null>(null);
-  const [gateways, setGateways] = useState<any[]>([]);
-  const [selectedGateway, setSelectedGateway] = useState<string>('');
   const [isSuccess, setIsSuccess] = useState(false);
   const [createdOrder, setCreatedOrder] = useState<any>(null);
   const [loading, setLoading] = useState(false);
@@ -71,10 +69,6 @@ export const CheckoutPage = () => {
           return prev;
         });
       }
-    });
-    wooApi.getPaymentGateways().then(data => {
-       setGateways(data);
-       if (data.length > 0) setSelectedGateway(data[0].id);
     });
     wooApi.getCountries().then(fetchedCountries => {
        setCountries(fetchedCountries);
@@ -147,13 +141,11 @@ export const CheckoutPage = () => {
     setError('');
     
     try {
-      const paymentMethod = gateways.find(g => g.id === selectedGateway);
-      
       const order = await wooApi.clearCartAndCreateOrder({
         billing,
         shipping: billing, // simplified, just copy billing for now
-        payment_method: paymentMethod?.id || 'bacs',
-        payment_method_title: paymentMethod?.title || 'Direct Bank Transfer'
+        payment_method: 'checkout',
+        payment_method_title: 'Continue to Payment'
       });
       
       if (order && order.id) {
@@ -163,7 +155,7 @@ export const CheckoutPage = () => {
          if (order.needs_payment && finalPaymentUrl) {
            sessionStorage.setItem('woo_pending_payment_url', finalPaymentUrl);
            window.location.href = finalPaymentUrl;
-         } else if (finalPaymentUrl && paymentMethod?.id !== 'cod' && paymentMethod?.id !== 'bacs') {
+         } else if (finalPaymentUrl) {
            sessionStorage.setItem('woo_pending_payment_url', finalPaymentUrl);
            window.location.href = finalPaymentUrl;
          } else {
@@ -213,8 +205,6 @@ export const CheckoutPage = () => {
 
                 <div className="text-slate-500">Total:</div>
                 <div className="font-bold text-slate-900 text-right">${createdOrder.total}</div>
-                <div className="text-slate-500">Payment Method:</div>
-                <div className="text-right">{createdOrder.payment_method_title}</div>
               </div>
 
               {createdOrder.line_items && createdOrder.line_items.length > 0 && (
@@ -333,27 +323,6 @@ export const CheckoutPage = () => {
               </div>
             </div>
 
-            <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
-              <h2 className="text-lg font-bold text-slate-900 mb-4 border-b border-slate-100 pb-2">Payment</h2>
-              {gateways.length === 0 ? (
-                <div className="text-sm text-slate-500">Loading payment methods...</div>
-              ) : (
-                <div className="flex flex-col gap-3">
-                  {gateways.map(gateway => (
-                    <label key={gateway.id} className={`p-4 border rounded-lg cursor-pointer flex flex-col gap-2 transition-all ${selectedGateway === gateway.id ? 'border-brand-primary bg-brand-primary/5' : 'border-slate-200 bg-slate-50 hover:bg-slate-100'}`}>
-                      <div className="flex items-center gap-3">
-                        <input type="radio" name="payment_gateway" checked={selectedGateway === gateway.id} onChange={() => setSelectedGateway(gateway.id)} className="w-4 h-4 text-brand-primary focus:ring-brand-primary" />
-                        <span className="font-bold text-slate-900">{gateway.title}</span>
-                      </div>
-                      {selectedGateway === gateway.id && (
-                        <div className="text-sm text-slate-600 pl-7" dangerouslySetInnerHTML={{ __html: gateway.description }} />
-                      )}
-                    </label>
-                  ))}
-                </div>
-              )}
-            </div>
-
             {error && (
               <div className="bg-red-50 text-red-600 p-4 rounded-lg font-medium border border-red-200">
                 {error}
@@ -446,7 +415,7 @@ export const CheckoutPage = () => {
                   <Loader2 size={24} className="animate-spin" />
                   Processing...
                 </>
-              ) : `Place Order $${cart.totals.total_price}`}
+              ) : `Continue to Payment ($${cart.totals.total_price})`}
             </button>
           </div>
         </div>
