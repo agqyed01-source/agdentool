@@ -250,54 +250,48 @@ export const ShopPage = () => {
           </div>
 
           {/* Main Content */}
-          <div className="flex-1">
+          <div className="flex-1 min-w-0">
             {/* Toolbar */}
-            <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm mb-6 flex flex-col sm:flex-row justify-between items-center gap-4">
-              <div className="text-sm text-slate-500 font-medium whitespace-nowrap">
+            <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm mb-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+              <div className="text-sm text-slate-500 font-medium whitespace-nowrap shrink-0">
                 Showing {products.length > 0 ? (page - 1) * itemsPerPage + 1 : 0}-{Math.min((page - 1) * itemsPerPage + products.length, totalCount)} of {totalCount} results
               </div>
               
-              <div className="flex flex-wrap items-center gap-4 w-full sm:w-auto justify-between sm:justify-end">
-                <div className="flex items-center gap-2 shrink-0">
-                  <span className="text-sm text-slate-500 font-medium hidden sm:inline">Show:</span>
-                  <div className="relative">
-                    <select 
-                      value={itemsPerPage}
-                      onChange={(e) => { 
-                        const val = Number(e.target.value);
-                        setItemsPerPage(val); 
-                        localStorage.setItem('shopItemsPerPage', String(val));
-                        setPage(1); 
-                      }}
-                      className="appearance-none pl-3 pr-8 py-1.5 border border-slate-300 rounded-lg text-sm font-medium text-slate-700 focus:outline-none focus:ring-2 focus:ring-brand-primary/50 focus:border-brand-primary bg-slate-50 w-full sm:w-auto"
-                    >
-                      <option value={12}>12</option>
-                      <option value={18}>18</option>
-                      <option value={24}>24</option>
-                      <option value={36}>36</option>
-                    </select>
-                    <ChevronDown size={14} className="absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none text-slate-500" />
-                  </div>
+              <div className="grid grid-cols-2 sm:flex sm:flex-row items-center gap-3 w-full sm:w-auto pb-1 sm:pb-0">
+                <div className="relative col-span-1">
+                  <select 
+                    value={itemsPerPage}
+                    onChange={(e) => { 
+                      const val = Number(e.target.value);
+                      setItemsPerPage(val); 
+                      localStorage.setItem('shopItemsPerPage', String(val));
+                      setPage(1); 
+                    }}
+                    className="appearance-none w-full pl-3 pr-8 py-2 border border-slate-300 rounded-lg text-sm font-medium text-slate-700 focus:outline-none focus:ring-2 focus:ring-brand-primary/50 focus:border-brand-primary bg-slate-50"
+                  >
+                    <option value={12}>12 per page</option>
+                    <option value={18}>18 per page</option>
+                    <option value={24}>24 per page</option>
+                    <option value={36}>36 per page</option>
+                  </select>
+                  <ChevronDown size={14} className="absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none text-slate-500" />
                 </div>
 
-                <div className="flex items-center gap-2 shrink-0">
-                  <span className="text-sm text-slate-500 font-medium hidden sm:inline">Sort by:</span>
-                  <div className="relative">
-                    <select 
-                      value={sortBy}
-                      onChange={(e) => { setSortBy(e.target.value); setPage(1); }}
-                      className="appearance-none pl-3 pr-8 py-1.5 border border-slate-300 rounded-lg text-sm font-medium text-slate-700 focus:outline-none focus:ring-2 focus:ring-brand-primary/50 focus:border-brand-primary bg-slate-50 w-full sm:w-auto"
-                    >
-                      <option value="popularity">Popularity</option>
-                      <option value="rating">Average Rating</option>
-                      <option value="price-asc">Price: Low to High</option>
-                      <option value="price-desc">Price: High to Low</option>
-                    </select>
-                    <ChevronDown size={14} className="absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none text-slate-500" />
-                  </div>
+                <div className="relative col-span-1">
+                  <select 
+                    value={sortBy}
+                    onChange={(e) => { setSortBy(e.target.value); setPage(1); }}
+                    className="appearance-none w-full pl-3 pr-8 py-2 border border-slate-300 rounded-lg text-sm font-medium text-slate-700 focus:outline-none focus:ring-2 focus:ring-brand-primary/50 focus:border-brand-primary bg-slate-50"
+                  >
+                    <option value="popularity">Popularity</option>
+                    <option value="rating">Average Rating</option>
+                    <option value="price-asc">Price: Low to High</option>
+                    <option value="price-desc">Price: High to Low</option>
+                  </select>
+                  <ChevronDown size={14} className="absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none text-slate-500" />
                 </div>
 
-                <div className="flex items-center bg-slate-100 rounded-lg p-1 border border-slate-200 shrink-0">
+                <div className="flex items-center justify-center bg-slate-100 rounded-lg p-1 border border-slate-200 col-span-2 sm:col-span-1">
                   <button 
                     onClick={() => handleViewModeChange('grid')}
                     className={`p-1.5 rounded-md transition-colors ${viewMode === 'grid' ? 'bg-white shadow-sm text-brand-primary' : 'text-slate-400 hover:text-slate-600'}`}
