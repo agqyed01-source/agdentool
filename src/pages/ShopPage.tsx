@@ -187,16 +187,21 @@ export const ShopPage = () => {
               <h3 className="font-bold text-slate-900 mb-4 flex items-center gap-2">
                 <Search size={18} /> Search
               </h3>
-              <form onSubmit={handleSearch} className="relative">
-                <input 
-                  type="text" 
-                  name="q"
-                  defaultValue={searchQuery}
-                  placeholder="Search products..." 
-                  className="w-full pl-10 pr-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-primary/50 focus:border-brand-primary"
-                />
-                <button type="submit" className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-brand-primary">
-                  <Search size={16} />
+              <form onSubmit={handleSearch} className="flex gap-2">
+                <div className="relative flex-1">
+                  <input 
+                    type="text" 
+                    name="q"
+                    defaultValue={searchQuery}
+                    placeholder="Search products..." 
+                    className="w-full pl-10 pr-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-primary/50 focus:border-brand-primary"
+                  />
+                  <div className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none">
+                    <Search size={16} />
+                  </div>
+                </div>
+                <button type="submit" className="bg-brand-primary text-white px-4 py-2 rounded-lg font-medium hover:bg-brand-secondary transition-colors whitespace-nowrap">
+                  Search
                 </button>
               </form>
             </div>
