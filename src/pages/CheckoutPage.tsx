@@ -143,10 +143,13 @@ export const CheckoutPage = () => {
       });
       
       if (order && order.id) {
-         if (order.needs_payment && order.payment_url) {
-           window.location.href = order.payment_url;
-         } else if (order.payment_url && paymentMethod?.id !== 'cod' && paymentMethod?.id !== 'bacs') {
-           window.location.href = order.payment_url;
+         const token = localStorage.getItem('woo_token');
+         const finalPaymentUrl = order.payment_url ? (token ? `${order.payment_url}&token=${token}` : order.payment_url) : '';
+
+         if (order.needs_payment && finalPaymentUrl) {
+           window.location.href = finalPaymentUrl;
+         } else if (finalPaymentUrl && paymentMethod?.id !== 'cod' && paymentMethod?.id !== 'bacs') {
+           window.location.href = finalPaymentUrl;
          } else {
            setCreatedOrder(order);
            setIsSuccess(true);

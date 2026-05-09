@@ -854,7 +854,7 @@ export const wooApi = {
     if (mockCartState.items.length === 0) throw new Error("Cart is empty");
     try {
       const payload = {
-        customer_id: 0, // ALWAYS 0 so WooCommerce doesn't force a login redirect to pay for the order
+        customer_id: mockCurrentUser?.id || 0,
         payment_method: orderData?.payment_method || "bacs",
         payment_method_title:
           orderData?.payment_method_title || "Direct Bank Transfer",
