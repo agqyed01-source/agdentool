@@ -348,12 +348,21 @@ export const ShopPage = () => {
                                  <span className="ml-2 text-sm line-through text-slate-400 font-bold">${product.regular_price}</span>
                                )}
                              </div>
-                             <button
-                               onClick={() => wooApi.addToCart(product, 1)}
-                               className="bg-brand-primary text-white px-4 py-2 rounded-lg font-bold text-sm hover:bg-brand-secondary transition-colors shadow-sm flex items-center justify-center gap-2"
-                             >
-                               Add to Cart
-                             </button>
+                             {product.type === 'variable' ? (
+                               <Link
+                                 to={`/product/${product.slug}`}
+                                 className="bg-brand-primary text-white px-4 py-2 rounded-lg font-bold text-sm hover:bg-brand-secondary transition-colors shadow-sm flex items-center justify-center gap-2"
+                               >
+                                 Select Options
+                               </Link>
+                             ) : (
+                               <button
+                                 onClick={() => wooApi.addToCart(product, 1)}
+                                 className="bg-brand-primary text-white px-4 py-2 rounded-lg font-bold text-sm hover:bg-brand-secondary transition-colors shadow-sm flex items-center justify-center gap-2"
+                               >
+                                 Add to Cart
+                               </button>
+                             )}
                            </div>
                         </div>
                       </div>

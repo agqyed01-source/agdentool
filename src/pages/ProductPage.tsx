@@ -191,7 +191,7 @@ export const ProductPage = () => {
 
           <div 
             className="prose prose-sm text-slate-600 mb-6"
-            dangerouslySetInnerHTML={{ __html: product.short_description || product.description }} 
+            dangerouslySetInnerHTML={{ __html: product.short_description || '' }} 
           />
 
           {/* Product Attributes / Variations */}
@@ -228,6 +228,14 @@ export const ProductPage = () => {
             </div>
             <button 
               onClick={() => {
+                if (product.type === 'variable') {
+                  const requiredAttributes = product.attributes?.filter(a => a.variation) || [];
+                  const missingAttributes = requiredAttributes.filter(a => !selectedVariations[a.name]);
+                  if (missingAttributes.length > 0) {
+                    alert(`Please select: ${missingAttributes.map(a => a.name).join(', ')}`);
+                    return;
+                  }
+                }
                 wooApi.addToCart(product, quantity, selectedVariations);
                 // Simple feedback
                 const btn = document.getElementById('add-btn');

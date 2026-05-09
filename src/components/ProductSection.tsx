@@ -165,22 +165,31 @@ export const ProductCard = ({ product }: { product: WooProduct }) => {
               In Stock
             </span>
           </div>
-          <button
-            id={`add-btn-${product.id}`}
-            onClick={(e) => {
-              e.preventDefault();
-              wooApi.addToCart(product, 1);
-              const btn = document.getElementById(`add-btn-${product.id}`);
-              if (btn) {
-                const original = btn.innerHTML;
-                btn.innerHTML = `<svg class="w-3.5 h-3.5 stroke-[3]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"></path></svg>`;
-                setTimeout(() => (btn.innerHTML = original), 2000);
-              }
-            }}
-            className="bg-brand-primary text-white p-2 rounded-lg hover:bg-brand-secondary transition-colors shadow-sm"
-          >
-            <ShoppingCart size={14} strokeWidth={3} />
-          </button>
+          {product.type === 'variable' ? (
+            <Link
+              to={`/product/${product.slug}`}
+              className="bg-brand-primary text-white px-3 py-1.5 rounded-lg hover:bg-brand-secondary transition-colors shadow-sm text-[11px] font-bold"
+            >
+              Select
+            </Link>
+          ) : (
+            <button
+              id={`add-btn-${product.id}`}
+              onClick={(e) => {
+                e.preventDefault();
+                wooApi.addToCart(product, 1);
+                const btn = document.getElementById(`add-btn-${product.id}`);
+                if (btn) {
+                  const original = btn.innerHTML;
+                  btn.innerHTML = `<svg class="w-3.5 h-3.5 stroke-[3]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"></path></svg>`;
+                  setTimeout(() => (btn.innerHTML = original), 2000);
+                }
+              }}
+              className="bg-brand-primary text-white p-2 rounded-lg hover:bg-brand-secondary transition-colors shadow-sm"
+            >
+              <ShoppingCart size={14} strokeWidth={3} />
+            </button>
+          )}
         </div>
       </div>
     </motion.div>
