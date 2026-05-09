@@ -22,6 +22,11 @@ export const ProductPage = () => {
       setError(null);
       setSelectedImageIndex(0);
       wooApi.getProductBySlug(slug).then(data => {
+        if (!data) {
+          setError("Product not found");
+          setLoading(false);
+          return;
+        }
         setProduct(data);
         // Initialize default variations if any
         if (data.type === 'variable' && data.attributes) {
@@ -127,12 +132,12 @@ export const ProductPage = () => {
 
       <div className="grid md:grid-cols-2 gap-12 bg-white p-6 md:p-10 rounded-2xl border border-slate-100 shadow-sm mb-12">
         {/* Product Image Gallery */}
-        <div className="flex flex-col gap-4">
-          <div className="aspect-square bg-slate-50 rounded-xl overflow-hidden border border-slate-100 p-8 flex items-center justify-center">
+        <div className="flex flex-col gap-4 min-w-0">
+          <div className="aspect-square w-full bg-slate-50 rounded-xl border border-slate-100 overflow-hidden">
             <img 
               src={product.images[selectedImageIndex]?.src || product.images[0]?.src} 
               alt={product.images[selectedImageIndex]?.alt || decodeHtmlEntities(product.name)} 
-              className="w-full h-full object-contain"
+              className="w-full h-full object-contain p-4 md:p-8"
               referrerPolicy="no-referrer"
             />
           </div>
@@ -236,7 +241,11 @@ export const ProductPage = () => {
                     return;
                   }
                 }
-                wooApi.addToCart(product, quantity, selectedVariations);
+                if (!product.price || parseFloat(product.price) <= 0) {
+                  alert("This product is currently unavailable for purchase (no price set).");
+                  return;
+                }
+                wooApi.addToCart(product, quantity, selectedVariations).catch(console.error);
                 // Simple feedback
                 const btn = document.getElementById('add-btn');
                 if (btn) {

@@ -30,7 +30,7 @@ export const ShopByCategoryBlock = () => {
       </div>
 
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-        {categories.slice(0, 6).map((cat) => (
+        {categories.filter(c => !c.parent || c.parent === 0 || c.parent === "0").slice(0, 6).map((cat) => (
           <Link
             to={`/category/${cat.slug}`}
             key={cat.id}
@@ -81,7 +81,7 @@ export const CategoryBar = () => {
           >
             All Products
           </Link>
-          {categories.map((cat) => (
+          {categories.filter(c => !c.parent || c.parent === 0 || c.parent === "0").map((cat) => (
             <Link
               to={`/category/${cat.slug}`}
               key={cat.id}
@@ -177,7 +177,11 @@ export const ProductCard = ({ product }: { product: WooProduct }) => {
               id={`add-btn-${product.id}`}
               onClick={(e) => {
                 e.preventDefault();
-                wooApi.addToCart(product, 1);
+                if (!product.price || parseFloat(product.price) <= 0) {
+                  alert("This product is currently unavailable for purchase (no price set).");
+                  return;
+                }
+                wooApi.addToCart(product, 1).catch(console.error);
                 const btn = document.getElementById(`add-btn-${product.id}`);
                 if (btn) {
                   const original = btn.innerHTML;

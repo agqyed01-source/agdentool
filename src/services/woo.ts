@@ -217,6 +217,9 @@ async function fetchWoo(
   return res.json();
 }
 
+let categoriesCache: WooCategory[] | null = null;
+let categoriesCacheTime = 0;
+
 export const wooApi = {
   getProducts: async (params?: {
     category?: string;
@@ -299,6 +302,15 @@ export const wooApi = {
 
   getProductBySlug: async (slug: string): Promise<WooProduct | null> => {
     try {
+      if (/^\d+$/.test(slug)) {
+         try {
+           const product = await fetchWoo(`/products/${slug}`);
+           if (product && product.id) return product;
+         } catch {
+           // fallback to slug search if id fails
+         }
+      }
+      
       const products = await fetchWoo("/products", { slug });
       return products.length > 0 ? products[0] : null;
     } catch (err: any) {
@@ -309,25 +321,46 @@ export const wooApi = {
     }
     return new Promise((resolve) => {
       setTimeout(() => {
-        const product = mockProducts.find((p) => p.slug === slug);
+        const product = mockProducts.find((p) => p.slug === slug || p.id.toString() === slug);
         resolve(product || null);
       }, 300);
     });
   },
 
   getCategories: async (): Promise<WooCategory[]> => {
+    if (categoriesCache && Date.now() - categoriesCacheTime < 5 * 60 * 1000) {
+      return categoriesCache;
+    }
+    
     try {
-      const data = await fetchWoo("/products/categories", {
-        per_page: "100",
-        hide_empty: "false"
-      });
-      if (!Array.isArray(data)) {
-        throw new Error(
-          data.message ||
-            "WooCommerce API did not return an array of categories",
-        );
+      let allCats: WooCategory[] = [];
+      let page = 1;
+      let hasMore = true;
+      
+      while (hasMore && page <= 5) {
+        const data = await fetchWoo("/products/categories", {
+          per_page: "100",
+          hide_empty: "false",
+          page: page.toString()
+        });
+        
+        if (!Array.isArray(data) || data.length === 0) {
+          if (page === 1 && !Array.isArray(data)) {
+            throw new Error(data.message || "WooCommerce API did not return an array of categories");
+          }
+          hasMore = false;
+        } else {
+          allCats = [...allCats, ...data];
+          if (data.length < 100) {
+            hasMore = false;
+          } else {
+            page++;
+          }
+        }
       }
-      return data;
+      categoriesCache = allCats;
+      categoriesCacheTime = Date.now();
+      return allCats;
     } catch (err: any) {
       console.error(err);
       if (!err.message?.includes("not configured")) {
@@ -397,9 +430,13 @@ export const wooApi = {
       product = productOrId;
     }
 
-    return new Promise((resolve) =>
+    return new Promise((resolve, reject) =>
       setTimeout(() => {
         if (product) {
+          if (!product.price || parseFloat(product.price) <= 0) {
+            reject(new Error("Product has no price set"));
+            return;
+          }
           const varString = variations ? JSON.stringify(variations) : '{}';
           const existingItem = mockCartState.items.find(
             (i) => i.id === product!.id && JSON.stringify(i.variations || {}) === varString,

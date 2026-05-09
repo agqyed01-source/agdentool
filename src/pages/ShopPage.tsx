@@ -103,6 +103,7 @@ export const ShopPage = () => {
   const currentCategoryName = currentCategorySlug ? findCategoryName(categories, currentCategorySlug) : undefined;
 
   const [totalCount, setTotalCount] = useState(0);
+  const [showMobileSidebar, setShowMobileSidebar] = useState(false);
 
   useEffect(() => {
     wooApi.getCategories().then(setCategories).catch(console.error);
@@ -164,17 +165,23 @@ export const ShopPage = () => {
       />
       
       <div className="bg-slate-50 py-6 border-b border-slate-200">
-        <div className="container mx-auto px-4">
+        <div className="container mx-auto px-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <h1 className="text-3xl font-bold text-slate-900 capitalize">
             {searchQuery ? `Search: "${searchQuery}"` : currentCategoryName ? decodeHtmlEntities(currentCategoryName) : 'All Products'}
           </h1>
+          <button 
+            className="lg:hidden flex items-center gap-2 bg-white px-4 py-2 rounded-lg border border-slate-200 text-sm font-medium text-slate-700 shadow-sm"
+            onClick={() => setShowMobileSidebar(!showMobileSidebar)}
+          >
+            <Filter size={16} /> Filters & Categories
+          </button>
         </div>
       </div>
 
       <div className="container mx-auto px-4 py-8">
         <div className="flex flex-col lg:flex-row gap-8">
           {/* Sidebar */}
-          <div className="w-full lg:w-1/4 flex-shrink-0 space-y-8">
+          <div className={`w-full lg:w-1/4 flex-shrink-0 space-y-8 ${showMobileSidebar ? 'block' : 'hidden lg:block'}`}>
             {/* Search */}
             <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
               <h3 className="font-bold text-slate-900 mb-4 flex items-center gap-2">
@@ -215,8 +222,9 @@ export const ShopPage = () => {
                     cats.forEach(c => map.set(c.id, { ...c, children: [] }));
                     
                     cats.forEach(c => {
-                      if (c.parent && c.parent !== 0 && map.has(c.parent)) {
-                        map.get(c.parent).children.push(map.get(c.id));
+                      const parentId = typeof c.parent === 'string' ? parseInt(c.parent, 10) : c.parent;
+                      if (parentId && parentId !== 0 && map.has(parentId)) {
+                        map.get(parentId).children.push(map.get(c.id));
                       } else {
                         tree.push(map.get(c.id));
                       }
@@ -357,7 +365,14 @@ export const ShopPage = () => {
                                </Link>
                              ) : (
                                <button
-                                 onClick={() => wooApi.addToCart(product, 1)}
+                                 onClick={(e) => {
+                                   e.preventDefault();
+                                   if (!product.price || parseFloat(product.price) <= 0) {
+                                     alert("This product is currently unavailable for purchase (no price set).");
+                                     return;
+                                   }
+                                   wooApi.addToCart(product, 1).catch(console.error);
+                                 }}
                                  className="bg-brand-primary text-white px-4 py-2 rounded-lg font-bold text-sm hover:bg-brand-secondary transition-colors shadow-sm flex items-center justify-center gap-2"
                                >
                                  Add to Cart
