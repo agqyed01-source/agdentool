@@ -257,7 +257,7 @@ export const ShopPage = () => {
                 Showing {products.length > 0 ? (page - 1) * itemsPerPage + 1 : 0}-{Math.min((page - 1) * itemsPerPage + products.length, totalCount)} of {totalCount} results
               </div>
               
-              <div className="flex items-center gap-4 w-full sm:w-auto justify-between sm:justify-end">
+              <div className="flex flex-wrap items-center gap-4 w-full sm:w-auto justify-between sm:justify-end">
                 <div className="flex items-center gap-2 shrink-0">
                   <span className="text-sm text-slate-500 font-medium hidden sm:inline">Show:</span>
                   <div className="relative">
@@ -392,7 +392,7 @@ export const ShopPage = () => {
 
                 {/* Pagination */}
                 {totalPages > 1 && (
-                  <div className="mt-12 flex justify-center items-center gap-2">
+                  <div className="mt-12 flex flex-wrap justify-center items-center gap-2">
                     <button 
                       onClick={handlePrevPage}
                       disabled={page === 1}
