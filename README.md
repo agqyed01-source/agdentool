@@ -124,7 +124,117 @@ function auto_login_via_jwt_token_for_checkout() {
 
 > **Note:** Ensure you replace the token validation logic with your actual JWT verification process matching the plugin or method you use for headless authentication.
 
-## Key Technologies
+## Customizing the Order Pay Page Template (WordPress Side)
+
+To create a truly custom, app-like "Cashier" (Payment) page without your WordPress theme's header, footer, or sidebars interfering, you can intercept the `order-pay` endpoint and load a completely custom HTML template. 
+
+Add the following PHP snippet to your child theme's `functions.php` or a custom plugin:
+
+```php
+add_action('template_redirect', 'custom_headless_order_pay_page');
+
+function custom_headless_order_pay_page() {
+    // Check if we are on the WooCommerce order-pay endpoint
+    if (function_exists('is_wc_endpoint_url') && is_wc_endpoint_url('order-pay')) {
+        // Output our custom HTML structure completely bypassing the theme
+        ?>
+        <!DOCTYPE html>
+        <html <?php language_attributes(); ?>>
+        <head>
+            <meta charset="<?php bloginfo( 'charset' ); ?>">
+            <meta name="viewport" content="width=device-width, initial-scale=1">
+            <title>Secure Payment Gateway</title>
+            <?php wp_head(); ?>
+            <style>
+                /* Completely custom styles for the payment gateway */
+                body { 
+                    background-color: #f8fafc; 
+                    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; 
+                    display: flex; 
+                    justify-content: center; 
+                    align-items: flex-start; 
+                    min-height: 100vh; 
+                    margin: 0; 
+                    padding: 40px 20px; 
+                    box-sizing: border-box; 
+                }
+                #custom-pay-wrapper { 
+                    background: white; 
+                    padding: 40px; 
+                    border-radius: 16px; 
+                    box-shadow: 0 10px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1); 
+                    width: 100%; 
+                    max-width: 550px; 
+                    border: 1px solid #e2e8f0;
+                }
+                .logo-container {
+                    text-align: center;
+                    margin-bottom: 24px;
+                }
+                .logo-container svg {
+                    width: 48px;
+                    height: 48px;
+                    color: #0ea5e9; /* Brand color */
+                }
+                h1.gateway-title { 
+                    text-align: center; 
+                    font-size: 24px; 
+                    color: #0f172a; 
+                    margin-top: 0; 
+                    margin-bottom: 8px; 
+                    font-weight: 700;
+                }
+                p.gateway-subtitle {
+                    text-align: center;
+                    color: #64748b;
+                    margin-bottom: 30px;
+                    font-size: 14px;
+                }
+                
+                /* WooCommerce form overrides inside our wrapper */
+                #custom-pay-wrapper .woocommerce { margin: 0; }
+                #custom-pay-wrapper .woocommerce-Message { display: none; } /* Hide default WC messages if desired */
+                #custom-pay-wrapper ul.order_details { background: #f1f5f9; border-radius: 8px; padding: 20px; border: none; margin-bottom: 30px; }
+                #custom-pay-wrapper ul.order_details li { border-right: none; border-bottom: 1px solid #e2e8f0; padding: 10px 0; margin: 0; float: none; width: 100%; display: flex; justify-content: space-between; text-transform: uppercase; font-size: 11px; color: #64748b; font-weight: 700; }
+                #custom-pay-wrapper ul.order_details li:last-child { border-bottom: none; }
+                #custom-pay-wrapper ul.order_details li strong { text-transform: none; font-size: 14px; color: #0f172a; }
+                
+                /* Hide WordPress Admin Bar on this specific page */
+                #wpadminbar { display: none !important; }
+                html { margin-top: 0 !important; }
+            </style>
+        </head>
+        <body <?php body_class(); ?>>
+            <div id="custom-pay-wrapper">
+                <div class="logo-container">
+                    <!-- Example Logo (Lucide ShieldCheck) -->
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-4"/></svg>
+                </div>
+                <h1 class="gateway-title">Secure Checkout</h1>
+                <p class="gateway-subtitle">Complete your payment below</p>
+                
+                <div class="woocommerce-custom-content">
+                    <?php
+                    // Render the WooCommerce checkout/pay shortcode content
+                    while ( have_posts() ) :
+                        the_post();
+                        the_content();
+                    endwhile;
+                    ?>
+                </div>
+            </div>
+            
+            <?php wp_footer(); ?>
+        </body>
+        </html>
+        <?php
+        exit; // Stop WordPress from loading the normal theme layout (get_header/get_footer)
+    }
+}
+```
+
+This approach allows you to completely remodel the payment page structure and inject arbitrary CSS, giving the WooCommerce WordPress end the appearance of a clean, isolated Stripe-like payment portal.
+
 
 - **Frontend**: React, React Router, Tailwind CSS, Framer Motion (for animations), Lucide React (Icons).
 - **Backend**: Express.js (serves API proxy and static frontend files).
