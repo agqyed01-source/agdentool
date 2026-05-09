@@ -741,9 +741,31 @@ export const wooApi = {
   getOrders: async (): Promise<WooOrder[]> => {
     try {
       if (!mockCurrentUser) return [];
-      const data = await fetchWoo('/orders', { customer: mockCurrentUser.id.toString() });
-      if (Array.isArray(data)) {
-        return data; // returns real WooOrders
+      
+      // Fetch orders explicitly tied to this user ID
+      const dataByIdResp = fetchWoo('/orders', { customer: mockCurrentUser.id.toString(), per_page: "50" }).catch(() => []);
+      
+      // Fetch guest orders tied to this user's email 
+      const dataByEmailResp = fetchWoo('/orders', { search: mockCurrentUser.email, per_page: "50" }).catch(() => []);
+
+      const [dataById, dataByEmail] = await Promise.all([dataByIdResp, dataByEmailResp]);
+
+      let combined: WooOrder[] = [];
+      if (Array.isArray(dataById)) combined = [...combined, ...dataById];
+      if (Array.isArray(dataByEmail)) {
+        // filter by exact email
+        const emailFiltered = dataByEmail.filter(o => o.billing?.email === mockCurrentUser?.email);
+        combined = [...combined, ...emailFiltered];
+      }
+
+      // Deduplicate by ID
+      const uniqueOrders = Array.from(new Map(combined.map(o => [o.id, o])).values());
+      
+      // Sort latest first
+      uniqueOrders.sort((a, b) => new Date(b.date_created || 0).getTime() - new Date(a.date_created || 0).getTime());
+
+      if (uniqueOrders.length > 0 || (Array.isArray(dataById) && Array.isArray(dataByEmail))) {
+        return uniqueOrders; // returns real WooOrders
       }
     } catch (err: any) {
       if (!err.message?.includes("not configured")) {
@@ -832,7 +854,7 @@ export const wooApi = {
     if (mockCartState.items.length === 0) throw new Error("Cart is empty");
     try {
       const payload = {
-        customer_id: mockCurrentUser?.id || 0,
+        customer_id: 0, // ALWAYS 0 so WooCommerce doesn't force a login redirect to pay for the order
         payment_method: orderData?.payment_method || "bacs",
         payment_method_title:
           orderData?.payment_method_title || "Direct Bank Transfer",
