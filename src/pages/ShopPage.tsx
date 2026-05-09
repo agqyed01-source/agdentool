@@ -312,7 +312,7 @@ export const ShopPage = () => {
             {/* Products */}
             {loading ? (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                 {[...Array(6)].map((_, i) => (
+                 {[...Array(itemsPerPage)].map((_, i) => (
                     <div key={i} className="h-72 bg-slate-100 animate-pulse rounded-xl"></div>
                  ))}
               </div>

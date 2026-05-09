@@ -49,14 +49,37 @@ export const ProductPage = () => {
   if (loading) {
     return (
       <div className="container mx-auto px-4 py-8 md:py-12 animate-pulse">
-        <div className="h-4 bg-slate-200 rounded w-1/4 mb-6"></div>
+        <div className="flex items-center gap-2 mb-8">
+          <div className="h-4 bg-slate-200 rounded w-12"></div>
+          <div className="h-4 w-4 bg-slate-200 rounded"></div>
+          <div className="h-4 bg-slate-200 rounded w-20"></div>
+          <div className="h-4 w-4 bg-slate-200 rounded"></div>
+          <div className="h-4 bg-slate-200 rounded w-32"></div>
+        </div>
+        
         <div className="grid md:grid-cols-2 gap-12 bg-white p-6 md:p-10 rounded-2xl border border-slate-100 shadow-sm mb-12">
-          {/* Skeleton Image */}
-          <div className="aspect-square bg-slate-200 rounded-xl"></div>
-          {/* Skeleton Details */}
-          <div className="flex flex-col py-4">
-            <div className="h-10 bg-slate-200 rounded-lg w-3/4 mb-4"></div>
-            <div className="h-8 bg-slate-200 rounded-lg w-1/4 mb-6"></div>
+          {/* Skeleton Image Gallery */}
+          <div className="flex flex-col gap-4 min-w-0">
+            <div className="aspect-square w-full bg-slate-100 rounded-xl border border-slate-100"></div>
+            <div className="flex gap-4">
+              <div className="flex-shrink-0 w-20 h-20 rounded-lg bg-slate-100"></div>
+              <div className="flex-shrink-0 w-20 h-20 rounded-lg bg-slate-100"></div>
+              <div className="flex-shrink-0 w-20 h-20 rounded-lg bg-slate-100"></div>
+            </div>
+          </div>
+          
+          {/* Skeleton Info */}
+          <div className="flex flex-col">
+            <div className="h-3 bg-slate-200 rounded w-20 mb-2"></div>
+            <div className="h-10 md:h-12 bg-slate-200 rounded w-3/4 mb-4"></div>
+            
+            <div className="flex items-center gap-4 mb-6">
+              <div className="h-4 bg-slate-200 rounded w-32"></div>
+            </div>
+            
+            <div className="flex items-center gap-4 mb-6 pb-6 border-b border-slate-100">
+              <div className="h-8 bg-slate-200 rounded w-32"></div>
+            </div>
             
             <div className="space-y-3 mb-8">
               <div className="h-4 bg-slate-200 rounded w-full"></div>
@@ -64,12 +87,19 @@ export const ProductPage = () => {
               <div className="h-4 bg-slate-200 rounded w-5/6"></div>
             </div>
             
-            <div className="h-6 bg-slate-200 rounded w-1/3 mb-4"></div>
-            <div className="h-12 bg-slate-200 rounded-lg w-full max-w-xs mb-8"></div>
+            <div className="h-px bg-slate-100 w-full mb-8"></div>
             
-            <div className="grid grid-cols-2 gap-4 mt-auto">
-              <div className="h-16 bg-slate-100 rounded-xl"></div>
-              <div className="h-16 bg-slate-100 rounded-xl"></div>
+            <div className="mb-8">
+              <div className="h-4 bg-slate-200 rounded w-24 mb-4"></div>
+              <div className="flex gap-4">
+                 <div className="h-12 w-32 bg-slate-200 rounded-lg"></div>
+                 <div className="h-12 w-full bg-slate-200 rounded-lg"></div>
+              </div>
+            </div>
+            
+            <div className="mt-8 bg-slate-50 p-6 rounded-xl border border-slate-100 space-y-4">
+                <div className="h-4 bg-slate-200 rounded w-full"></div>
+                <div className="h-4 bg-slate-200 rounded w-3/4"></div>
             </div>
           </div>
         </div>
