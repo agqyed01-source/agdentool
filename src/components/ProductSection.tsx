@@ -121,13 +121,13 @@ export const ProductCard = ({ product }: { product: WooProduct }) => {
         />
         <button
           onClick={(e) => e.preventDefault()}
-          className="absolute bottom-2 right-2 p-2 bg-white rounded-full shadow-md text-slate-400 hover:text-brand-primary opacity-0 group-hover:opacity-100 transition-opacity translate-y-2 group-hover:translate-y-0"
+          className="absolute bottom-2 right-2 p-2 bg-white/90 backdrop-blur-sm rounded-full shadow-sm text-slate-400 hover:text-brand-primary opacity-0 group-hover:opacity-100 transition-opacity translate-y-2 group-hover:translate-y-0"
         >
           <Heart size={14} />
         </button>
       </Link>
 
-      <div className="flex flex-col flex-grow">
+      <div className="flex flex-col flex-grow min-w-0">
         <span className="text-[10px] font-bold text-brand-primary mb-1 uppercase tracking-wider">
           {decodeHtmlEntities(product.categories[0]?.name)}
         </span>

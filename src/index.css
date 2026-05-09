@@ -34,10 +34,24 @@
   background: linear-gradient(135deg, #1e3a8a 0%, #2563eb 100%);
 }
 
-.scroller-hidden::-webkit-scrollbar {
-  display: none;
-}
-.scroller-hidden {
+.scroller-hidden, .hide-scrollbar {
   -ms-overflow-style: none;
   scrollbar-width: none;
+}
+.scroller-hidden::-webkit-scrollbar, .hide-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+.custom-scrollbar::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  @apply bg-slate-200 rounded-full;
+}
+.custom-scrollbar:hover::-webkit-scrollbar-thumb {
+  @apply bg-slate-300;
 }

@@ -181,7 +181,7 @@ export const ShopPage = () => {
       <div className="container mx-auto px-4 py-8">
         <div className="flex flex-col lg:flex-row gap-8">
           {/* Sidebar */}
-          <div className={`w-full lg:w-1/4 flex-shrink-0 space-y-8 ${showMobileSidebar ? 'block' : 'hidden lg:block'}`}>
+          <div className={`w-full lg:w-1/4 flex-shrink-0 space-y-8 lg:sticky lg:top-24 lg:self-start ${showMobileSidebar ? 'block' : 'hidden lg:block'}`}>
             {/* Search */}
             <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
               <h3 className="font-bold text-slate-900 mb-4 flex items-center gap-2">
@@ -211,7 +211,7 @@ export const ShopPage = () => {
               <h3 className="font-bold text-slate-900 mb-4 flex items-center gap-2">
                 <Filter size={18} /> Categories
               </h3>
-              <ul className="space-y-1">
+              <ul className="space-y-1 overflow-y-auto max-h-[calc(100vh-640px)] pr-2 custom-scrollbar">
                 <li>
                   <Link 
                     to="/shop" 
@@ -327,7 +327,7 @@ export const ShopPage = () => {
             ) : (
               <>
                 {viewMode === 'grid' ? (
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                  <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
                     {paginatedProducts.map(product => (
                       <div key={product.id}>
                          <ProductCard product={product} />
@@ -335,30 +335,30 @@ export const ShopPage = () => {
                     ))}
                   </div>
                 ) : (
-                  <div className="space-y-4">
+                  <div className="flex flex-col gap-0 sm:gap-4 bg-white sm:bg-transparent border-t border-slate-100 sm:border-0 -mx-4 sm:mx-0 px-4 sm:px-0">
                     {paginatedProducts.map(product => (
-                      <div key={product.id} className="bg-white border border-slate-200 rounded-xl p-4 flex flex-col sm:flex-row gap-6 hover:border-brand-primary/30 transition-colors">
-                        <Link to={`/product/${product.slug}`} className="w-full sm:w-40 h-40 flex-shrink-0 bg-slate-50 rounded-lg overflow-hidden relative group">
+                      <div key={product.id} className="bg-white border-b sm:border border-slate-100 sm:rounded-xl py-4 sm:p-4 flex flex-row gap-4 sm:gap-6 hover:border-brand-primary/30 transition-colors">
+                        <Link to={`/product/${product.slug}`} className="w-28 sm:w-40 h-28 sm:h-40 flex-shrink-0 bg-slate-50 rounded-lg overflow-hidden relative group">
                            {product.sale_price && (
-                             <span className="absolute top-2 left-2 z-10 text-[9px] font-black bg-brand-primary text-white px-1.5 py-0.5 rounded uppercase tracking-tighter">Sale</span>
+                             <span className="absolute top-1 left-1 sm:top-2 sm:left-2 z-10 text-[9px] font-black bg-brand-primary text-white px-1.5 sm:px-1.5 py-0.5 rounded uppercase tracking-tighter">Sale</span>
                            )}
                            <img src={product.images[0]?.src} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" alt="" referrerPolicy="no-referrer" />
                         </Link>
-                        <div className="flex-1 flex flex-col">
-                           <span className="text-xs font-bold text-brand-primary uppercase tracking-wider mb-1">{decodeHtmlEntities(product.categories[0]?.name)}</span>
-                           <Link to={`/product/${product.slug}`} className="text-lg font-bold text-slate-900 hover:text-brand-primary mb-2 line-clamp-2">{decodeHtmlEntities(product.name)}</Link>
-                           <div dangerouslySetInnerHTML={{ __html: product.short_description || '' }} className="text-sm text-slate-600 mb-4 line-clamp-2" />
-                           <div className="mt-auto flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                             <div className="text-xl font-black text-slate-900">
+                        <div className="flex-1 flex flex-col min-w-0">
+                           <span className="text-[10px] sm:text-xs font-bold text-brand-primary uppercase tracking-wider mb-1">{decodeHtmlEntities(product.categories[0]?.name)}</span>
+                           <Link to={`/product/${product.slug}`} className="text-sm sm:text-lg font-bold text-slate-900 hover:text-brand-primary mb-1 sm:mb-2 line-clamp-2">{decodeHtmlEntities(product.name)}</Link>
+                           <div dangerouslySetInnerHTML={{ __html: product.short_description || '' }} className="hidden sm:block text-sm text-slate-600 mb-4 line-clamp-2" />
+                           <div className="mt-auto flex flex-row sm:items-center justify-between gap-2 sm:gap-4">
+                             <div className="text-lg sm:text-xl font-black text-brand-primary sm:text-slate-900">
                                ${product.price}
                                {product.regular_price && product.regular_price !== product.price && (
-                                 <span className="ml-2 text-sm line-through text-slate-400 font-bold">${product.regular_price}</span>
+                                 <span className="ml-1.5 sm:ml-2 text-xs sm:text-sm line-through text-slate-400 font-bold">${product.regular_price}</span>
                                )}
                              </div>
                              {product.type === 'variable' ? (
                                <Link
                                  to={`/product/${product.slug}`}
-                                 className="bg-brand-primary text-white px-4 py-2 rounded-lg font-bold text-sm hover:bg-brand-secondary transition-colors shadow-sm flex items-center justify-center gap-2"
+                                 className="hidden sm:flex bg-brand-primary text-white px-4 py-2 rounded-lg font-bold text-sm hover:bg-brand-secondary transition-colors shadow-sm items-center justify-center gap-2"
                                >
                                  Select Options
                                </Link>
@@ -372,7 +372,7 @@ export const ShopPage = () => {
                                    }
                                    wooApi.addToCart(product, 1).catch(console.error);
                                  }}
-                                 className="bg-brand-primary text-white px-4 py-2 rounded-lg font-bold text-sm hover:bg-brand-secondary transition-colors shadow-sm flex items-center justify-center gap-2"
+                                 className="hidden sm:flex bg-brand-primary text-white px-4 py-2 rounded-lg font-bold text-sm hover:bg-brand-secondary transition-colors shadow-sm items-center justify-center gap-2"
                                >
                                  Add to Cart
                                </button>

@@ -16,7 +16,8 @@ import {
   AlertCircle,
   Ticket,
   Copy,
-  Eye
+  Eye,
+  ChevronDown
 } from 'lucide-react';
 
 import Select from 'react-select';
@@ -872,20 +873,22 @@ export const AccountPage = () => {
         {/* Sidebar Nav */}
         <div className="w-full lg:w-72 shrink-0">
           <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-sm">
-            <div className="p-6 bg-slate-50 border-b border-slate-100 text-center">
-              <div className="w-20 h-20 bg-brand-primary text-white rounded-full flex items-center justify-center text-3xl font-bold mx-auto mb-4 border-4 border-white shadow-sm italic">
+            <div className="p-4 lg:p-6 bg-slate-50 lg:border-b border-slate-100 flex items-center lg:block lg:text-center gap-4">
+              <div className="w-12 h-12 lg:w-20 lg:h-20 shrink-0 bg-brand-primary text-white rounded-full flex items-center justify-center text-xl lg:text-3xl font-bold lg:mx-auto lg:mb-4 border-2 lg:border-4 border-white shadow-sm italic">
                 {user.first_name ? user.first_name[0] : user.email[0].toUpperCase()}
               </div>
-              <h2 className="font-bold text-slate-900 truncate">
-                {user.first_name ? `${user.first_name} ${user.last_name || ''}` : user.username || 'User'}
-              </h2>
-              <div className="flex items-center justify-center gap-1 mt-1">
-                <ShieldCheck size={14} className="text-brand-primary" />
-                <span className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">{user.role || 'Customer'}</span>
+              <div className="flex-1 min-w-0 flex flex-col justify-center lg:items-center">
+                <h2 className="font-bold text-slate-900 truncate">
+                  {user.first_name ? `${user.first_name} ${user.last_name || ''}` : user.username || 'User'}
+                </h2>
+                <div className="flex items-center lg:justify-center gap-1 mt-1">
+                  <ShieldCheck size={14} className="text-brand-primary" />
+                  <span className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">{user.role || 'Customer'}</span>
+                </div>
               </div>
             </div>
             
-            <nav className="p-4 space-y-1">
+            <nav className="hidden lg:block p-4 space-y-1">
               <button 
                 onClick={() => setActiveTab('dashboard')}
                 className={`flex items-center gap-3 w-full px-4 py-3 font-bold rounded-xl transition-all ${activeTab === 'dashboard' ? 'bg-brand-primary text-white shadow-brand-primary/20 shadow-lg' : 'text-slate-600 hover:bg-slate-50'}`}
@@ -922,6 +925,27 @@ export const AccountPage = () => {
                 </button>
               </div>
             </nav>
+          </div>
+
+          {/* Mobile Tab Select */}
+          <div className="lg:hidden flex gap-2 mt-4">
+           <div className="flex-1 bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm relative">
+             <select 
+                value={activeTab}
+                onChange={(e) => setActiveTab(e.target.value as Tab)}
+                className="w-full appearance-none px-4 py-3 bg-transparent font-bold text-slate-700 outline-none relative z-10"
+             >
+                <option value="dashboard">Dashboard</option>
+                <option value="orders">Orders</option>
+                <option value="addresses">Addresses</option>
+                <option value="details">Account Details</option>
+                <option value="coupons">Coupons</option>
+             </select>
+             <ChevronDown size={18} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none z-0" />
+           </div>
+           <button onClick={handleLogout} className="flex-none p-3 text-red-500 font-bold bg-white border border-red-100 hover:bg-red-50 rounded-xl transition-all shadow-sm" title="Logout">
+              <LogOut size={20} />
+           </button>
           </div>
         </div>
 

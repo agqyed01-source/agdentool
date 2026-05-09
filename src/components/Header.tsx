@@ -1,8 +1,50 @@
 import React, { useState, useEffect, useRef } from "react";
-import { Search, ShoppingBag, Menu, Phone, User, X, Loader2, MessageCircle } from "lucide-react";
+import { Search, ShoppingBag, Menu, Phone, User, X, Loader2, MessageCircle, ChevronDown } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
-import { wooApi, WooProduct, WooUser } from "../services/woo";
+import { wooApi, WooProduct, WooUser, WooCategory } from "../services/woo";
+import { decodeHtmlEntities } from "../utils/format";
+
+const MobileCategoryNode = ({ node, depth = 0, setIsMenuOpen }: { node: any, depth?: number, setIsMenuOpen: (v: boolean) => void }) => {
+  const [isExpanded, setIsExpanded] = useState(depth === 0);
+  const hasChildren = node.children && node.children.length > 0;
+  
+  return (
+    <div className="">
+      <div className="flex items-center justify-between py-2">
+        <Link 
+          to={`/category/${node.slug}`}
+          onClick={() => setIsMenuOpen(false)}
+          className={`flex-1 text-slate-700 ${depth === 0 ? 'text-lg font-medium' : 'text-base font-normal hover:text-brand-primary transition-colors'}`}
+        >
+          {decodeHtmlEntities(node.name)}
+        </Link>
+        {hasChildren && (
+          <button 
+            type="button" 
+            onClick={(e) => { e.preventDefault(); setIsExpanded(!isExpanded); }} 
+            className="p-2 text-slate-400 hover:text-brand-primary"
+          >
+            <ChevronDown size={18} className={`transform transition-transform ${isExpanded ? '' : '-rotate-90'}`} />
+          </button>
+        )}
+      </div>
+      
+      {hasChildren && isExpanded && (
+        <div className="pl-4 ml-2 border-l border-slate-100 space-y-1">
+          {node.children.map((child: any) => (
+            <MobileCategoryNode 
+              key={child.id} 
+              node={child} 
+              depth={depth + 1} 
+              setIsMenuOpen={setIsMenuOpen}
+            />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+};
 
 export const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -10,6 +52,7 @@ export const Header = () => {
   const [menus, setMenus] = useState<
     { id: number; title: string; url: string }[]
   >([]);
+  const [categories, setCategories] = useState<WooCategory[]>([]);
   const [searchParams] = useSearchParams();
   const [searchQuery, setSearchQuery] = useState(
     searchParams.get("search") || "",
@@ -34,6 +77,8 @@ export const Header = () => {
       .getMenus()
       .then(setMenus)
       .catch((err) => console.error("Menu fetch failed:", err));
+
+    wooApi.getCategories().then(setCategories).catch(console.error);
 
     // Poll cart just for demo purposes or fetch once
     wooApi.getCart().then((cart) => setCartCount(cart.totals.total_items));
@@ -428,24 +473,39 @@ export const Header = () => {
                 </button>
               </div>
 
-              <div className="flex flex-col gap-6 text-lg font-medium text-slate-700">
+              <div className="flex flex-col gap-3 text-lg font-medium text-slate-700">
                 <Link
                   to="/"
                   onClick={() => setIsMenuOpen(false)}
-                  className="text-brand-primary"
+                  className="text-lg font-medium text-slate-700 hover:text-brand-primary border-b border-transparent hover:border-brand-primary/20 pb-2 mb-2"
                 >
                   Home
                 </Link>
-                {menus.map((menu) => (
-                  <Link
-                    key={menu.id}
-                    to={menu.url}
-                    onClick={() => setIsMenuOpen(false)}
-                    className="hover:text-brand-primary"
-                  >
-                    {menu.title}
-                  </Link>
-                ))}
+                {(() => {
+                  const buildTree = (cats: WooCategory[]) => {
+                    const tree: (WooCategory & { children?: any[] })[] = [];
+                    const map = new Map<number, any>();
+                    cats.forEach(c => map.set(c.id, { ...c, children: [] }));
+                    
+                    cats.forEach(c => {
+                      const parentId = typeof c.parent === 'string' ? parseInt(c.parent, 10) : c.parent;
+                      if (parentId && parentId !== 0 && map.has(parentId)) {
+                        map.get(parentId).children.push(map.get(c.id));
+                      } else {
+                        tree.push(map.get(c.id));
+                      }
+                    });
+                    return tree;
+                  };
+
+                  return buildTree(categories).map(node => (
+                    <MobileCategoryNode 
+                      key={node.id} 
+                      node={node} 
+                      setIsMenuOpen={setIsMenuOpen} 
+                    />
+                  ));
+                })()}
                 <hr className="border-slate-100" />
                 <a
                   href="https://wa.me/message/"
