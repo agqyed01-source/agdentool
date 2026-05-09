@@ -1,11 +1,8 @@
 import React from "react";
 import { Seo } from "../components/Seo";
 import { TrustBar, Hero } from "../components/TrustBarAndHero";
-import {
-  ProductGrid,
-  ShopByCategoryBlock,
-} from "../components/ProductSection";
-import { Newsletter } from "../components/FooterAndNav";
+import { ProductGrid, ShopByCategoryBlock } from "../components/ProductSection";
+import { Newsletter, WhatsAppAgents } from "../components/FooterAndNav";
 
 export const Home = () => {
   return (
@@ -34,6 +31,7 @@ export const Home = () => {
       <div className="bg-white py-12 border-t border-slate-100">
         <ProductGrid title="New Arrivals" />
       </div>
+      <WhatsAppAgents />
       <Newsletter />
     </>
   );

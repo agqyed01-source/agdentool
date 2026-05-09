@@ -211,7 +211,7 @@ export const ShopPage = () => {
               <h3 className="font-bold text-slate-900 mb-4 flex items-center gap-2">
                 <Filter size={18} /> Categories
               </h3>
-              <ul className="space-y-1 overflow-y-auto max-h-[calc(100vh-640px)] pr-2 custom-scrollbar">
+              <ul className="space-y-1 overflow-y-auto max-h-[calc(100vh-250px)] pr-2 custom-scrollbar">
                 <li>
                   <Link 
                     to="/shop" 
