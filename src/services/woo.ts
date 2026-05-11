@@ -954,25 +954,9 @@ export const wooApi = {
             value
           })) : [];
           
-          let subtotalNum = Math.max(0, parseFloat(i.price || '0')) * i.quantity;
-          let totalNum = subtotalNum;
-          
-          // roughly distribute coupon discount to line item total if percent
-          // for accurate Woo order creation without throwing error
-          if (mockCartState.coupons && mockCartState.coupons.length > 0) {
-              const orderSubtotal = mockCartState.items.reduce((acc, item) => acc + parseFloat(item.price || '0') * item.quantity, 0);
-              const orderDiscount = parseFloat(mockCartState.totals.total_discount || '0');
-              if (orderSubtotal > 0 && orderDiscount > 0) {
-                 const discountRatio = orderDiscount / orderSubtotal;
-                 totalNum = subtotalNum - (subtotalNum * discountRatio);
-              }
-          }
-          
           return {
             product_id: i.id,
             quantity: i.quantity,
-            total: totalNum.toFixed(2),
-            subtotal: subtotalNum.toFixed(2),
             ...(meta_data.length > 0 ? { meta_data } : {}),
           };
         }),
@@ -994,53 +978,8 @@ export const wooApi = {
       return newOrder;
     } catch (err: any) {
       console.error("Failed to create live order", err);
-      // Fallback to mock order
+      throw err;
     }
-
-    return new Promise((resolve) =>
-      setTimeout(() => {
-        const totalNum = parseFloat(mockCartState.totals.total_price);
-        const newOrder: WooOrder = {
-          id: Math.floor(Math.random() * 10000) + 1000,
-          status: "pending",
-          date_created: new Date().toISOString(),
-          total: mockCartState.totals.total_price,
-          discount_total: mockCartState.totals.total_discount,
-          payment_method_title:
-            orderData?.payment_method_title || "Direct Bank Transfer",
-          needs_payment: totalNum > 0,
-          payment_url: "",
-          line_items: mockCartState.items.map((i) => ({
-            id: Math.floor(Math.random() * 10000),
-            name: i.name,
-            product_id: i.id,
-            quantity: i.quantity,
-            total: (parseFloat(i.price) * i.quantity).toFixed(2),
-          })),
-        };
-
-        // Save to local storage
-        if (mockCurrentUser) {
-          const orders = JSON.parse(
-            localStorage.getItem(ORDERS_STORAGE_KEY) || "[]",
-          );
-          orders.push(newOrder);
-          localStorage.setItem(ORDERS_STORAGE_KEY, JSON.stringify(orders));
-        }
-
-        mockCartState = {
-          items: [],
-          coupons: [],
-          totals: {
-            total_items: 0,
-            total_price: "0.00",
-            total_discount: "0.00",
-          },
-        };
-        saveCart();
-        resolve(newOrder);
-      }, 500),
-    );
   },
 
   submitCF7: async (
