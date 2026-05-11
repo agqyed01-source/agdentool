@@ -486,9 +486,16 @@ export const AccountPage = () => {
               <div className="p-6">
                 <div className="space-y-3">
                   {order.line_items.map(item => (
-                    <div key={item.id} className="flex justify-between items-center py-1">
-                       <div className="text-sm font-medium text-slate-900">{item.name} <span className="text-slate-400">x{item.quantity}</span></div>
-                       <div className="text-sm font-bold text-slate-900">${item.total}</div>
+                    <div key={item.id} className="flex justify-between items-start py-1">
+                       <div className="text-sm font-medium text-slate-900 flex flex-col">
+                         <span>{item.name} <span className="text-slate-400 font-normal">x{item.quantity}</span></span>
+                         {item.meta_data && item.meta_data.length > 0 && (
+                           <span className="text-xs text-slate-500 font-normal mt-0.5">
+                             {item.meta_data.map(m => `${m.key}: ${m.value}`).join(', ')}
+                           </span>
+                         )}
+                       </div>
+                       <div className="text-sm font-bold text-slate-900 mt-0.5">${item.total}</div>
                     </div>
                   ))}
                 </div>

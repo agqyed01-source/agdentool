@@ -91,6 +91,11 @@ export const OrderPage = () => {
                   )}
                   <div className="flex-grow">
                     <h3 className="font-bold text-slate-900">{item.name}</h3>
+                    {item.meta_data && item.meta_data.length > 0 && (
+                      <div className="text-slate-500 text-xs mt-0.5">
+                        {item.meta_data.map((m: any) => `${m.key}: ${m.value}`).join(', ')}
+                      </div>
+                    )}
                     <div className="text-slate-500 text-sm mt-1">Quantity: {item.quantity}</div>
                   </div>
                   <div className="font-bold text-slate-900 text-lg">
