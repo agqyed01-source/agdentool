@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { ShoppingCart, Heart, Star } from "lucide-react";
+import { ShoppingCart, Heart, Star, Box, ChevronRight, Syringe, Scissors, Shield, Activity, Sparkles, Layers, Microscope, Wrench } from "lucide-react";
 import { motion } from "motion/react";
 import { Link, useParams, useSearchParams } from "react-router-dom";
 import { wooApi, WooProduct, WooCategory } from "../services/woo";
@@ -7,11 +7,42 @@ import { decodeHtmlEntities } from "../utils/format";
 
 export const ShopByCategoryBlock = () => {
   const [categories, setCategories] = useState<WooCategory[]>([]);
+  const [catImages, setCatImages] = useState<Record<string, string>>({});
+
+  const getCategoryFallback = (name: string, slug: string) => {
+    const text = (name + " " + slug).toLowerCase();
+    
+    if (text.includes("equip") || text.includes("machine")) return { icon: <Activity strokeWidth={1.5} />, color: "text-blue-500", bg: "bg-blue-50" };
+    if (text.includes("instrument") || text.includes("tool") || text.includes("surgical") || text.includes("surgery")) return { icon: <Scissors strokeWidth={1.5} />, color: "text-teal-500", bg: "bg-teal-50" };
+    if (text.includes("implant")) return { icon: <Wrench strokeWidth={1.5} />, color: "text-slate-600", bg: "bg-slate-100" };
+    if (text.includes("ortho") || text.includes("brace")) return { icon: <Layers strokeWidth={1.5} />, color: "text-indigo-500", bg: "bg-indigo-50" };
+    if (text.includes("endo")) return { icon: <Microscope strokeWidth={1.5} />, color: "text-purple-500", bg: "bg-purple-50" };
+    if (text.includes("dispos") || text.includes("protect") || text.includes("glove") || text.includes("infection")) return { icon: <Shield strokeWidth={1.5} />, color: "text-emerald-500", bg: "bg-emerald-50" };
+    if (text.includes("material") || text.includes("cement") || text.includes("composite") || text.includes("restorative")) return { icon: <Sparkles strokeWidth={1.5} />, color: "text-amber-500", bg: "bg-amber-50" };
+    if (text.includes("hygiene") || text.includes("prevent")) return { icon: <Syringe strokeWidth={1.5} />, color: "text-sky-500", bg: "bg-sky-50" };
+
+    return { icon: <Box strokeWidth={1.5} />, color: "text-brand-primary", bg: "bg-brand-primary/10" };
+  };
 
   useEffect(() => {
     wooApi
       .getCategories()
-      .then(setCategories)
+      .then((cats) => {
+        setCategories(cats);
+        // Fetch real product images for categories that lack a thumbnail
+        const topCats = cats.filter(c => !c.parent || c.parent === 0).slice(0, 8);
+        topCats.forEach(cat => {
+          if (!cat.image?.src) {
+            wooApi.getProducts({ category: String(cat.id), per_page: 1 }).then(res => {
+              if (res.products && res.products.length > 0 && res.products[0].images?.length > 0) {
+                setCatImages(prev => ({ ...prev, [cat.id]: res.products[0].images[0].src }));
+              }
+            }).catch(() => {
+              // Ignore errors, it will fallback to icon
+            });
+          }
+        });
+      })
       .catch((err) => console.error("Category fetch failed:", err));
   }, []);
 
@@ -22,39 +53,53 @@ export const ShopByCategoryBlock = () => {
           Shop by Category
         </h2>
         <Link
-          to="/shop"
+          to="/categories"
           className="text-brand-primary text-sm font-bold flex items-center hover:underline"
         >
           View All Categories <span className="ml-1">→</span>
         </Link>
       </div>
 
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-        {categories.filter(c => !c.parent || c.parent === 0 || c.parent === "0").slice(0, 6).map((cat) => (
-          <Link
-            to={`/category/${cat.slug}`}
-            key={cat.id}
-            className="bg-white border border-slate-100 rounded-xl p-4 flex flex-col items-center hover:border-brand-primary/30 hover:shadow-lg hover:-translate-y-1 transition-all group"
-          >
-            <div className="w-full aspect-square mb-4 p-2">
-              <img
-                src={
-                  cat.image?.src ||
-                  "https://images.unsplash.com/photo-1606811841689-23dfddce3e95?auto=format&fit=crop&q=80&w=200"
-                }
-                alt={decodeHtmlEntities(cat.name)}
-                className="w-full h-full object-contain group-hover:scale-105 transition-transform"
-                referrerPolicy="no-referrer"
-              />
-            </div>
-            <h3 className="text-brand-primary text-[13px] font-bold text-center mb-1 leading-tight">
-              {decodeHtmlEntities(cat.name)}
-            </h3>
-            <p className="text-[11px] text-slate-500 font-medium text-center">
-              {cat.count || 0}+ Products
-            </p>
-          </Link>
-        ))}
+      <div className="flex flex-col md:grid md:grid-cols-3 lg:grid-cols-6 gap-3 md:gap-4">
+        {categories.filter(c => !c.parent || c.parent === 0).slice(0, 6).map((cat) => {
+          const imgSrc = cat.image?.src || catImages[cat.id];
+          const fallback = getCategoryFallback(cat.name, cat.slug);
+          return (
+            <Link
+              to={`/category/${cat.slug}`}
+              key={cat.id}
+              className="bg-white border border-slate-100 rounded-xl p-4 flex flex-row md:flex-col items-center gap-4 md:gap-0 hover:border-brand-primary/30 hover:shadow-lg md:hover:-translate-y-1 transition-all group"
+            >
+              <div className={`w-16 h-16 md:w-full md:aspect-square md:mb-4 p-2 shrink-0 flex items-center justify-center rounded-lg transition-colors ${imgSrc ? 'bg-slate-50/50 group-hover:bg-slate-50' : fallback.bg}`}>
+                {imgSrc ? (
+                  <img
+                    src={imgSrc}
+                    alt={decodeHtmlEntities(cat.name)}
+                    className="w-full h-full object-contain group-hover:scale-105 transition-transform mix-blend-multiply"
+                    referrerPolicy="no-referrer"
+                  />
+                ) : (
+                  <div className={`${fallback.color} w-8 h-8 md:w-16 md:h-16 transition-transform group-hover:scale-110 flex items-center justify-center`}>
+                     {React.cloneElement(fallback.icon as React.ReactElement<{className?: string}>, { className: "w-full h-full" })}
+                  </div>
+                )}
+              </div>
+              <div className="flex-1 text-left md:text-center min-w-0">
+                <h3 className="text-brand-primary text-[15px] md:text-[13px] font-bold mb-1 leading-tight line-clamp-2">
+                  {decodeHtmlEntities(cat.name)}
+                </h3>
+  
+                <p className="text-[12px] md:text-[11px] text-slate-500 font-medium flex items-center gap-1 md:justify-center">
+                  <span className="w-1.5 h-1.5 rounded-full bg-brand-primary/50 md:hidden"></span>
+                  {cat.count || 0} Products
+                </p>
+              </div>
+              <div className="flex md:hidden shrink-0 text-slate-300 pr-2 group-hover:text-brand-primary transition-colors">
+                 <ChevronRight size={20} />
+              </div>
+            </Link>
+          );
+        })}
       </div>
     </section>
   );
@@ -81,7 +126,7 @@ export const CategoryBar = () => {
           >
             All Products
           </Link>
-          {categories.filter(c => !c.parent || c.parent === 0 || c.parent === "0").map((cat) => (
+          {categories.filter(c => !c.parent || c.parent === 0).map((cat) => (
             <Link
               to={`/category/${cat.slug}`}
               key={cat.id}

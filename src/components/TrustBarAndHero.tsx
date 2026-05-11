@@ -1,5 +1,6 @@
 import React from 'react';
 import { Truck, ShieldCheck, Clock, Award } from 'lucide-react';
+import { Link } from 'react-router-dom';
 
 export const TrustBar = () => {
   const items = [
@@ -11,9 +12,9 @@ export const TrustBar = () => {
 
   return (
     <div className="bg-slate-50 border-b border-slate-200 py-4">
-      <div className="container mx-auto px-4 flex flex-wrap justify-between items-center gap-6">
+      <div className="container mx-auto px-4 grid grid-cols-2 lg:flex lg:flex-row justify-between items-center gap-4 lg:gap-6">
         {items.map((item, idx) => (
-          <div key={idx} className="flex items-center gap-3">
+          <div key={idx} className="flex items-center gap-2 sm:gap-3">
             <div className="w-10 h-10 bg-white border border-slate-200 rounded-lg flex items-center justify-center text-lg shadow-sm">
               {item.icon}
             </div>
@@ -46,12 +47,12 @@ export const Hero = () => {
             German-engineered precision for the modern dental clinic. In stock and ready for immediate global dispatch.
           </p>
           <div className="flex flex-wrap gap-4">
-            <button className="bg-white hover:bg-slate-100 text-slate-900 font-bold px-8 py-3.5 rounded-full text-sm transition-all transform active:scale-95 shadow-xl">
+            <Link to="/shop" className="bg-white hover:bg-slate-100 text-slate-900 font-bold px-8 py-3.5 rounded-full text-sm transition-all transform active:scale-95 shadow-xl text-center">
               Shop Collection
-            </button>
-            <button className="border border-white/30 hover:bg-white/10 text-white font-bold px-8 py-3.5 rounded-full text-sm transition-all backdrop-blur-sm">
+            </Link>
+            <Link to="/shop" className="border border-white/30 hover:bg-white/10 text-white font-bold px-8 py-3.5 rounded-full text-sm transition-all backdrop-blur-sm text-center">
               View Digital Catalog
-            </button>
+            </Link>
           </div>
         </div>
       </div>

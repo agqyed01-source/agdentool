@@ -147,24 +147,6 @@ export const Header = () => {
 
   return (
     <header className="sticky top-0 z-50 bg-white border-b border-slate-100 shadow-sm">
-      {/* Top Utility Bar - Pro Style */}
-      <div className="bg-brand-secondary text-white py-2 text-[11px] font-medium uppercase tracking-wider">
-        <div className="container mx-auto px-4 flex justify-between items-center">
-          <div className="flex gap-4 items-center">
-            <span>Dental Professional Choice</span>
-            <span className="opacity-30">|</span>
-            <span className="flex items-center gap-1">
-              Free Shipping on orders over $150
-            </span>
-          </div>
-          <div className="flex gap-4 items-center">
-            <a href="https://wa.me/message/" target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 hover:text-white/80 transition-colors">
-              <MessageCircle size={14} /> WhatsApp Us
-            </a>
-          </div>
-        </div>
-      </div>
-
       {/* Main Header */}
       <div className="container mx-auto px-4 py-4 md:py-5">
         <div className="flex items-center justify-between gap-6 md:gap-10">

@@ -37,7 +37,7 @@ export const FeaturedCategories = () => {
   return (
     <section className="container mx-auto px-4 py-12">
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-        {categories.filter(c => !c.parent || c.parent === 0 || c.parent === "0").slice(0, 6).map((cat, idx) => (
+        {categories.filter(c => !c.parent || c.parent === 0).slice(0, 6).map((cat, idx) => (
           <Link to={`/category/${cat.slug}`} key={cat.id} className="group p-6 bg-slate-50 rounded-xl border border-slate-100 hover:border-brand-primary/20 hover:bg-white hover:shadow-sm transition-all text-left">
             <div className={`w-10 h-10 ${getCategoryColor(idx)} rounded-lg flex items-center justify-center mb-4 group-hover:scale-110 transition-transform`}>
               {getCategoryIcon(idx)}

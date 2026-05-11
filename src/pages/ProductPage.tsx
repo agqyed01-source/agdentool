@@ -5,6 +5,7 @@ import { wooApi, WooProduct } from '../services/woo';
 import { decodeHtmlEntities } from '../utils/format';
 import { ShoppingCart, Star, ShieldCheck, Truck } from 'lucide-react';
 import { ProductReviews } from '../components/ProductReviews';
+import { WhatsAppAgents } from '../components/FooterAndNav';
 
 export const ProductPage = () => {
   const { slug } = useParams<{ slug: string }>();
@@ -122,11 +123,12 @@ export const ProductPage = () => {
   }
 
   return (
-    <div className="container mx-auto px-4 py-8 md:py-12">
-      <Seo 
-        title={decodeHtmlEntities(product.name)}
-        description={product.short_description.replace(/<[^>]+>/g, '')}
-        type="product"
+    <>
+      <div className="container mx-auto px-4 py-8 md:py-12">
+        <Seo 
+          title={decodeHtmlEntities(product.name)}
+          description={product.short_description.replace(/<[^>]+>/g, '')}
+          type="product"
         image={product.images[0]?.src}
         jsonLd={{
           "@context": "https://schema.org/",
@@ -339,5 +341,7 @@ export const ProductPage = () => {
         )}
       </div>
     </div>
+    <WhatsAppAgents />
+    </>
   );
 };

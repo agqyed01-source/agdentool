@@ -18,26 +18,26 @@ export const WhatsAppAgents = () => {
           <h2 className="text-2xl font-bold text-slate-900 mb-2">Expert Clinical Support</h2>
           <p className="text-slate-500">Chat directly with our specialists on WhatsApp for instant assistance.</p>
         </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
           {agents.map((agent, idx) => (
             <a 
               key={idx}
               href={`https://wa.me/${agent.phone}`}
               target="_blank"
               rel="noopener noreferrer"
-              className="flex items-center gap-4 p-4 rounded-xl border border-slate-200 hover:border-[#25D366] hover:shadow-sm transition-all group bg-slate-50 relative overflow-hidden"
+              className="flex items-center gap-2 sm:gap-4 p-3 lg:p-4 rounded-xl border border-slate-200 hover:border-[#25D366] hover:shadow-sm transition-all group bg-slate-50 relative overflow-hidden"
             >
-              <div className="absolute top-0 right-0 w-16 h-16 bg-[#25D366]/5 rounded-bl-[100px] -z-10 group-hover:scale-150 transition-transform duration-500"></div>
-              <div className="relative">
-                <img src={agent.avatar} alt={agent.name} className="w-12 h-12 rounded-full object-cover border-2 border-white shadow-sm group-hover:scale-110 transition-transform duration-300" />
-                <div className="absolute bottom-0 right-0 w-3.5 h-3.5 bg-[#25D366] border-2 border-white rounded-full"></div>
+              <div className="absolute top-0 right-0 w-12 h-12 lg:w-16 lg:h-16 bg-[#25D366]/5 rounded-bl-[100px] -z-10 group-hover:scale-150 transition-transform duration-500"></div>
+              <div className="relative shrink-0">
+                <img src={agent.avatar} alt={agent.name} className="w-10 h-10 lg:w-12 lg:h-12 rounded-full object-cover border-2 border-white shadow-sm group-hover:scale-110 transition-transform duration-300" />
+                <div className="absolute bottom-0 right-0 w-3 lg:w-3.5 h-3 lg:h-3.5 bg-[#25D366] border-2 border-white rounded-full"></div>
               </div>
-              <div className="flex-1">
-                <p className="font-bold text-slate-900 leading-tight group-hover:text-[#25D366] transition-colors">{agent.name}</p>
-                <p className="text-[11px] font-medium text-slate-500 uppercase tracking-wider">{agent.role}</p>
+              <div className="flex-1 min-w-0">
+                <p className="font-bold text-slate-900 leading-tight group-hover:text-[#25D366] transition-colors text-sm lg:text-base truncate">{agent.name}</p>
+                <p className="text-[9px] lg:text-[11px] font-medium text-slate-500 uppercase tracking-wider truncate">{agent.role}</p>
               </div>
-              <div className="w-10 h-10 rounded-full bg-white shadow-sm border border-slate-100 text-[#25D366] flex items-center justify-center group-hover:bg-[#25D366] group-hover:text-white transition-colors">
-                 <MessageCircle size={18} />
+              <div className="hidden sm:flex shrink-0 w-8 lg:w-10 h-8 lg:h-10 rounded-full bg-white shadow-sm border border-slate-100 text-[#25D366] items-center justify-center group-hover:bg-[#25D366] group-hover:text-white transition-colors">
+                 <MessageCircle className="w-4 h-4 lg:w-[18px] lg:h-[18px]" />
               </div>
             </a>
           ))}

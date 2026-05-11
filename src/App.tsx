@@ -14,6 +14,7 @@ import { CartPage } from './pages/CartPage';
 import { AccountPage } from './pages/AccountPage';
 import { CheckoutPage } from './pages/CheckoutPage';
 import { ShopPage } from './pages/ShopPage';
+import { CategoriesPage } from './pages/CategoriesPage';
 import { OrderPage } from './pages/OrderPage';
 
 function ScrollToTop() {
@@ -37,6 +38,7 @@ export default function App() {
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/shop" element={<ShopPage />} />
+          <Route path="/categories" element={<CategoriesPage />} />
           <Route path="/product/:slug" element={<ProductPage />} />
           <Route path="/category/:slug" element={<ShopPage />} />
           <Route path="/cart" element={<CartPage />} />
