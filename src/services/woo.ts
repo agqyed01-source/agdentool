@@ -948,10 +948,17 @@ export const wooApi = {
           postcode: "94103",
           country: "US",
         },
-        line_items: mockCartState.items.map((i) => ({
-          product_id: i.id,
-          quantity: i.quantity,
-        })),
+        line_items: mockCartState.items.map((i) => {
+          const meta_data = i.variations ? Object.entries(i.variations).map(([key, value]) => ({
+            key,
+            value
+          })) : [];
+          return {
+            product_id: i.id,
+            quantity: i.quantity,
+            ...(meta_data.length > 0 ? { meta_data } : {}),
+          };
+        }),
         shipping_lines: orderData?.shipping_lines || [],
         coupon_lines: (mockCartState.coupons || []).map((c) => ({
           code: c.code,
