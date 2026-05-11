@@ -956,12 +956,15 @@ export const wooApi = {
           return {
             product_id: i.id,
             quantity: i.quantity,
+            total: (Math.max(0, parseFloat(i.price || '0')) * i.quantity).toFixed(2),
+            subtotal: (Math.max(0, parseFloat(i.price || '0')) * i.quantity).toFixed(2),
             ...(meta_data.length > 0 ? { meta_data } : {}),
           };
         }),
         shipping_lines: orderData?.shipping_lines || [],
         coupon_lines: (mockCartState.coupons || []).map((c) => ({
           code: c.code,
+          discount: c.discount
         })),
       };
 
@@ -976,22 +979,23 @@ export const wooApi = {
       saveCart();
       return newOrder;
     } catch (err: any) {
-      if (!err.message?.includes("not configured")) {
-        console.error("Failed to create live order", err);
-      }
+      console.error("Failed to create live order", err);
       // Fallback to mock order
     }
 
     return new Promise((resolve) =>
       setTimeout(() => {
+        const totalNum = parseFloat(mockCartState.totals.total_price);
         const newOrder: WooOrder = {
           id: Math.floor(Math.random() * 10000) + 1000,
-          status: "processing",
+          status: "pending",
           date_created: new Date().toISOString(),
           total: mockCartState.totals.total_price,
           discount_total: mockCartState.totals.total_discount,
           payment_method_title:
             orderData?.payment_method_title || "Direct Bank Transfer",
+          needs_payment: totalNum > 0,
+          payment_url: "",
           line_items: mockCartState.items.map((i) => ({
             id: Math.floor(Math.random() * 10000),
             name: i.name,
