@@ -953,18 +953,32 @@ export const wooApi = {
             key,
             value
           })) : [];
+          
+          let subtotalNum = Math.max(0, parseFloat(i.price || '0')) * i.quantity;
+          let totalNum = subtotalNum;
+          
+          // roughly distribute coupon discount to line item total if percent
+          // for accurate Woo order creation without throwing error
+          if (mockCartState.coupons && mockCartState.coupons.length > 0) {
+              const orderSubtotal = mockCartState.items.reduce((acc, item) => acc + parseFloat(item.price || '0') * item.quantity, 0);
+              const orderDiscount = parseFloat(mockCartState.totals.total_discount || '0');
+              if (orderSubtotal > 0 && orderDiscount > 0) {
+                 const discountRatio = orderDiscount / orderSubtotal;
+                 totalNum = subtotalNum - (subtotalNum * discountRatio);
+              }
+          }
+          
           return {
             product_id: i.id,
             quantity: i.quantity,
-            total: (Math.max(0, parseFloat(i.price || '0')) * i.quantity).toFixed(2),
-            subtotal: (Math.max(0, parseFloat(i.price || '0')) * i.quantity).toFixed(2),
+            total: totalNum.toFixed(2),
+            subtotal: subtotalNum.toFixed(2),
             ...(meta_data.length > 0 ? { meta_data } : {}),
           };
         }),
         shipping_lines: orderData?.shipping_lines || [],
         coupon_lines: (mockCartState.coupons || []).map((c) => ({
           code: c.code,
-          discount: c.discount
         })),
       };
 
