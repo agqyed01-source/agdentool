@@ -96,7 +96,7 @@ export const Footer = () => {
              <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
                 <p className="text-xs font-bold text-slate-900 mb-1">Support Concierge</p>
                 <p className="text-[10px] text-slate-500 mb-3">Message a specialist for bulk pricing or support.</p>
-                <a href="https://wa.me/message/" target="_blank" rel="noopener noreferrer" className="w-full bg-[#25D366] text-white py-2 rounded-lg text-xs font-bold shadow-sm flex items-center justify-center gap-1 hover:bg-[#128C7E] transition-colors">
+                <a href="https://wa.me/447856364969" target="_blank" rel="noopener noreferrer" className="w-full bg-[#25D366] text-white py-2 rounded-lg text-xs font-bold shadow-sm flex items-center justify-center gap-1 hover:bg-[#128C7E] transition-colors">
                   <MessageCircle size={14} /> Message on WhatsApp
                 </a>
              </div>

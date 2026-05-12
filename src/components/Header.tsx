@@ -490,7 +490,7 @@ export const Header = () => {
                 })()}
                 <hr className="border-slate-100" />
                 <a
-                  href="https://wa.me/message/"
+                  href="https://wa.me/447856364969"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="text-base font-normal flex items-center gap-2 hover:text-[#25D366] transition-colors"
