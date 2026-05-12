@@ -5,7 +5,7 @@ import { wooApi } from '../services/woo';
 
 export const WhatsAppAgents = () => {
   const agents = [
-    { name: 'Sarah Chen', role: 'Clinical Support', avatar: 'https://i.pravatar.cc/150?u=sarah', phone: '1234567890' },
+    { name: 'Sarah Chen', role: 'Support Specialist', avatar: 'https://i.pravatar.cc/150?u=sarah', phone: '1234567890' },
     { name: 'Dr. Mike', role: 'Equipment Specialist', avatar: 'https://i.pravatar.cc/150?u=mike', phone: '1234567891' },
     { name: 'Emma Wilson', role: 'Bulk Orders', avatar: 'https://i.pravatar.cc/150?u=emma', phone: '1234567892' },
     { name: 'James Kim', role: 'Technical Service', avatar: 'https://i.pravatar.cc/150?u=james', phone: '1234567893' },
@@ -15,7 +15,7 @@ export const WhatsAppAgents = () => {
     <section className="bg-white py-12 border-t border-slate-100">
       <div className="container mx-auto px-4">
         <div className="text-center mb-8">
-          <h2 className="text-2xl font-bold text-slate-900 mb-2">Expert Clinical Support</h2>
+          <h2 className="text-2xl font-bold text-slate-900 mb-2">Expert Support</h2>
           <p className="text-slate-500">Chat directly with our specialists on WhatsApp for instant assistance.</p>
         </div>
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
@@ -121,7 +121,7 @@ export const Newsletter = () => {
       <div className="container mx-auto px-4 text-center">
         <div className="max-w-2xl mx-auto">
           <h2 className="text-2xl md:text-3xl font-bold mb-4">Stay updated with Industry Insights</h2>
-          <p className="text-gray-500 mb-8">Join 5,000+ dental professionals. Get the latest tech news and exclusive discounts directly in your inbox.</p>
+          <p className="text-gray-500 mb-8">Join 5,000+ professionals. Get the latest tech news and exclusive discounts directly in your inbox.</p>
           
           <form className="flex flex-col sm:flex-row gap-3" onSubmit={handleSubmit}>
             <input 

@@ -9,7 +9,7 @@ export const Home = () => {
     <>
       <Seo
         title="Premium Dental Supplies & Equipment"
-        description="Shop 15,000+ premium dental products, instruments, and clinic equipment. Fast dispatch, secured payments, and expert support."
+        description="Shop 15,000+ premium dental products, instruments, and equipment. Fast dispatch, secured payments, and expert support."
         type="website"
         jsonLd={{
           "@context": "https://schema.org",

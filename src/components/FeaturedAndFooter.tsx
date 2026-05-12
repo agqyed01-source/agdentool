@@ -67,7 +67,7 @@ export const Footer = () => {
               </div>
             </div>
             <p className="text-slate-500 text-sm leading-relaxed mb-6">
-              Precision-engineered equipment and reliable clinical supplies since 1998. The industry choice for modern dentistry.
+              Precision-engineered equipment and reliable medical supplies since 1998. The industry choice for modern dentistry.
             </p>
           </div>
           
@@ -94,7 +94,7 @@ export const Footer = () => {
           <div>
              <h4 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-6">Expert Help</h4>
              <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
-                <p className="text-xs font-bold text-slate-900 mb-1">Clinic Concierge</p>
+                <p className="text-xs font-bold text-slate-900 mb-1">Support Concierge</p>
                 <p className="text-[10px] text-slate-500 mb-3">Message a specialist for bulk pricing or support.</p>
                 <a href="https://wa.me/message/" target="_blank" rel="noopener noreferrer" className="w-full bg-[#25D366] text-white py-2 rounded-lg text-xs font-bold shadow-sm flex items-center justify-center gap-1 hover:bg-[#128C7E] transition-colors">
                   <MessageCircle size={14} /> Message on WhatsApp

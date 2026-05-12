@@ -7,7 +7,7 @@ export const TrustBar = () => {
     { icon: '🚚', text: 'Fast Dispatch', sub: 'Next Day Delivery Available' },
     { icon: '🔒', text: 'Secured Payment', sub: 'SSL Encrypted Checkout' },
     { icon: '✓', text: 'Genuine Products', sub: 'Authorized Manufacturer Rep' },
-    { icon: '📞', text: 'Expert Support', sub: 'Professional Dental Assistance' },
+    { icon: '📞', text: 'Expert Support', sub: 'Professional Assistance' },
   ];
 
   return (
@@ -44,7 +44,7 @@ export const Hero = () => {
              Premium Surgical <br /><span className="text-blue-400">Precision Implements</span>
           </h1>
           <p className="text-sm md:text-lg text-slate-300 mb-8 max-w-md leading-relaxed">
-            German-engineered precision for the modern dental clinic. In stock and ready for immediate global dispatch.
+            German-engineered precision for the modern professional. In stock and ready for immediate global dispatch.
           </p>
           <div className="flex flex-wrap gap-4">
             <Link to="/shop" className="bg-white hover:bg-slate-100 text-slate-900 font-bold px-8 py-3.5 rounded-full text-sm transition-all transform active:scale-95 shadow-xl text-center">
@@ -62,7 +62,7 @@ export const Hero = () => {
         <img 
           src="https://images.unsplash.com/photo-1588776814546-1ffcf47267a5?auto=format&fit=crop&q=80&w=800"
           className="w-full h-full object-cover opacity-50 grayscale hover:grayscale-0 transition-all duration-1000"
-          alt="Clinic Setup"
+          alt="Professional Setup"
         />
       </div>
     </section>

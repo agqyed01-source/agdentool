@@ -295,7 +295,7 @@ export const ProductGrid = ({
           </h2>
           {!searchQuery && !slug && (
             <p className="text-slate-500 text-sm font-medium">
-              Everything your clinic needs for high-performance dentistry.
+              Everything you need for high-performance operations.
             </p>
           )}
         </div>

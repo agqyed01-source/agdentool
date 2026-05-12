@@ -271,7 +271,7 @@ export const ProductPage = () => {
              </div>
              <span className="text-slate-300">|</span>
              <a href="#reviews" onClick={(e) => { e.preventDefault(); setActiveTab('reviews'); document.getElementById('details-section')?.scrollIntoView({ behavior: 'smooth' }); }} className="text-sm font-medium text-brand-primary hover:underline">
-               {product.rating_count} Clinic Reviews
+               {product.rating_count} Reviews
              </a>
           </div>
 
@@ -394,7 +394,7 @@ export const ProductPage = () => {
             onClick={() => setActiveTab('reviews')}
             className={`pb-4 text-lg font-bold transition-colors relative ${activeTab === 'reviews' ? 'text-brand-primary' : 'text-slate-500 hover:text-slate-900'}`}
           >
-            Clinic Reviews ({product.rating_count})
+            Reviews ({product.rating_count})
             {activeTab === 'reviews' && (
               <span className="absolute bottom-0 left-0 w-full h-0.5 bg-brand-primary rounded-t-full" />
             )}

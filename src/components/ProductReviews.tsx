@@ -106,7 +106,7 @@ export const ProductReviews = ({ productId, initialCount, averageRating }: { pro
         </div>
         
         <div className="flex-1">
-           <h3 className="text-xl font-bold text-slate-900 mb-6">Real Reviews from Dental Professionals</h3>
+           <h3 className="text-xl font-bold text-slate-900 mb-6">Real Reviews from Professionals</h3>
            
            <div className="space-y-6 mb-12">
               {loading ? (
@@ -151,7 +151,7 @@ export const ProductReviews = ({ productId, initialCount, averageRating }: { pro
                  <div className="bg-green-50 text-green-700 p-4 rounded-lg flex flex-col items-center justify-center text-center py-8">
                    <CheckCircle className="mb-2" size={32} />
                    <p className="font-bold">Thank you for your review!</p>
-                   <p className="text-sm mt-1">Your feedback helps clinics make better choices.</p>
+                   <p className="text-sm mt-1">Your feedback helps others make better choices.</p>
                    <button onClick={() => setSubmitStatus('idle')} className="mt-4 text-sm font-medium underline">Write another review</button>
                  </div>
               ) : (
@@ -212,7 +212,7 @@ export const ProductReviews = ({ productId, initialCount, averageRating }: { pro
                           value={reviewerEmail}
                           onChange={e => setReviewerEmail(e.target.value)}
                           className="w-full border border-slate-200 rounded-lg p-3 text-sm outline-none focus:border-brand-primary"
-                          placeholder="smith@clinic.com"
+                          placeholder="smith@example.com"
                         />
                       </div>
                     </div>
@@ -259,7 +259,7 @@ export const ProductReviews = ({ productId, initialCount, averageRating }: { pro
                     className="w-full bg-slate-900 text-white font-bold text-sm rounded-lg py-3 hover:bg-slate-800 transition-colors flex items-center justify-center gap-2 mt-2 disabled:bg-slate-400"
                   >
                     {submitStatus === 'loading' && <Loader2 size={16} className="animate-spin" />}
-                    Submit Clinic Review
+                    Submit Review
                   </button>
                 </form>
               )}
