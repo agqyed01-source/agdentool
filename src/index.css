@@ -22,6 +22,18 @@
   }
 }
 
+/* Prevent iOS Safari from zooming in on input focus by ensuring text is at least 16px */
+@media screen and (max-width: 768px) {
+  input[type="text"],
+  input[type="email"],
+  input[type="tel"],
+  input[type="number"],
+  select,
+  textarea {
+    font-size: 16px !important;
+  }
+}
+
 .shoptimizer-card {
   @apply bg-white rounded-xl border border-slate-100 transition-all duration-200 shadow-sm;
 }

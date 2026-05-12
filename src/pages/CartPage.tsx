@@ -158,7 +158,7 @@ export const CartPage = () => {
                 placeholder="Coupon code" 
                 value={couponCode}
                 onChange={(e) => setCouponCode(e.target.value)}
-                className="w-full px-4 py-2 border border-slate-200 rounded-lg outline-none focus:ring-2 focus:ring-brand-primary/50 text-sm"
+                className="w-full px-4 py-2 border border-slate-200 rounded-lg outline-none focus:ring-2 focus:ring-brand-primary/50 text-base sm:text-sm"
               />
               <button 
                 type="submit" 
