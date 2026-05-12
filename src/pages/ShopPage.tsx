@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Link, useParams, useSearchParams } from "react-router-dom";
-import { Search, Grid, List as ListIcon, ChevronDown, Filter } from "lucide-react";
+import { Search, Grid, List as ListIcon, ChevronDown, Filter, X } from "lucide-react";
 import { Seo } from "../components/Seo";
 import { wooApi, WooProduct, WooCategory } from "../services/woo";
 import { ProductCard } from "../components/ProductSection";
@@ -110,6 +110,10 @@ export const ShopPage = () => {
   }, []);
 
   useEffect(() => {
+    setShowMobileSidebar(false);
+  }, [currentCategorySlug]);
+
+  useEffect(() => {
     setLoading(true);
     setError(null);
     
@@ -150,6 +154,7 @@ export const ShopPage = () => {
     } else {
       setSearchParams({});
     }
+    setShowMobileSidebar(false);
   };
 
   const handleNextPage = () => setPage(p => Math.min(p + 1, totalPages));
@@ -180,10 +185,35 @@ export const ShopPage = () => {
 
       <div className="container mx-auto px-4 py-8">
         <div className="flex flex-col lg:flex-row gap-8">
+          {/* Mobile Overlay Background */}
+          {showMobileSidebar && (
+            <div 
+              className="fixed inset-0 bg-slate-900/50 z-40 lg:hidden transition-opacity"
+              onClick={() => setShowMobileSidebar(false)}
+            />
+          )}
+
           {/* Sidebar */}
-          <div className={`w-full lg:w-1/4 flex-shrink-0 space-y-8 lg:sticky lg:top-24 lg:self-start ${showMobileSidebar ? 'block' : 'hidden lg:block'}`}>
-            {/* Search */}
-            <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
+          <div className={`
+            fixed inset-y-0 left-0 z-50 w-[85%] max-w-sm bg-white shadow-xl overflow-y-auto transform transition-transform duration-300 ease-in-out p-5
+            lg:static lg:inset-auto lg:z-auto lg:w-1/4 lg:max-w-none lg:bg-transparent lg:shadow-none lg:overflow-visible lg:transform-none lg:flex-shrink-0 lg:space-y-8 lg:sticky lg:top-24 lg:self-start lg:p-0
+            ${showMobileSidebar ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
+          `}>
+            {/* Mobile Header */}
+            <div className="flex justify-between items-center mb-6 lg:hidden">
+              <h2 className="text-xl font-bold text-slate-900">Filters & Categories</h2>
+              <button 
+                onClick={() => setShowMobileSidebar(false)}
+                className="p-2 text-slate-500 hover:text-slate-800 hover:bg-slate-100 rounded-full transition-colors"
+                aria-label="Close menu"
+              >
+                <X size={20} />
+              </button>
+            </div>
+
+            <div className="space-y-8">
+              {/* Search */}
+              <div className="bg-white lg:p-5 rounded-xl lg:border lg:border-slate-200 lg:shadow-sm">
               <h3 className="font-bold text-slate-900 mb-4 flex items-center gap-2">
                 <Search size={18} /> Search
               </h3>
@@ -207,7 +237,7 @@ export const ShopPage = () => {
             </div>
 
             {/* Categories */}
-            <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
+            <div className="bg-white lg:p-5 rounded-xl lg:border lg:border-slate-200 lg:shadow-sm">
               <h3 className="font-bold text-slate-900 mb-4 flex items-center gap-2">
                 <Filter size={18} /> Categories
               </h3>
@@ -247,6 +277,7 @@ export const ShopPage = () => {
                 })()}
               </ul>
             </div>
+          </div>
           </div>
 
           {/* Main Content */}
