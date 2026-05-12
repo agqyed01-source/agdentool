@@ -7,6 +7,19 @@
  * VITE_WOO_CONSUMER_SECRET=cs_XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
  */
 
+export interface WooVariation {
+  id: number;
+  price: string;
+  regular_price: string;
+  sale_price: string;
+  price_html?: string;
+  attributes: {
+    id: number;
+    name: string;
+    option: string;
+  }[];
+}
+
 export interface WooProduct {
   id: number;
   name: string;
@@ -18,6 +31,7 @@ export interface WooProduct {
   price: string;
   regular_price: string;
   sale_price: string;
+  price_html?: string;
   categories: { id: number; name: string; slug: string }[];
   images: { id: number; src: string; alt: string }[];
   attributes: {
@@ -25,6 +39,11 @@ export interface WooProduct {
     name: string;
     options: string[];
     variation: boolean;
+  }[];
+  default_attributes?: {
+    id: number;
+    name: string;
+    option: string;
   }[];
   variations: number[];
   average_rating: string;
@@ -325,6 +344,17 @@ export const wooApi = {
         resolve(product || null);
       }, 300);
     });
+  },
+
+  getProductVariations: async (productId: number): Promise<WooVariation[]> => {
+    try {
+      const data = await fetchWoo(`/products/${productId}/variations`, { per_page: "100" });
+      if (Array.isArray(data)) return data;
+      return [];
+    } catch (err: any) {
+      console.error("Failed to fetch variations:", err);
+      return [];
+    }
   },
 
   getCategories: async (): Promise<WooCategory[]> => {

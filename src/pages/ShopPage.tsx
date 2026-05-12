@@ -350,9 +350,15 @@ export const ShopPage = () => {
                            <div dangerouslySetInnerHTML={{ __html: product.short_description || '' }} className="hidden sm:block text-sm text-slate-600 mb-4 line-clamp-2" />
                            <div className="mt-auto flex flex-row sm:items-center justify-between gap-2 sm:gap-4">
                              <div className="text-lg sm:text-xl font-black text-brand-primary sm:text-slate-900">
-                               ${product.price}
-                               {product.regular_price && product.regular_price !== product.price && (
-                                 <span className="ml-1.5 sm:ml-2 text-xs sm:text-sm line-through text-slate-400 font-bold">${product.regular_price}</span>
+                               {product.price_html ? (
+                                 <div className="woo-price" dangerouslySetInnerHTML={{ __html: product.price_html.replace(/Price range/gi, '').replace(/가격 범위/g, '').replace(/范[围|圍][^<]*/g, '').replace(/价格[^<]*/g, '') }} />
+                               ) : (
+                                 <>
+                                   ${product.price}
+                                   {product.regular_price && product.regular_price !== product.price && (
+                                     <span className="ml-1.5 sm:ml-2 text-xs sm:text-sm line-through text-slate-400 font-bold">${product.regular_price}</span>
+                                   )}
+                                 </>
                                )}
                              </div>
                              {product.type === 'variable' ? (

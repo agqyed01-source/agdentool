@@ -197,15 +197,24 @@ export const ProductCard = ({ product }: { product: WooProduct }) => {
 
         <div className="mt-auto flex items-end justify-between">
           <div>
-            <span className="text-sm font-black text-slate-900">
-              ${product.price}
-            </span>
-            {product.regular_price &&
-              product.regular_price !== product.price && (
-                <span className="ml-1 text-[10px] line-through text-slate-300 font-bold">
-                  ${product.regular_price}
+            {product.price_html ? (
+              <div 
+                className="woo-price text-sm"
+                dangerouslySetInnerHTML={{ __html: product.price_html.replace(/Price range/gi, '').replace(/가격 범위/g, '').replace(/范[围|圍][^<]*/g, '').replace(/价格[^<]*/g, '') }} 
+              />
+            ) : (
+              <>
+                <span className="text-sm font-black text-slate-900">
+                  ${product.price}
                 </span>
-              )}
+                {product.regular_price &&
+                  product.regular_price !== product.price && (
+                    <span className="ml-1 text-[10px] line-through text-slate-300 font-bold">
+                      ${product.regular_price}
+                    </span>
+                  )}
+              </>
+            )}
             <span className="block text-[9px] text-slate-400 font-medium">
               In Stock
             </span>

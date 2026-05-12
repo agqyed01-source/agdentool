@@ -55,3 +55,26 @@
 .custom-scrollbar:hover::-webkit-scrollbar-thumb {
   @apply bg-slate-300;
 }
+
+.woo-price {
+  @apply text-slate-900;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+}
+.woo-price .screen-reader-text {
+  display: none !important;
+}
+.woo-price del {
+  @apply text-slate-400 font-bold;
+  text-decoration: line-through;
+  font-size: 0.65em;
+}
+.woo-price ins {
+  text-decoration: none;
+}
+.woo-price .amount {
+  @apply inline-block;
+}
+

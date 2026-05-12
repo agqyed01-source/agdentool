@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { Seo } from '../components/Seo';
-import { wooApi, WooProduct } from '../services/woo';
+import { wooApi, WooProduct, WooVariation } from '../services/woo';
 import { decodeHtmlEntities } from '../utils/format';
 import { ShoppingCart, Star, ShieldCheck, Truck } from 'lucide-react';
 import { ProductReviews } from '../components/ProductReviews';
@@ -14,6 +14,7 @@ export const ProductPage = () => {
   const [error, setError] = useState<string | null>(null);
   const [quantity, setQuantity] = useState(1);
   const [selectedVariations, setSelectedVariations] = useState<Record<string, string>>({});
+  const [variationsData, setVariationsData] = useState<WooVariation[]>([]);
   const [activeTab, setActiveTab] = useState<'description' | 'reviews'>('description');
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
 
@@ -32,12 +33,26 @@ export const ProductPage = () => {
         // Initialize default variations if any
         if (data.type === 'variable' && data.attributes) {
            const initialVars: Record<string, string> = {};
-           data.attributes.filter(attr => attr.variation).forEach(attr => {
-             if (attr.options.length > 0) {
-               initialVars[attr.name] = attr.options[0];
-             }
-           });
+           if (data.default_attributes && data.default_attributes.length > 0) {
+             data.default_attributes.forEach(attr => {
+               let parentAttr = data.attributes.find(pa => pa.id !== 0 && pa.id === attr.id) ||
+                                data.attributes.find(pa => pa.name.toLowerCase() === attr.name.toLowerCase() || 
+                                                          pa.name.toLowerCase().replace(/\s+/g, '-') === attr.name.toLowerCase() || 
+                                                          `pa_${pa.name.toLowerCase().replace(/\s+/g, '-')}` === attr.name.toLowerCase());
+               const canonicalName = parentAttr ? parentAttr.name : attr.name;
+               let exactOption = attr.option;
+               if (parentAttr && parentAttr.options) {
+                  const normOption = attr.option.toLowerCase().replace(/%[0-9A-F]{2}/gi, '').replace(/[^a-z0-9]/g, '');
+                  const match = parentAttr.options.find(opt => opt.toLowerCase().replace(/%[0-9A-F]{2}/gi, '').replace(/[^a-z0-9]/g, '') === normOption || opt.toLowerCase() === attr.option.toLowerCase());
+                  if (match) exactOption = match;
+               }
+               initialVars[canonicalName] = exactOption;
+             });
+           }
            setSelectedVariations(initialVars);
+           wooApi.getProductVariations(data.id).then(vars => {
+             setVariationsData(vars);
+           });
         }
         setLoading(false);
       }).catch(err => {
@@ -46,6 +61,47 @@ export const ProductPage = () => {
       });
     }
   }, [slug]);
+
+  // Find current variation based on selected attributes
+  const currentVariation = React.useMemo(() => {
+    if (!variationsData || variationsData.length === 0 || !product) return null;
+
+    // Ensure all required attributes are selected first
+    if (product.attributes) {
+      const requiredAttributes = product.attributes.filter(a => a.variation);
+      const isMissing = requiredAttributes.some(a => !(selectedVariations[a.name] || selectedVariations[a.name.toLowerCase()]));
+      if (isMissing) return null;
+    }
+
+    return variationsData.find(v => {
+      // Check if every attribute in the variation matches the selected variations
+      return v.attributes.every(attr => {
+        if (attr.option === "") return true; // Means Any option
+        
+        let parentAttr;
+        if (product && product.attributes) {
+           parentAttr = product.attributes.find(pa => pa.id !== 0 && pa.id === attr.id) ||
+                        product.attributes.find(pa => pa.name.toLowerCase() === attr.name.toLowerCase() || 
+                                                      pa.name.toLowerCase().replace(/\s+/g, '-') === attr.name.toLowerCase() || 
+                                                      `pa_${pa.name.toLowerCase().replace(/\s+/g, '-')}` === attr.name.toLowerCase());
+        }
+        
+        const canonicalName = parentAttr ? parentAttr.name : attr.name;
+        const selected = selectedVariations[canonicalName] || selectedVariations[attr.name] || selectedVariations[attr.name.toLowerCase()];
+        
+        if (!selected) return false;
+
+        const normSelected = selected.toLowerCase().replace(/%[0-9A-F]{2}/gi, '').replace(/[^a-z0-9]/g, '');
+        const normOption = attr.option.toLowerCase().replace(/%[0-9A-F]{2}/gi, '').replace(/[^a-z0-9]/g, '');
+        
+        return normSelected === normOption || selected.toLowerCase() === attr.option.toLowerCase();
+      });
+    });
+  }, [variationsData, selectedVariations, product]);
+
+  const currentPrice = currentVariation 
+    ? (currentVariation.price || currentVariation.sale_price || currentVariation.regular_price)
+    : product?.price;
 
   if (loading) {
     return (
@@ -141,7 +197,7 @@ export const ProductPage = () => {
             "@type": "Offer",
             "url": `https://yourdentalsite.com/product/${product.slug}`,
             "priceCurrency": "USD",
-            "price": product.price,
+            "price": currentPrice,
             "availability": "https://schema.org/InStock"
           },
           "aggregateRating": {
@@ -219,10 +275,26 @@ export const ProductPage = () => {
              </a>
           </div>
 
-          <div className="mb-8">
-            <span className="text-4xl font-black text-slate-900">${product.price}</span>
-            {product.regular_price !== product.price && (
-              <span className="text-lg text-slate-400 line-through font-bold ml-3">${product.regular_price}</span>
+          <div className="mb-8 font-black text-slate-900 flex items-center">
+            {currentVariation ? (
+              <>
+                <span className="text-4xl">${currentVariation.price}</span>
+                {currentVariation.regular_price && currentVariation.regular_price !== currentVariation.price && (
+                  <span className="text-lg text-slate-400 line-through font-bold ml-3">${currentVariation.regular_price}</span>
+                )}
+              </>
+            ) : product.price_html ? (
+              <div 
+                className="woo-price text-4xl"
+                dangerouslySetInnerHTML={{ __html: product.price_html.replace(/Price range/gi, '').replace(/가격 범위/g, '').replace(/范[围|圍][^<]*/g, '').replace(/价格[^<]*/g, '') }} 
+              />
+            ) : (
+              <>
+                <span className="text-4xl">${product.price}</span>
+                {product.regular_price !== product.price && (
+                  <span className="text-lg text-slate-400 line-through font-bold ml-3">${product.regular_price}</span>
+                )}
+              </>
             )}
           </div>
 
@@ -273,11 +345,11 @@ export const ProductPage = () => {
                     return;
                   }
                 }
-                if (!product.price || parseFloat(product.price) <= 0) {
+                if (!currentPrice || parseFloat(currentPrice) <= 0) {
                   alert("This product is currently unavailable for purchase (no price set).");
                   return;
                 }
-                wooApi.addToCart(product, quantity, selectedVariations).catch(console.error);
+                wooApi.addToCart({ ...product, price: currentPrice }, quantity, selectedVariations).catch(console.error);
                 // Simple feedback
                 const btn = document.getElementById('add-btn');
                 if (btn) {
