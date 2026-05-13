@@ -84,10 +84,10 @@ export const Footer = () => {
           <div>
              <h4 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-6">Company</h4>
             <ul className="space-y-3 text-sm text-slate-600 font-medium">
-              <li><a href="#" className="hover:text-brand-primary transition-colors">About Depot</a></li>
-              <li><a href="#" className="hover:text-brand-primary transition-colors">Pro Membership</a></li>
-              <li><a href="#" className="hover:text-brand-primary transition-colors">Shipping Policy</a></li>
-              <li><a href="#" className="hover:text-brand-primary transition-colors">Terms of Service</a></li>
+              <li><Link to="/about" className="hover:text-brand-primary transition-colors">About Us</Link></li>
+              <li><Link to="/contact" className="hover:text-brand-primary transition-colors">Contact Us</Link></li>
+              <li><Link to="/shipping" className="hover:text-brand-primary transition-colors">Shipping Policy</Link></li>
+              <li><Link to="/terms" className="hover:text-brand-primary transition-colors">Terms of Service</Link></li>
             </ul>
           </div>
 
@@ -104,11 +104,11 @@ export const Footer = () => {
         </div>
 
         <div className="pt-8 border-t border-slate-200 flex flex-col md:flex-row justify-between items-center gap-4 text-[10px] text-slate-400 font-bold uppercase tracking-widest">
-          <p>© 2026 DentalDepot Supply Co.</p>
+          <p>© 2026 AGDentool Supply Co.</p>
           <div className="flex gap-8">
-            <a href="#" className="hover:text-slate-600">Privacy</a>
-            <a href="#" className="hover:text-slate-600">Compliance</a>
-            <a href="#" className="hover:text-slate-600">Cookie Settings</a>
+            <Link to="/privacy" className="hover:text-slate-600">Privacy</Link>
+            <Link to="/compliance" className="hover:text-slate-600">Compliance</Link>
+            <Link to="/cookies" className="hover:text-slate-600">Cookie Policy</Link>
           </div>
         </div>
       </div>

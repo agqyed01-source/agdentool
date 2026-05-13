@@ -175,12 +175,9 @@ export const Header = () => {
                 ></path>
               </svg>
             </div>
-            <div className="leading-none select-none">
+            <div className="leading-none select-none flex items-baseline">
               <span className="text-xl font-bold tracking-tight text-brand-secondary">
-                DENTAL
-              </span>
-              <span className="text-xl font-light tracking-tight text-slate-900">
-                DEPOT
+                AGDentool
               </span>
             </div>
           </Link>

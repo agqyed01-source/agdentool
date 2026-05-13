@@ -16,6 +16,13 @@ import { CheckoutPage } from './pages/CheckoutPage';
 import { ShopPage } from './pages/ShopPage';
 import { CategoriesPage } from './pages/CategoriesPage';
 import { OrderPage } from './pages/OrderPage';
+import { AboutUs } from './pages/AboutUs';
+import { ShippingPolicy } from './pages/ShippingPolicy';
+import { TermsOfService } from './pages/TermsOfService';
+import { ContactUs } from './pages/ContactUs';
+import { PrivacyPolicy } from './pages/PrivacyPolicy';
+import { Compliance } from './pages/Compliance';
+import { CookiePolicy } from './pages/CookiePolicy';
 
 function ScrollToTop() {
   const { pathname } = useLocation();
@@ -45,6 +52,13 @@ export default function App() {
           <Route path="/checkout" element={<CheckoutPage />} />
           <Route path="/account" element={<AccountPage />} />
           <Route path="/order/:id" element={<OrderPage />} />
+          <Route path="/about" element={<AboutUs />} />
+          <Route path="/shipping" element={<ShippingPolicy />} />
+          <Route path="/terms" element={<TermsOfService />} />
+          <Route path="/contact" element={<ContactUs />} />
+          <Route path="/privacy" element={<PrivacyPolicy />} />
+          <Route path="/compliance" element={<Compliance />} />
+          <Route path="/cookies" element={<CookiePolicy />} />
         </Routes>
       </main>
 
