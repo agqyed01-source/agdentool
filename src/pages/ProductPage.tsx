@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { Seo } from '../components/Seo';
 import { wooApi, WooProduct, WooVariation } from '../services/woo';
@@ -17,6 +17,24 @@ export const ProductPage = () => {
   const [variationsData, setVariationsData] = useState<WooVariation[]>([]);
   const [activeTab, setActiveTab] = useState<'description' | 'reviews'>('description');
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
+  const [showStickyAdd, setShowStickyAdd] = useState(false);
+  const addToCartRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        // Show sticky button only when the target is NOT visible,
+        // which means top of screen is past it or we haven't scrolled to it.
+        // Actually, since we want this on mobile when add to cart is not in view:
+        setShowStickyAdd(!entry.isIntersecting);
+      },
+      { threshold: 0 }
+    );
+    if (addToCartRef.current) {
+      observer.observe(addToCartRef.current);
+    }
+    return () => observer.disconnect();
+  }, [product]);
 
   useEffect(() => {
     if (slug) {
@@ -324,65 +342,67 @@ export const ProductPage = () => {
           />
 
           {/* Product Attributes / Variations */}
-          {product.type === 'variable' && product.attributes && product.attributes.length > 0 && (
-            <div className="mb-6 space-y-5">
-              {product.attributes.filter(attr => attr.variation).map(attr => (
-                <div key={attr.id || attr.name} className="flex flex-col">
-                  <label className="text-sm font-semibold text-slate-900 mb-3">{attr.name}: <span className="font-normal text-slate-500">{selectedVariations[attr.name]}</span></label>
-                  <div className="flex flex-wrap gap-2">
-                     {attr.options.map(opt => (
-                       <button
-                         key={opt}
-                         onClick={() => setSelectedVariations(prev => ({ ...prev, [attr.name]: opt }))}
-                         className={`px-4 py-2 border rounded-lg text-sm font-medium transition-all ${
-                           selectedVariations[attr.name] === opt 
-                             ? 'border-brand-primary bg-brand-primary/5 text-brand-primary' 
-                             : 'border-slate-200 bg-white text-slate-700 hover:border-slate-300 hover:bg-slate-50'
-                         }`}
-                       >
-                         {opt}
-                       </button>
-                     ))}
+          <div ref={addToCartRef} className="scroll-mt-32">
+            {product.type === 'variable' && product.attributes && product.attributes.length > 0 && (
+              <div className="mb-6 space-y-5">
+                {product.attributes.filter(attr => attr.variation).map(attr => (
+                  <div key={attr.id || attr.name} className="flex flex-col">
+                    <label className="text-sm font-semibold text-slate-900 mb-3">{attr.name}: <span className="font-normal text-slate-500">{selectedVariations[attr.name]}</span></label>
+                    <div className="flex flex-wrap gap-2">
+                       {attr.options.map(opt => (
+                         <button
+                           key={opt}
+                           onClick={() => setSelectedVariations(prev => ({ ...prev, [attr.name]: opt }))}
+                           className={`px-4 py-2 border rounded-lg text-sm font-medium transition-all ${
+                             selectedVariations[attr.name] === opt 
+                               ? 'border-brand-primary bg-brand-primary/5 text-brand-primary' 
+                               : 'border-slate-200 bg-white text-slate-700 hover:border-slate-300 hover:bg-slate-50'
+                           }`}
+                         >
+                           {opt}
+                         </button>
+                       ))}
+                    </div>
                   </div>
-                </div>
-              ))}
-            </div>
-          )}
+                ))}
+              </div>
+            )}
 
-          <div className="flex flex-wrap gap-4 mt-auto border-t border-slate-100 pt-8">
-            <div className="flex items-center border border-slate-200 rounded-lg bg-white overflow-hidden w-32">
-              <button onClick={() => setQuantity(Math.max(1, quantity - 1))} className="px-4 py-3 text-slate-500 hover:bg-slate-50 transition-colors font-bold cursor-pointer">-</button>
-              <input type="number" min="1" value={quantity} onChange={e => setQuantity(parseInt(e.target.value) || 1)} className="w-full text-center font-bold text-slate-900 outline-none" />
-              <button onClick={() => setQuantity(quantity + 1)} className="px-4 py-3 text-slate-500 hover:bg-slate-50 transition-colors font-bold cursor-pointer">+</button>
-            </div>
-            <button 
-              onClick={() => {
-                if (product.type === 'variable') {
-                  const requiredAttributes = product.attributes?.filter(a => a.variation) || [];
-                  const missingAttributes = requiredAttributes.filter(a => !selectedVariations[a.name]);
-                  if (missingAttributes.length > 0) {
-                    alert(`Please select: ${missingAttributes.map(a => a.name).join(', ')}`);
+            <div className="flex flex-wrap gap-4 mt-auto border-t border-slate-100 pt-8">
+              <div className="flex items-center border border-slate-200 rounded-lg bg-white overflow-hidden w-32">
+                <button onClick={() => setQuantity(Math.max(1, quantity - 1))} className="px-4 py-3 text-slate-500 hover:bg-slate-50 transition-colors font-bold cursor-pointer">-</button>
+                <input type="number" min="1" value={quantity} onChange={e => setQuantity(parseInt(e.target.value) || 1)} className="w-full text-center font-bold text-slate-900 outline-none" />
+                <button onClick={() => setQuantity(quantity + 1)} className="px-4 py-3 text-slate-500 hover:bg-slate-50 transition-colors font-bold cursor-pointer">+</button>
+              </div>
+              <button 
+                onClick={() => {
+                  if (product.type === 'variable') {
+                    const requiredAttributes = product.attributes?.filter(a => a.variation) || [];
+                    const missingAttributes = requiredAttributes.filter(a => !selectedVariations[a.name]);
+                    if (missingAttributes.length > 0) {
+                      alert(`Please select: ${missingAttributes.map(a => a.name).join(', ')}`);
+                      return;
+                    }
+                  }
+                  if (!currentPrice || parseFloat(currentPrice) <= 0) {
+                    alert("This product is currently unavailable for purchase (no price set).");
                     return;
                   }
-                }
-                if (!currentPrice || parseFloat(currentPrice) <= 0) {
-                  alert("This product is currently unavailable for purchase (no price set).");
-                  return;
-                }
-                wooApi.addToCart({ ...product, price: currentPrice }, quantity, selectedVariations).catch(console.error);
-                // Simple feedback
-                const btn = document.getElementById('add-btn');
-                if (btn) {
-                  const original = btn.innerHTML;
-                  btn.innerHTML = `<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg> Added`;
-                  setTimeout(() => btn.innerHTML = original, 2000);
-                }
-              }}
-              id="add-btn"
-              className="flex-grow bg-brand-primary text-white font-bold text-lg rounded-lg shadow-[0_4px_14px_0_rgba(37,99,235,0.39)] hover:shadow-[0_6px_20px_rgba(37,99,235,0.23)] hover:-translate-y-0.5 transition-all flex items-center justify-center gap-2 py-4"
-            >
-              <ShoppingCart size={20} /> Add to Cart
-            </button>
+                  wooApi.addToCart({ ...product, price: currentPrice }, quantity, selectedVariations).catch(console.error);
+                  // Simple feedback
+                  const btn = document.getElementById('add-btn');
+                  if (btn) {
+                    const original = btn.innerHTML;
+                    btn.innerHTML = `<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg> Added`;
+                    setTimeout(() => btn.innerHTML = original, 2000);
+                  }
+                }}
+                id="add-btn"
+                className="flex-grow bg-brand-primary text-white font-bold text-lg rounded-lg shadow-[0_4px_14px_0_rgba(37,99,235,0.39)] hover:shadow-[0_6px_20px_rgba(37,99,235,0.23)] hover:-translate-y-0.5 transition-all flex items-center justify-center gap-2 py-4"
+              >
+                <ShoppingCart size={20} /> Add to Cart
+              </button>
+            </div>
           </div>
 
           <div className="mt-8 grid grid-cols-2 gap-4 text-sm text-slate-600 font-medium">
@@ -431,6 +451,27 @@ export const ProductPage = () => {
         {activeTab === 'reviews' && (
           <ProductReviews productId={product.id} initialCount={product.rating_count} averageRating={product.average_rating} />
         )}
+      </div>
+
+      <div 
+        className={`fixed bottom-[56px] left-0 right-0 z-[40] bg-white border-t border-slate-200 p-4 shadow-[0_-4px_10px_rgba(0,0,0,0.05)] transition-transform duration-300 md:hidden flex justify-center ${showStickyAdd ? 'translate-y-0' : 'translate-y-[150%]'}`}
+      >
+        <div className="flex items-center justify-between gap-4 w-full max-w-7xl">
+          <div className="flex flex-col min-w-0">
+            <span className="text-xs text-slate-500 font-medium truncate">{decodeHtmlEntities(product.name)}</span>
+            <span className="text-lg font-bold text-slate-900">${currentPrice}</span>
+          </div>
+          <button 
+            onClick={() => {
+               if (addToCartRef.current) {
+                 addToCartRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
+               }
+            }}
+            className="bg-brand-primary text-white font-bold px-6 py-3 rounded-lg shadow-sm whitespace-nowrap"
+          >
+            {product.type === 'variable' ? 'Select Options' : 'Add to Cart'}
+          </button>
+        </div>
       </div>
     </div>
     <WhatsAppAgents />
