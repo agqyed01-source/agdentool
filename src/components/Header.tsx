@@ -158,7 +158,7 @@ export const Header = () => {
             <Menu size={24} />
           </button>
 
-          {/* Logo - Dental Depot Style */}
+          {/* Logo - AGDentool Style */}
           <Link to="/" className="flex-shrink-0 flex items-center gap-2">
             <div className="w-10 h-10 bg-brand-primary rounded-lg flex items-center justify-center">
               <svg
@@ -441,7 +441,7 @@ export const Header = () => {
                     </svg>
                   </div>
                   <span className="text-xl font-bold text-slate-900">
-                    Dental Depot
+                    AGDentool
                   </span>
                 </Link>
                 <button

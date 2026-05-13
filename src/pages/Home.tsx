@@ -14,7 +14,7 @@ export const Home = () => {
         jsonLd={{
           "@context": "https://schema.org",
           "@type": "WebSite",
-          name: "Dental Depot",
+          name: "AGDentool",
           url: "https://www.yourdentalsite.com/",
           potentialAction: {
             "@type": "SearchAction",

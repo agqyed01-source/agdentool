@@ -18,7 +18,7 @@ export const Seo: React.FC<SeoProps> = ({
   url,
   jsonLd 
 }) => {
-  const siteName = 'Dental Depot';
+  const siteName = 'AGDentool';
   const fullTitle = `${title} | ${siteName}`;
 
   return (

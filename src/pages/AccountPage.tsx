@@ -270,7 +270,7 @@ export const AccountPage = () => {
   if (!user) {
     return (
       <div className="container mx-auto px-4 py-16 flex justify-center">
-        <Seo title="Account Login" description="Sign in to your Dental Depot account." />
+        <Seo title="Account Login" description="Sign in to your AGDentool account." />
         <div className="w-full max-w-md bg-white p-8 rounded-2xl border border-slate-100 shadow-sm">
           <div className="flex bg-slate-100 rounded-lg p-1 mb-8">
             <button 
@@ -874,7 +874,7 @@ export const AccountPage = () => {
 
   return (
     <div className="container mx-auto px-4 py-8 md:py-12">
-      <Seo title="My Account" description="Manage your Dental Depot account and orders." />
+      <Seo title="My Account" description="Manage your AGDentool account and orders." />
       
       <div className="flex flex-col lg:flex-row gap-12">
         {/* Sidebar Nav */}
