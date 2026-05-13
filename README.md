@@ -192,12 +192,36 @@ function custom_headless_order_pay_page() {
                 }
                 
                 /* WooCommerce form overrides inside our wrapper */
-                #custom-pay-wrapper .woocommerce { margin: 0; }
+                #custom-pay-wrapper .woocommerce { margin: 0; width: 100%; }
+                #custom-pay-wrapper #order_review, #custom-pay-wrapper #order_review_heading { width: 100% !important; float: none !important; margin: 0 !important; }
                 #custom-pay-wrapper .woocommerce-Message { display: none; } /* Hide default WC messages if desired */
-                #custom-pay-wrapper ul.order_details { background: #f1f5f9; border-radius: 8px; padding: 20px; border: none; margin-bottom: 30px; }
-                #custom-pay-wrapper ul.order_details li { border-right: none; border-bottom: 1px solid #e2e8f0; padding: 10px 0; margin: 0; float: none; width: 100%; display: flex; justify-content: space-between; text-transform: uppercase; font-size: 11px; color: #64748b; font-weight: 700; }
+                #custom-pay-wrapper ul.order_details { background: #f1f5f9; border-radius: 8px; padding: 20px; border: none; margin-bottom: 30px; display: flex; flex-direction: column; width: 100%; box-sizing: border-box; }
+                #custom-pay-wrapper ul.order_details li { border-right: none; border-bottom: 1px solid #e2e8f0; padding: 10px 0; margin: 0; float: none; width: 100%; display: flex; flex-direction: column; text-transform: uppercase; font-size: 11px; color: #64748b; font-weight: 700; }
                 #custom-pay-wrapper ul.order_details li:last-child { border-bottom: none; }
-                #custom-pay-wrapper ul.order_details li strong { text-transform: none; font-size: 14px; color: #0f172a; }
+                #custom-pay-wrapper ul.order_details li strong { text-transform: none; font-size: 14px; color: #0f172a; margin-top: 4px; }
+                
+                /* Order table styling */
+                table.shop_table { width: 100%; border-collapse: collapse; margin-bottom: 30px; text-align: left; }
+                table.shop_table th { padding: 12px 8px; border-bottom: 2px solid #e2e8f0; color: #0f172a; font-size: 14px; }
+                table.shop_table td { padding: 12px 8px; border-bottom: 1px solid #e2e8f0; vertical-align: middle; color: #475569; font-size: 14px; }
+                table.shop_table tfoot th, table.shop_table tfoot td { font-weight: bold; color: #0f172a; }
+                
+                /* Payment methods styling */
+                #payment { background: #f8fafc; border-radius: 8px; border: 1px solid #e2e8f0; overflow: hidden; }
+                #payment ul.payment_methods { list-style: none; margin: 0; padding: 0; border-bottom: 1px solid #e2e8f0; }
+                #payment ul.payment_methods li { padding: 16px; border-bottom: 1px solid #e2e8f0; }
+                #payment ul.payment_methods li:last-child { border-bottom: none; }
+                #payment ul.payment_methods li input { margin-right: 12px; }
+                #payment ul.payment_methods li label { font-weight: 600; color: #0f172a; display: inline-flex; align-items: center; }
+                #payment ul.payment_methods li label img { max-height: 24px; margin-left: 8px; }
+                #payment div.payment_box { padding: 16px; background: #e2e8f0; border-radius: 4px; font-size: 13px; color: #475569; margin-top: 12px; }
+                
+                /* Submit button styling */
+                #payment .form-row { padding: 20px; margin: 0; background: #fff; }
+                #payment .button { width: 100%; background: #0ea5e9; color: #fff; border: none; padding: 14px; border-radius: 8px; font-size: 16px; font-weight: 600; cursor: pointer; transition: background 0.2s; }
+                #payment .button:hover { background: #0284c7; }
+                
+                .woocommerce-privacy-policy-text { font-size: 12px; color: #64748b; margin-bottom: 16px; line-height: 1.5; }
                 
                 /* Hide WordPress Admin Bar on this specific page */
                 #wpadminbar { display: none !important; }
