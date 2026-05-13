@@ -59,6 +59,35 @@ VITE_GTM_ID=GTM-XXXXXXX
 4. Provide a description, select the User, and set Permissions to **Read/Write**.
 5. Generate the API key. Copy the Consumer Key and Consumer Secret to your `.env` file.
 
+### WordPress `functions.php` Configuration
+Because this frontend operates as a Headless application interacting with WooCommerce via the REST API, you may need to add specific code snippets to your active WordPress theme's `functions.php` (or use a Code Snippets plugin).
+
+#### 1. Security: Prevent Draft Products in REST API
+By default, authenticated REST API requests via Consumer Keys (with Read/Write permissions) will return products with a `draft` status. While the frontend explicitly filters for `status=publish`, you can enforce this strictly on the backend to prevent draft data leakage:
+```php
+add_filter( 'woocommerce_rest_product_object_query', function( $args, $request ) {
+    $args['post_status'] = 'publish';
+    return $args;
+}, 10, 2 );
+```
+
+#### 2. CORS (Cross-Origin Resource Sharing)
+Although our integrated Node.js proxy (`server.ts`) handles most requests, if you perform direct client-to-WordPress requests (like direct form submissions), you might encounter CORS blocks. To globally allow frontend domains:
+```php
+add_action( 'rest_api_init', function() {
+    remove_filter( 'rest_pre_serve_request', 'rest_send_cors_headers' );
+    add_filter( 'rest_pre_serve_request', function( $value ) {
+        header( 'Access-Control-Allow-Origin: *' ); // Replace * with your frontend domain for production
+        header( 'Access-Control-Allow-Methods: GET, POST, OPTIONS, PUT, DELETE' );
+        header( 'Access-Control-Allow-Credentials: true' );
+        if ( 'OPTIONS' === $_SERVER['REQUEST_METHOD'] ) {
+            exit();
+        }
+        return $value;
+    });
+}, 15 );
+```
+
 ---
 
 ## 中文使用手册
@@ -124,3 +153,32 @@ A: 旧网站部署的 Google Site Kit 会把追踪代码注入在 WordPress 的�
 1. 找到你原来绑定的 GA4 追踪 ID（格式为 `G-XXXXXXXX`）以及 GTM 容器 ID（格式为 `GTM-XXXXX`）。
 2. 将这两个值或者其中需要用到的值，填入前端根目录 `.env` 文件的 `VITE_GA_MEASUREMENT_ID` 和 `VITE_GTM_ID` 里。
 3. 代码里的 `<Analytics />` 组件会自动把 gtag 等统计代码注入到网页内，并在用户进行路由切换时正确统计每一个页面的访问 (Page View)。
+
+### WordPress `functions.php` 补充配置参数说明
+由于该前端应用作为 Headless 架构与 WooCommerce 交互，为了确保数据的安全性和 API 的正常调用，建议您在 WordPress 当前主题的 `functions.php` 文件中（或者使用 Code Snippets 插件）加入以下配套代码说明：
+
+#### 1. 拦截草稿商品 (Draft) 被 API 输出
+由于使用了具备管理员权限的 REST API Keys，默认情况下 WooCommerce 会连同“草稿(Draft)”状态的商品一起返回（前端已经在请求中加了 `status=publish` 参数修复此问题）。但为了从源头防止内部数据泄露，您可以强制过滤：
+```php
+add_filter( 'woocommerce_rest_product_object_query', function( $args, $request ) {
+    $args['post_status'] = 'publish';
+    return $args;
+}, 10, 2 );
+```
+
+#### 2. 处理跨域请求拦截 (CORS) 配置
+前端已经自带了 Node.js （`server.ts`）做代理中转，大部分请求不会遇到跨域问题。但如果您在后续开发中需要前端页面直连请求 WordPress 某些 API（如提交一些不支持代理的表单），需要在后端开放跨域权限。将这里的 `*` 换成你最终的前端域名以保证安全性：
+```php
+add_action( 'rest_api_init', function() {
+    remove_filter( 'rest_pre_serve_request', 'rest_send_cors_headers' );
+    add_filter( 'rest_pre_serve_request', function( $value ) {
+        header( 'Access-Control-Allow-Origin: *' ); // 上线后建议替换为您前端的生产域名
+        header( 'Access-Control-Allow-Methods: GET, POST, OPTIONS, PUT, DELETE' );
+        header( 'Access-Control-Allow-Credentials: true' );
+        if ( 'OPTIONS' === $_SERVER['REQUEST_METHOD'] ) {
+            exit();
+        }
+        return $value;
+    });
+}, 15 );
+```
