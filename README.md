@@ -13,7 +13,7 @@ A modern, high-performance web storefront interacting with WooCommerce via the R
 This project requires environment variables to connect to your WooCommerce store securely. In a local environment, create a `.env` file in the root directory:
 
 ```env
-VITE_WOO_API_URL=https://your-wordpress-site.com/wp-json/wc/v3
+VITE_WOO_API_URL=https://your-wordpress-site.com
 VITE_WOO_CONSUMER_KEY=ck_your_consumer_key_here
 VITE_WOO_CONSUMER_SECRET=cs_your_consumer_secret_here
 VITE_WOO_CF7_ID=your_contact_form_7_id
@@ -234,6 +234,111 @@ function custom_headless_order_pay_page() {
 ```
 
 This approach allows you to completely remodel the payment page structure and inject arbitrary CSS, giving the WooCommerce WordPress end the appearance of a clean, isolated Stripe-like payment portal.
+
+## Redirecting Users Back to the Frontend After Payment
+
+By default, after a successful payment, WooCommerce redirects users to the backend `order-received` page (e.g., `npm.agdentool.com/checkout/order-received/...`). Since you are using a headless React architecture, you want the user to land on the React frontend's order confirmation page (e.g., `agdentool.com/order/123`).
+
+To force WooCommerce to redirect users directly back to your React application, add the following PHP snippet to your WordPress theme's `functions.php` or a custom plugin:
+
+```php
+// 1. Change the URL that payment gateways use to redirect the user:
+add_filter('woocommerce_get_return_url', 'headless_woocommerce_get_return_url', 10, 2);
+
+function headless_woocommerce_get_return_url($return_url, $order) {
+    if ($order) {
+        $frontend_url = 'https://agdentool.com'; // Replace with your actual frontend domain
+        $return_url = $frontend_url . '/order/' . $order->get_id();
+    }
+    return $return_url;
+}
+
+// 2. Catch any direct visits to the order-received page and safely redirect:
+add_action('template_redirect', 'headless_redirect_order_received_page');
+
+function headless_redirect_order_received_page() {
+    if (function_exists('is_wc_endpoint_url') && is_wc_endpoint_url('order-received')) {
+        global $wp;
+        $order_id = absint($wp->query_vars['order-received']);
+        
+        if ($order_id) {
+            $frontend_url = 'https://agdentool.com/order/' . $order_id; // Replace with your frontend domain
+            wp_safe_redirect($frontend_url);
+            exit;
+        }
+    }
+}
+```
+
+## Cloudflare Configuration (Security & Caching)
+
+Since the architecture separates the headless WooCommerce backend (`npm.agdentool.com`) from the React frontend (`agdentool.com`), you should configure Cloudflare rules to secure the backend and optimize caching using the Free Plan. 
+
+### 1. WordPress Backend (`npm.agdentool.com`)
+
+The backend domain is dedicated entirely to CMS administration, serving API endpoints, and processing payments. To prevent users from accessing original frontend-facing WordPress pages (such as `/product/...`, categories, or the home page), we will block those requests entirely. We do not need a redirect because the frontend mapping is already handled by the React application.
+
+#### Security Rules (WAF Custom Rules)
+Go to **Security > WAF > Custom rules** and create a rule to block standard frontend pages while allowing API, admin, and WooCommerce endpoints.
+
+**Rule Name:** `Block Frontend Pages on Backend`
+**Action:** `Block`
+**Expression (Use the Expression Builder):**
+* Match `ALL` of the following:
+  * `Hostname` equals `npm.agdentool.com`
+  * `URI Path` does not start with `/wp-admin/`
+  * `URI Path` does not contain `wp-login.php`
+  * `URI Path` does not start with `/wp-json/`
+  * `URI Path` does not start with `/wc-api/` (Required for payment gateway webhooks)
+  * `URI Path` does not start with `/checkout/order-pay/` (Required if using WooCommerce hosted payment page)
+  * `URI Query String` does not contain `wc-ajax=` (Required for WooCommerce AJAX features like cart updates)
+
+Alternatively, if you strictly want to block just products and categories:
+**Action:** `Block`
+* Match `ANY` of the following:
+  * `URI Path` starts with `/product/`
+  * `URI Path` starts with `/product-category/`
+  * `URI Path` starts with `/shop/`
+  * `URI Path` equals `/` (and `URI Query String` does not contain `wc-ajax=`)
+
+#### Caching Rules (Page Rules / Cache Rules)
+In the Free Plan, WooCommerce backend caching should be bypassed for dynamic areas to prevent checkout or REST API issues.
+
+Go to **Caching > Cache Rules** and create a rule:
+
+**Rule Name:** `Bypass Cache for Dynamic Backend Paths`
+**Action:** `Bypass cache`
+**Expression:**
+* Match `ANY` of the following:
+  * `URI Path` starts with `/wp-admin/`
+  * `URI Path` contains `wp-login.php`
+  * `URI Path` starts with `/wp-json/`
+  * `URI Path` starts with `/wc-api/`
+  * `URI Path` starts with `/checkout/`
+  * `URI Query String` contains `wc-ajax=`
+
+*(Optional)* If you want to cache the WooCommerce REST API for faster frontend catalog loading, you could create an earlier rule targeting `URI Path starts with /wp-json/wc/v3/products` (method `GET`) and set the **Cache status** to `Eligible for cache` with an Edge TTL of 2-4 hours.
+
+### 2. React Frontend (`agdentool.com`)
+
+For the Express/React frontend, you want Cloudflare to cache static assets aggressively to save bandwidth and improve load times while bypassing dynamic API proxies.
+
+#### Security 
+- Go to **Security > Settings** and set the Security Level to `Medium`.
+- Go to **Security > Bots** and enable **Bot Fight Mode**.
+
+#### Caching Rules
+Go to **Caching > Cache Rules** and create:
+
+**Rule 1: Bypass API routes**
+* **Expression:** `URI Path` starts with `/api/` (If your Express server uses this for proxies)
+* **Action:** `Bypass cache`
+
+**Rule 2: Cache Static Assets**
+* **Expression:** `URI Path` extension is in `css, js, jpg, jpeg, png, svg, webp, woff2, ico`
+* **Action:** `Cache`
+  * **Edge TTL:** 1 month
+  * **Browser TTL:** 1 month
 
 
 - **Frontend**: React, React Router, Tailwind CSS, Framer Motion (for animations), Lucide React (Icons).
