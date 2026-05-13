@@ -248,9 +248,10 @@ export const wooApi = {
     per_page?: number;
     orderby?: string;
     order?: string;
+    status?: string;
   }): Promise<{ products: WooProduct[], totalPages: number, total: number }> => {
     try {
-      const query: Record<string, string> = {};
+      const query: Record<string, string> = { status: params?.status || "publish" };
       if (params?.search) query.search = params.search;
       if (params?.page) query.page = params.page.toString();
       if (params?.per_page) query.per_page = params.per_page.toString();
@@ -331,7 +332,7 @@ export const wooApi = {
          }
       }
       
-      const products = await fetchWoo("/products", { slug });
+      const products = await fetchWoo("/products", { slug, status: "publish" });
       return products.length > 0 ? products[0] : null;
     } catch (err: any) {
       console.error(err);

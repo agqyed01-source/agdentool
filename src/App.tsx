@@ -8,6 +8,7 @@ import { Routes, Route, useLocation } from 'react-router-dom';
 import { Header } from './components/Header';
 import { Footer } from './components/FeaturedAndFooter';
 import { MobileBottomNav } from './components/FooterAndNav';
+import { Analytics } from './components/Analytics';
 import { Home } from './pages/Home';
 import { ProductPage } from './pages/ProductPage';
 import { CartPage } from './pages/CartPage';
@@ -38,6 +39,7 @@ export default function App() {
   return (
     <div className="min-h-screen flex flex-col bg-slate-50">
       <ScrollToTop />
+      <Analytics />
       {/* Navigation */}
       <Header />
       
