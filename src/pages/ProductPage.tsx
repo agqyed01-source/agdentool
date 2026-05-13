@@ -221,11 +221,11 @@ export const ProductPage = () => {
       <div className="grid md:grid-cols-2 gap-12 bg-white p-6 md:p-10 rounded-2xl border border-slate-100 shadow-sm mb-12">
         {/* Product Image Gallery */}
         <div className="flex flex-col gap-4 min-w-0">
-          <div className="aspect-square w-full bg-slate-50 rounded-xl border border-slate-100 overflow-hidden">
+          <div className="aspect-square w-full bg-slate-50 rounded-xl border border-slate-100 overflow-hidden flex items-center justify-center p-4 md:p-8">
             <img 
               src={product.images[selectedImageIndex]?.src || product.images[0]?.src} 
               alt={product.images[selectedImageIndex]?.alt || decodeHtmlEntities(product.name)} 
-              className="w-full h-full object-contain p-4 md:p-8"
+              className="max-w-full max-h-full object-contain"
               referrerPolicy="no-referrer"
             />
           </div>
@@ -250,7 +250,7 @@ export const ProductPage = () => {
         </div>
 
         {/* Product Info */}
-        <div className="flex flex-col">
+        <div className="flex flex-col min-w-0">
           <span className="text-xs font-bold text-brand-primary uppercase tracking-widest mb-2">
             {decodeHtmlEntities(product.categories[0]?.name)}
           </span>
@@ -299,7 +299,7 @@ export const ProductPage = () => {
           </div>
 
           <div 
-            className="prose prose-sm text-slate-600 mb-6"
+            className="prose prose-sm text-slate-600 mb-6 max-w-full break-words overflow-x-auto"
             dangerouslySetInnerHTML={{ __html: product.short_description || '' }} 
           />
 
@@ -403,7 +403,7 @@ export const ProductPage = () => {
 
         {activeTab === 'description' && (
           <div 
-            className="prose prose-slate max-w-none px-2"
+            className="prose prose-slate max-w-none px-2 break-words overflow-x-auto"
             dangerouslySetInnerHTML={{ __html: product.description }}
           />
         )}
