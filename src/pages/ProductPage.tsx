@@ -99,6 +99,26 @@ export const ProductPage = () => {
     });
   }, [variationsData, selectedVariations, product]);
 
+  useEffect(() => {
+    if (currentVariation?.image?.src && product) {
+      const idx = product.images.findIndex(img => img.src === currentVariation.image?.src || img.id === currentVariation.image?.id);
+      if (idx !== -1) {
+        setSelectedImageIndex(idx);
+      } else {
+        // If the image is not in the gallery, add it temporarily so it can be selected
+        setProduct((prev) => {
+          if (!prev) return prev;
+          if (prev.images.some(img => img.src === currentVariation.image!.src)) return prev;
+          return {
+            ...prev,
+            images: [...prev.images, currentVariation.image!]
+          };
+        });
+        setSelectedImageIndex(product.images.length);
+      }
+    }
+  }, [currentVariation, product]);
+
   const currentPrice = currentVariation 
     ? (currentVariation.price || currentVariation.sale_price || currentVariation.regular_price)
     : product?.price;

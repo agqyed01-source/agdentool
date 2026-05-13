@@ -13,6 +13,7 @@ export interface WooVariation {
   regular_price: string;
   sale_price: string;
   price_html?: string;
+  image?: { id: number; src: string; alt: string };
   attributes: {
     id: number;
     name: string;
