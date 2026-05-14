@@ -19,14 +19,16 @@ export const ProductPage = () => {
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
   const [loadedImages, setLoadedImages] = useState<Record<string, boolean>>({});
   const [showStickyAdd, setShowStickyAdd] = useState(false);
+  const [showStickyHeader, setShowStickyHeader] = useState(false);
   const addToCartRef = useRef<HTMLDivElement>(null);
   const imgRef = useRef<HTMLImageElement>(null);
+  const imageGalleryRef = useRef<HTMLDivElement>(null);
 
   const currentImageSrc = product?.images[selectedImageIndex]?.src || product?.images[0]?.src || '';
   const isImageLoading = currentImageSrc ? !loadedImages[currentImageSrc] : false;
 
   useEffect(() => {
-    const observer = new IntersectionObserver(
+    const observerAdd = new IntersectionObserver(
       ([entry]) => {
         // Show sticky button only when the target is NOT visible,
         // which means top of screen is past it or we haven't scrolled to it.
@@ -36,9 +38,27 @@ export const ProductPage = () => {
       { threshold: 0 }
     );
     if (addToCartRef.current) {
-      observer.observe(addToCartRef.current);
+      observerAdd.observe(addToCartRef.current);
     }
-    return () => observer.disconnect();
+
+    const observerHeader = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.boundingClientRect.bottom < 0) {
+            setShowStickyHeader(true);
+        } else {
+            setShowStickyHeader(false);
+        }
+      },
+      { threshold: 0 }
+    );
+    if (imageGalleryRef.current) {
+      observerHeader.observe(imageGalleryRef.current);
+    }
+
+    return () => {
+        observerAdd.disconnect();
+        observerHeader.disconnect();
+    };
   }, [product]);
 
   useEffect(() => {
@@ -261,9 +281,34 @@ export const ProductPage = () => {
         <span className="text-slate-900">{decodeHtmlEntities(product.name)}</span>
       </div>
 
+      {/* Mobile Sticky Header for Image & Variation Name */}
+      <div 
+        className={`fixed top-[73px] left-0 right-0 z-[40] bg-white border-b border-slate-200 p-3 shadow-sm transition-transform duration-300 md:hidden flex items-start gap-4 ${showStickyHeader ? 'translate-y-0' : '-translate-y-[150%]'}`}
+      >
+        <div className="w-[40%] aspect-square max-w-[160px] bg-slate-50 border border-slate-100 rounded-lg flex-shrink-0 flex items-center justify-center overflow-hidden">
+          <img 
+            src={currentImageSrc} 
+            alt="Current Variant" 
+            className="w-full h-full object-contain"
+          />
+        </div>
+        <div className="flex flex-col min-w-0 flex-1 pt-1">
+          <span className="text-sm font-bold text-slate-900 line-clamp-2">{decodeHtmlEntities(product.name)}</span>
+          {currentVariation ? (
+             <span className="text-sm text-brand-primary font-bold mt-1 truncate">
+                 {currentVariation.attributes.filter(a => a.option).map(a => a.option).join(', ')}
+             </span>
+          ) : (
+             <span className="text-sm text-slate-500 mt-1 truncate">
+                 {Object.values(selectedVariations).filter(v => v).join(', ') || 'Select options'}
+             </span>
+          )}
+        </div>
+      </div>
+
       <div className="grid md:grid-cols-2 gap-12 bg-white p-6 md:p-10 rounded-2xl border border-slate-100 shadow-sm mb-12">
         {/* Product Image Gallery */}
-        <div className="flex flex-col gap-4 min-w-0">
+        <div ref={imageGalleryRef} className="flex flex-col gap-4 min-w-0">
           <div className="aspect-square w-full bg-slate-50 rounded-xl border border-slate-100 overflow-hidden relative flex items-center justify-center p-4 md:p-8">
             {isImageLoading && (
               <div className="absolute inset-0 z-10 flex items-center justify-center bg-slate-50/50 backdrop-blur-sm">
