@@ -25,15 +25,7 @@ export const ProductPage = () => {
   useEffect(() => {
     const src = product?.images?.[selectedImageIndex]?.src;
     if (!src) return;
-    
     setIsImageLoading(true);
-    // If we have ref, setTimeout slightly to check if complete to avoid flicker
-    const timer = setTimeout(() => {
-      if (imgRef.current?.complete && imgRef.current?.src.includes(src)) {
-        setIsImageLoading(false);
-      }
-    }, 50);
-    return () => clearTimeout(timer);
   }, [product?.images?.[selectedImageIndex]?.src]);
 
   useEffect(() => {
@@ -282,6 +274,7 @@ export const ProductPage = () => {
               </div>
             )}
             <img 
+              key={product.images[selectedImageIndex]?.src || product.images[0]?.src}
               ref={imgRef}
               src={product.images[selectedImageIndex]?.src || product.images[0]?.src} 
               alt={product.images[selectedImageIndex]?.alt || decodeHtmlEntities(product.name)} 
