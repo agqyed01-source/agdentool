@@ -315,9 +315,19 @@ async function startServer() {
   });
 
   // API routing for WooCommerce
-  app.post('/api/woo/fetch', async (req, res) => {
+  app.all('/api/woo/fetch', async (req, res) => {
     try {
-      const { endpoint, queryParams, method, bodyData } = req.body;
+      let endpoint, queryParams, method, bodyData, includeHeaders;
+
+      if (req.method === 'GET') {
+        endpoint = req.query.endpoint as string;
+        method = 'GET';
+        queryParams = req.query.queryParams ? JSON.parse(req.query.queryParams as string) : {};
+        includeHeaders = req.query.includeHeaders === 'true';
+      } else {
+        ({ endpoint, queryParams, method, bodyData, includeHeaders } = req.body);
+      }
+      
       const WOO_URL = process.env.VITE_WOO_API_URL;
       const WOO_KEY = process.env.VITE_WOO_CONSUMER_KEY;
       const WOO_SECRET = process.env.VITE_WOO_CONSUMER_SECRET;
@@ -376,7 +386,7 @@ async function startServer() {
       const totalPages = wooRes.headers.get('x-wp-totalpages');
       const total = wooRes.headers.get('x-wp-total');
 
-      if (req.body.includeHeaders && (totalPages !== null)) {
+      if (includeHeaders && (totalPages !== null)) {
         return res.json({ 
           data: data, 
           headers: {

@@ -223,11 +223,29 @@ async function fetchWoo(
   bodyData?: any,
   includeHeaders: boolean = false
 ) {
-  const res = await fetch("/api/woo/fetch", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ endpoint, queryParams, method, bodyData, includeHeaders }),
-  });
+  let fetchOptions: RequestInit;
+  let url = "/api/woo/fetch";
+
+  if (method === "GET") {
+    const searchParams = new URLSearchParams();
+    searchParams.set("endpoint", endpoint);
+    if (Object.keys(queryParams).length > 0) {
+      searchParams.set("queryParams", JSON.stringify(queryParams));
+    }
+    if (includeHeaders) {
+      searchParams.set("includeHeaders", "true");
+    }
+    url += `?${searchParams.toString()}`;
+    fetchOptions = { method: "GET" };
+  } else {
+    fetchOptions = {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ endpoint, queryParams, method, bodyData, includeHeaders }),
+    };
+  }
+
+  const res = await fetch(url, fetchOptions);
 
   if (!res.ok) {
     const errorData = await res.json().catch(() => ({}));

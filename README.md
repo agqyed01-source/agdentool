@@ -154,6 +154,17 @@ A: 旧网站部署的 Google Site Kit 会把追踪代码注入在 WordPress 的�
 2. 将这两个值或者其中需要用到的值，填入前端根目录 `.env` 文件的 `VITE_GA_MEASUREMENT_ID` 和 `VITE_GTM_ID` 里。
 3. 代码里的 `<Analytics />` 组件会自动把 gtag 等统计代码注入到网页内，并在用户进行路由切换时正确统计每一个页面的访问 (Page View)。
 
+**Q: 为什么我用 Google PageSpeed Insights 测试我部署好的真实网站，提示“NO_FCP / 该网页未渲染任何内容”？**
+A: 对于 React 单页应用 (SPA)，跑出 NO_FCP 通常是因为前端渲染在 PageSpeed 解析期间完全失效或被拦截。最常见的排查方向如下：
+1. **被 WAF/CDN 防火墙拦截（最常见）**：如果您的域名使用了 Cloudflare（开启了 Bot Fight Mode 或位于 Under Attack 模式），或者服务器启用了防爬虫功能，PageSpeed 会被识别为 Bot 并被拦截在一个空白的验证页面，导致无法形成 FCP。建议在 CDN 设置中将被拦截的 GoogleBot IP 加入白名单，或暂时关闭防爬虫模式后测试。
+2. **生产环境变量缺失导致的白屏崩毁**：请确保在您部署的平台（如 Vercel, Netlify 或宝塔面板）的后台设置中，正确填写了 `.env` 里的环境变量（如 `VITE_WOO_API_URL`）。由于 Vite 在打包时会替换变量，如果在云端打包时忘记配置，代码中相关的 JS 判断可能会抛出致命错误，直接导致 React 渲染树在瞬间崩溃并输出白屏。您可以打开无痕模式，按 F12 打开 Console 控制台再访问一次，看看是否有红色的报错。
+3. **JS 资源找不到 (404)**：如果因为 Nginx 配置或部署路径的问题，导致网页加载了空的 `index.html` 却无法加载对应的 `/assets/index-xxx.js` 文件，就会出现没任何内容渲染的情况。请检查您的 Nginx/Vercel 配置是否做好了 SPA 路由的重定向（即所有的请求都 fallback 到 `index.html`），并确保静态资源的引用路径正确。
+
+**Q: 我在 Cloudflare 中配置了 Cache Rules 来缓存 API 请求，但是发现 `/api/woo/fetch` 是 POST 请求无法被正常缓存？**
+A: 这是因为此前的内部代理默认使用了统一的 HTTP POST 来传递参数（由于包含了请求标头和复杂的 Body 数据）。**此问题现已在最新的代码中修复**。
+现在，所有的查询型操作（例如获取商品列表 `GET /products`、获取分类目录等）都会在到达中转服务器 `/api/woo/fetch` 之前，被前台代码自动转换为带有 URL Query String 的 HTTP `GET` 请求（例如 `/api/woo/fetch?endpoint=/products&queryParams=...`）。
+由于采用了标准的 GET 请求，您现在可以**安全地在 Cloudflare 的 Cache Rules (缓存规则) 中对 URI Path 包含 `/api/woo/fetch` 且请求方法为 GET 的资源进行边缘缓存 (Edge Cache)**，从而大幅降低请求 WordPress 后端的频率并提高页面的加载速度。
+
 ### WordPress `functions.php` 补充配置参数说明
 由于该前端应用作为 Headless 架构与 WooCommerce 交互，为了确保数据的安全性和 API 的正常调用，建议您在 WordPress 当前主题的 `functions.php` 文件中（或者使用 Code Snippets 插件）加入以下配套代码说明：
 
