@@ -161,9 +161,9 @@ A: 对于 React 单页应用 (SPA)，跑出 NO_FCP 通常是因为前端渲染�
 3. **JS 资源找不到 (404)**：如果因为 Nginx 配置或部署路径的问题，导致网页加载了空的 `index.html` 却无法加载对应的 `/assets/index-xxx.js` 文件，就会出现没任何内容渲染的情况。请检查您的 Nginx/Vercel 配置是否做好了 SPA 路由的重定向（即所有的请求都 fallback 到 `index.html`），并确保静态资源的引用路径正确。
 
 **Q: 我在 Cloudflare 中配置了 Cache Rules 来缓存 API 请求，但是发现 `/api/woo/fetch` 是 POST 请求无法被正常缓存？**
-A: 这是因为此前的内部代理默认使用了统一的 HTTP POST 来传递参数（由于包含了请求标头和复杂的 Body 数据）。**此问题现已在最新的代码中修复**。
-现在，所有的查询型操作（例如获取商品列表 `GET /products`、获取分类目录等）都会在到达中转服务器 `/api/woo/fetch` 之前，被前台代码自动转换为带有 URL Query String 的 HTTP `GET` 请求（例如 `/api/woo/fetch?endpoint=/products&queryParams=...`）。
-由于采用了标准的 GET 请求，您现在可以**安全地在 Cloudflare 的 Cache Rules (缓存规则) 中对 URI Path 包含 `/api/woo/fetch` 且请求方法为 GET 的资源进行边缘缓存 (Edge Cache)**，从而大幅降低请求 WordPress 后端的频率并提高页面的加载速度。
+A: 这是因为此前的内部代理默认使用了统一的 HTTP POST 来传递参数（由于包含了请求标头和复杂的 Body 数据）。**此问题现已在最新的代码中彻底修复**。
+现在，所有的查询型操作（例如获取商品列表 `GET /products`、获取分类目录等）都会被自动转换为带有深度 Restful URL Path 的 HTTP `GET` 请求（将查询参数伪静态化编码到路径中，例如 `/api/woo/get/products/-/category/15/page/1`）。
+这能够确保即便是最严格且默认忽略 URL 参数的 CDN（或部分粗糙配置了 Cache Rules 的场景）也能完美实现分离缓存：**您现在可以直接在 Cloudflare 的 Cache Rules (缓存规则) 中对 URI Path 包含 `/api/woo/get/` 的资源进行强边缘缓存 (Edge Cache)**。由于每个参数组合都物理存在于 URL 路径中，生成的 Cache Key 将是唯一的，这能大幅降低请求 WordPress 后端的频率并极大提高页面的加载速度。
 
 ### WordPress `functions.php` 补充配置参数说明
 由于该前端应用作为 Headless 架构与 WooCommerce 交互，为了确保数据的安全性和 API 的正常调用，建议您在 WordPress 当前主题的 `functions.php` 文件中（或者使用 Code Snippets 插件）加入以下配套代码说明：

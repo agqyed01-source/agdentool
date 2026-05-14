@@ -224,20 +224,34 @@ async function fetchWoo(
   includeHeaders: boolean = false
 ) {
   let fetchOptions: RequestInit;
-  let url = "/api/woo/fetch";
+  let url = "";
 
   if (method === "GET") {
-    const searchParams = new URLSearchParams();
-    searchParams.set("endpoint", endpoint);
-    if (Object.keys(queryParams).length > 0) {
-      searchParams.set("queryParams", JSON.stringify(queryParams));
+    const cleanEndpoint = endpoint.startsWith('/') ? endpoint.slice(1) : endpoint;
+    url = `/api/woo/get/${cleanEndpoint}`;
+
+    const pathParams: string[] = [];
+    if (queryParams) {
+      const keys = Object.keys(queryParams).sort();
+      keys.forEach((key) => {
+        const value = queryParams[key];
+        if (value !== undefined && value !== null) {
+          pathParams.push(encodeURIComponent(key));
+          pathParams.push(encodeURIComponent(String(value)));
+        }
+      });
     }
     if (includeHeaders) {
-      searchParams.set("includeHeaders", "true");
+      pathParams.push("includeHeaders");
+      pathParams.push("true");
     }
-    url += `?${searchParams.toString()}`;
+    
+    if (pathParams.length > 0) {
+      url += `/-/${pathParams.join('/')}`;
+    }
     fetchOptions = { method: "GET" };
   } else {
+    url = "/api/woo/fetch";
     fetchOptions = {
       method: "POST",
       headers: { "Content-Type": "application/json" },
