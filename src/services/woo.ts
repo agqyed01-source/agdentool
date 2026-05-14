@@ -140,6 +140,7 @@ export interface WooCategory {
 export interface WooCartItem {
   key: string;
   id: number;
+  variation_id?: number;
   quantity: number;
   name: string;
   price: string;
@@ -477,7 +478,8 @@ export const wooApi = {
   addToCart: async (
     productOrId: number | WooProduct,
     quantity: number = 1,
-    variations?: Record<string, string>
+    variations?: Record<string, string>,
+    variation_id?: number
   ): Promise<WooCart> => {
     let product: WooProduct | undefined;
     if (typeof productOrId === "number") {
@@ -515,6 +517,7 @@ export const wooApi = {
             mockCartState.items.push({
               key: `cart_item_${Date.now()}`,
               id: product.id,
+              variation_id: variation_id,
               name: `${product.name}${nameSuffix}`,
               price: product.price || "0",
               quantity: quantity,
@@ -1020,6 +1023,7 @@ export const wooApi = {
           
           return {
             product_id: i.id,
+            ...(i.variation_id ? { variation_id: i.variation_id } : {}),
             quantity: i.quantity,
             ...(meta_data.length > 0 ? { meta_data } : {}),
           };

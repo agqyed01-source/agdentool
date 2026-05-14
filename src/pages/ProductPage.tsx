@@ -412,7 +412,7 @@ export const ProductPage = () => {
                     images: currentVariation?.image?.src 
                       ? [{ id: currentVariation.image.id, src: currentVariation.image.src, alt: currentVariation.image.alt || '' }] 
                       : product.images
-                  }, quantity, selectedVariations).catch(console.error);
+                  }, quantity, selectedVariations, currentVariation?.id).catch(console.error);
                   // Simple feedback
                   const btn = document.getElementById('add-btn');
                   if (btn) {
