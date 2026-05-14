@@ -17,16 +17,13 @@ export const ProductPage = () => {
   const [variationsData, setVariationsData] = useState<WooVariation[]>([]);
   const [activeTab, setActiveTab] = useState<'description' | 'reviews'>('description');
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
-  const [isImageLoading, setIsImageLoading] = useState(true);
+  const [loadedImages, setLoadedImages] = useState<Record<string, boolean>>({});
   const [showStickyAdd, setShowStickyAdd] = useState(false);
   const addToCartRef = useRef<HTMLDivElement>(null);
   const imgRef = useRef<HTMLImageElement>(null);
 
-  useEffect(() => {
-    const src = product?.images?.[selectedImageIndex]?.src;
-    if (!src) return;
-    setIsImageLoading(true);
-  }, [product?.images?.[selectedImageIndex]?.src]);
+  const currentImageSrc = product?.images[selectedImageIndex]?.src || product?.images[0]?.src || '';
+  const isImageLoading = currentImageSrc ? !loadedImages[currentImageSrc] : false;
 
   useEffect(() => {
     const observer = new IntersectionObserver(
@@ -274,14 +271,18 @@ export const ProductPage = () => {
               </div>
             )}
             <img 
-              key={product.images[selectedImageIndex]?.src || product.images[0]?.src}
+              key={currentImageSrc}
               ref={imgRef}
-              src={product.images[selectedImageIndex]?.src || product.images[0]?.src} 
+              src={currentImageSrc} 
               alt={product.images[selectedImageIndex]?.alt || decodeHtmlEntities(product.name)} 
               className={`max-w-full max-h-full object-contain transition-opacity duration-300 ${isImageLoading ? 'opacity-0' : 'opacity-100'}`}
               referrerPolicy="no-referrer"
-              onLoad={() => setIsImageLoading(false)}
-              onError={() => setIsImageLoading(false)}
+              onLoad={() => {
+                if (currentImageSrc) setLoadedImages(prev => ({ ...prev, [currentImageSrc]: true }));
+              }}
+              onError={() => {
+                if (currentImageSrc) setLoadedImages(prev => ({ ...prev, [currentImageSrc]: true }));
+              }}
             />
           </div>
           {product.images.length > 1 && (
