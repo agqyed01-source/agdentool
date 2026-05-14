@@ -17,8 +17,24 @@ export const ProductPage = () => {
   const [variationsData, setVariationsData] = useState<WooVariation[]>([]);
   const [activeTab, setActiveTab] = useState<'description' | 'reviews'>('description');
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
+  const [isImageLoading, setIsImageLoading] = useState(true);
   const [showStickyAdd, setShowStickyAdd] = useState(false);
   const addToCartRef = useRef<HTMLDivElement>(null);
+  const imgRef = useRef<HTMLImageElement>(null);
+
+  useEffect(() => {
+    const src = product?.images?.[selectedImageIndex]?.src;
+    if (!src) return;
+    
+    setIsImageLoading(true);
+    // If we have ref, setTimeout slightly to check if complete to avoid flicker
+    const timer = setTimeout(() => {
+      if (imgRef.current?.complete && imgRef.current?.src.includes(src)) {
+        setIsImageLoading(false);
+      }
+    }, 50);
+    return () => clearTimeout(timer);
+  }, [product?.images?.[selectedImageIndex]?.src]);
 
   useEffect(() => {
     const observer = new IntersectionObserver(
@@ -259,12 +275,20 @@ export const ProductPage = () => {
       <div className="grid md:grid-cols-2 gap-12 bg-white p-6 md:p-10 rounded-2xl border border-slate-100 shadow-sm mb-12">
         {/* Product Image Gallery */}
         <div className="flex flex-col gap-4 min-w-0">
-          <div className="aspect-square w-full bg-slate-50 rounded-xl border border-slate-100 overflow-hidden flex items-center justify-center p-4 md:p-8">
+          <div className="aspect-square w-full bg-slate-50 rounded-xl border border-slate-100 overflow-hidden relative flex items-center justify-center p-4 md:p-8">
+            {isImageLoading && (
+              <div className="absolute inset-0 z-10 flex items-center justify-center bg-slate-50/50 backdrop-blur-sm">
+                <div className="w-10 h-10 border-4 border-slate-200 border-t-brand-primary rounded-full animate-spin"></div>
+              </div>
+            )}
             <img 
+              ref={imgRef}
               src={product.images[selectedImageIndex]?.src || product.images[0]?.src} 
               alt={product.images[selectedImageIndex]?.alt || decodeHtmlEntities(product.name)} 
-              className="max-w-full max-h-full object-contain"
+              className={`max-w-full max-h-full object-contain transition-opacity duration-300 ${isImageLoading ? 'opacity-0' : 'opacity-100'}`}
               referrerPolicy="no-referrer"
+              onLoad={() => setIsImageLoading(false)}
+              onError={() => setIsImageLoading(false)}
             />
           </div>
           {product.images.length > 1 && (
@@ -388,7 +412,13 @@ export const ProductPage = () => {
                     alert("This product is currently unavailable for purchase (no price set).");
                     return;
                   }
-                  wooApi.addToCart({ ...product, price: currentPrice }, quantity, selectedVariations).catch(console.error);
+                  wooApi.addToCart({ 
+                    ...product, 
+                    price: currentPrice,
+                    images: currentVariation?.image?.src 
+                      ? [{ id: currentVariation.image.id, src: currentVariation.image.src, alt: currentVariation.image.alt || '' }] 
+                      : product.images
+                  }, quantity, selectedVariations).catch(console.error);
                   // Simple feedback
                   const btn = document.getElementById('add-btn');
                   if (btn) {
