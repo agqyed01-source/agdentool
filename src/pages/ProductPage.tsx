@@ -303,6 +303,28 @@ export const ProductPage = () => {
                  {Object.values(selectedVariations).filter(v => v).join(', ') || 'Select options'}
              </span>
           )}
+          <div className="font-bold text-slate-900 mt-1">
+            {currentVariation ? (
+              <div className="flex items-baseline gap-2">
+                <span className="text-lg">${currentVariation.price}</span>
+                {currentVariation.regular_price && currentVariation.regular_price !== currentVariation.price && (
+                  <span className="text-xs text-slate-400 line-through font-bold">${currentVariation.regular_price}</span>
+                )}
+              </div>
+            ) : product.price_html ? (
+              <div 
+                className="woo-price text-lg"
+                dangerouslySetInnerHTML={{ __html: product.price_html.replace(/Price range/gi, '').replace(/가격 범위/g, '').replace(/范[围|圍][^<]*/g, '').replace(/价格[^<]*/g, '') }} 
+              />
+            ) : (
+              <div className="flex items-baseline gap-2">
+                <span className="text-lg">${product.price}</span>
+                {product.regular_price !== product.price && (
+                  <span className="text-xs text-slate-400 line-through font-bold">${product.regular_price}</span>
+                )}
+              </div>
+            )}
+          </div>
         </div>
       </div>
 
