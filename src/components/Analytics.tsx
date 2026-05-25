@@ -14,7 +14,9 @@ export function Analytics() {
   useEffect(() => {
     // Initialize Google Tag Manager (GTM)
     const gtmId = import.meta.env.VITE_GTM_ID;
+    console.log("Analytics Init -> GTM ID:", gtmId);
     if (gtmId && gtmId !== 'GTM-XXXXXXX') {
+      console.log("Analytics Init -> Initializing GTM...");
       const script = document.createElement('script');
       script.innerHTML = `
         (function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
@@ -32,7 +34,9 @@ export function Analytics() {
 
     // Initialize Google Analytics (GA4)
     const gaId = import.meta.env.VITE_GA_MEASUREMENT_ID;
+    console.log("Analytics Init -> GA ID:", gaId);
     if (gaId && gaId !== 'G-XXXXXXXXXX') {
+      console.log("Analytics Init -> Initializing GA4...");
       const script1 = document.createElement('script');
       script1.async = true;
       script1.src = `https://www.googletagmanager.com/gtag/js?id=${gaId}`;
