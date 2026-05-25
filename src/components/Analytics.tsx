@@ -14,7 +14,9 @@ export function Analytics() {
   useEffect(() => {
     // Initialize Google Tag Manager (GTM)
     const gtmId = import.meta.env.VITE_GTM_ID;
-    if (gtmId && gtmId !== 'GTM-XXXXXXX') {
+    console.log('[Analytics] Initialization check - GTM ID:', gtmId);
+    
+    if (gtmId && gtmId !== 'GTM-XXXXXXX' && gtmId !== 'undefined') {
       (function(w: any, d, s, l, i) {
         w[l] = w[l] || [];
         w[l].push({ 'gtm.start': new Date().getTime(), event: 'gtm.js' });
@@ -33,11 +35,16 @@ export function Analytics() {
       const noscript = document.createElement('noscript');
       noscript.innerHTML = `<iframe src="https://www.googletagmanager.com/ns.html?id=${gtmId}" height="0" width="0" style="display:none;visibility:hidden"></iframe>`;
       document.body.insertBefore(noscript, document.body.firstChild);
+      console.log('[Analytics] GTM Initialized successfully with ID:', gtmId);
+    } else {
+      console.warn('[Analytics] GTM missing or invalid. Check your .env setup or GitHub Secrets.');
     }
 
     // Initialize Google Analytics (GA4)
     const gaId = import.meta.env.VITE_GA_MEASUREMENT_ID;
-    if (gaId && gaId !== 'G-XXXXXXXXXX') {
+    console.log('[Analytics] Initialization check - GA ID:', gaId);
+    
+    if (gaId && gaId !== 'G-XXXXXXXXXX' && gaId !== 'undefined') {
       const script1 = document.createElement('script');
       script1.async = true;
       script1.src = `https://www.googletagmanager.com/gtag/js?id=${gaId}`;
@@ -47,6 +54,9 @@ export function Analytics() {
       window.gtag = function gtag(){window.dataLayer.push(arguments);}
       window.gtag('js', new Date());
       window.gtag('config', gaId);
+      console.log('[Analytics] GA4 Initialized successfully with ID:', gaId);
+    } else {
+      console.warn('[Analytics] GA missing or invalid. Check your .env setup or GitHub Secrets.');
     }
   }, []);
 
