@@ -479,7 +479,20 @@ export const ProductPage = () => {
                     images: currentVariation?.image?.src 
                       ? [{ id: currentVariation.image.id, src: currentVariation.image.src, alt: currentVariation.image.alt || '' }] 
                       : product.images
-                  }, quantity, selectedVariations, currentVariation?.id).catch(console.error);
+                  }, quantity, selectedVariations, currentVariation?.id).then(() => {
+                    if (window.gtag) {
+                      window.gtag('event', 'add_to_cart', {
+                        currency: 'USD',
+                        value: parseFloat(currentPrice || '0') * quantity,
+                        items: [{
+                          item_id: product.id.toString(),
+                          item_name: product.name,
+                          price: parseFloat(currentPrice || '0'),
+                          quantity: quantity
+                        }]
+                      });
+                    }
+                  }).catch(console.error);
                   // Simple feedback
                   const btn = document.getElementById('add-btn');
                   if (btn) {

@@ -26,6 +26,26 @@ export const OrderPage = () => {
     }
   }, [id]);
 
+  useEffect(() => {
+    if (order && window.gtag) {
+      const trackedKey = `ga_tracked_order_${order.id}`;
+      if (!sessionStorage.getItem(trackedKey)) {
+        window.gtag('event', 'purchase', {
+          transaction_id: order.id.toString(),
+          currency: 'USD',
+          value: parseFloat(order.total || '0'),
+          items: order.line_items?.map((item: any) => ({
+            item_id: item.product_id?.toString(),
+            item_name: item.name,
+            price: parseFloat(item.price || item.total || '0'),
+            quantity: item.quantity
+          }))
+        });
+        sessionStorage.setItem(trackedKey, 'true');
+      }
+    }
+  }, [order]);
+
   if (loading) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[50vh]">

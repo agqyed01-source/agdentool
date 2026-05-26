@@ -172,7 +172,21 @@ export const CartPage = () => {
           </form>
 
           <button 
-            onClick={() => navigate('/checkout')}
+            onClick={() => {
+              if (window.gtag) {
+                window.gtag('event', 'begin_checkout', {
+                  currency: 'USD',
+                  value: parseFloat(cart.totals.total_price),
+                  items: cart.items.map(item => ({
+                    item_id: item.id.toString(),
+                    item_name: item.name,
+                    price: parseFloat(item.price || '0'),
+                    quantity: item.quantity
+                  }))
+                });
+              }
+              navigate('/checkout');
+            }}
             className="w-full bg-brand-primary text-white font-bold py-4 rounded-lg shadow-[0_4px_14px_0_rgba(37,99,235,0.39)] hover:shadow-[0_6px_20px_rgba(37,99,235,0.23)] hover:-translate-y-0.5 transition-all text-center"
           >
             Proceed to Checkout
