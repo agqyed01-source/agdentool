@@ -63,10 +63,15 @@ export function Analytics() {
   // Track page views on route change (for Single Page Application)
   useEffect(() => {
     const gaId = import.meta.env.VITE_GA_MEASUREMENT_ID;
-    if (gaId && gaId !== 'G-XXXXXXXXXX' && window.gtag) {
-      window.gtag('config', gaId, {
-        page_path: location.pathname + location.search,
-      });
+    if (gaId && gaId !== 'G-XXXXXXXXXX' && gaId !== 'undefined' && window.gtag) {
+      // Delay tracking slightly to allow React Helmet to update document.title
+      const timer = setTimeout(() => {
+        window.gtag('config', gaId, {
+          page_path: location.pathname + location.search,
+          page_title: document.title,
+        });
+      }, 150);
+      return () => clearTimeout(timer);
     }
   }, [location]);
 
