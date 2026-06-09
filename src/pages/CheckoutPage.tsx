@@ -3,6 +3,7 @@ import { Seo } from '../components/Seo';
 import { wooApi, WooCart } from '../services/woo';
 import { Lock, CreditCard, Loader2 } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import shippingRules from '../data/shippingRules.json';
 
 import Select from 'react-select';
 
@@ -97,35 +98,176 @@ export const CheckoutPage = () => {
     let isMounted = true;
     const fetchShipping = async () => {
       try {
-        const zones = await wooApi.getShippingZones();
-        let matchedZoneId = 0; // Default to 'Rest of the World'
+        if (!isMounted) return;
 
-        if (billing.country) {
-          // Attempt to find a precise zone for the selected country
-          // In WooCommerce API, to see locations for a zone you have to query /locations
-          // For simplicity without hitting /locations for every zone, we pick zone 0 (fallback)
-          // unless your store has a specific plugin endpoint. We will just load zone 0 
-          // or zone 1 as fallback for demonstration.
-          // In a production app, you might fetch locations of each zone if zones amount is small.
-          for (const zone of zones) {
-             if (zone.id !== 0) {
-                // If we want accurate zones we'd fetch locations. But here we just assume zone 0 represents available options, or fetch the first explicit zone's methods.
-                // Let's just fetch the first explicit zone's methods if it exists and has methods for simplicity, otherwise zone 0.
-                matchedZoneId = zone.id;
-                break;
+        // Using a custom shipping snippet here as requested:
+        const subtotal = cart?.totals?.total_price ? parseFloat(cart.totals.total_price) : 0;
+        
+        interface GroupData {
+           weight: number;
+           qty: number;
+           subtotal: number;
+        }
+        
+        const groups: Record<string, GroupData> = {};
+        let overallWeight = 0;
+        let overallQty = 0;
+        let overallSubtotal = 0;
+        
+        if (cart) {
+          for (const item of cart.items) {
+             let itemWeight = 0;
+             let itemShippingClass = '';
+             if (item.variation_id) {
+                const variations = await wooApi.getProductVariations(item.id);
+                const variation = variations.find(v => v.id === item.variation_id);
+                if (variation && variation.weight) {
+                   itemWeight = parseFloat(variation.weight);
+                }
              }
+             if (!itemWeight || !itemShippingClass) {
+                const product = await wooApi.getProductBySlug(item.id.toString());
+                if (product) {
+                   if (!itemWeight && product.weight) itemWeight = parseFloat(product.weight);
+                   if (product.shipping_class) itemShippingClass = product.shipping_class;
+                }
+             }
+             if (isNaN(itemWeight)) itemWeight = 0;
+             
+             const itemQty = item.quantity;
+             const itemPriceStr = typeof item.price === "string" ? item.price : String(item.price);
+             const matchedPriceStr = itemPriceStr.match(/[\d.]+/);
+             const itemPrice = matchedPriceStr ? parseFloat(matchedPriceStr[0]) : 0;
+             const itemSubtotal = itemPrice * itemQty;
+             
+             if (!groups[itemShippingClass]) {
+                 groups[itemShippingClass] = { weight: 0, qty: 0, subtotal: 0 };
+             }
+             groups[itemShippingClass].weight += itemWeight * itemQty;
+             groups[itemShippingClass].qty += itemQty;
+             groups[itemShippingClass].subtotal += itemSubtotal;
+             
+             overallWeight += itemWeight * itemQty;
+             overallQty += itemQty;
+             overallSubtotal += itemSubtotal;
           }
         }
         
-        let methods = await wooApi.getShippingZoneMethods(matchedZoneId);
-        if (methods.length === 0 && matchedZoneId !== 0) {
-           methods = await wooApi.getShippingZoneMethods(0);
+        let snippetMethods: any[] = [];
+        const enabledRules = (shippingRules.rules || []).filter((r: any) => r.enabled).sort((a: any, b: any) => (a.priority || 0) - (b.priority || 0));
+
+        let accumulatedCost = 0;
+        let matchedRuleNames: string[] = [];
+        let matchedRuleIds: string[] = [];
+        let allGroupsMatched = true;
+
+        console.log("--- Shipping Evaluation Started ---");
+        console.log("Groups to evaluate:", groups);
+
+        for (const [sClass, group] of Object.entries(groups)) {
+             let groupMatched = false;
+             console.log(`\nEvaluating Group [${sClass || 'none'}]:`, group);
+             
+             for (const rule of enabledRules) {
+                 const condition = rule.condition || {};
+                 let match = true;
+                 let failReason = "";
+                 
+                 if (condition.countries && Array.isArray(condition.countries) && condition.countries.length > 0) {
+                    if (!condition.countries.includes(billing.country)) { match = false; failReason = `Country ${billing.country} not in [${condition.countries}]`; }
+                 }
+                 if (match && condition.shipping_classes && Array.isArray(condition.shipping_classes) && condition.shipping_classes.length > 0) {
+                    if (!condition.shipping_classes.includes(sClass)) { match = false; failReason = `Class '${sClass}' not in [${condition.shipping_classes}]`; }
+                 }
+                 if (match && condition.min_amount !== undefined && group.subtotal < condition.min_amount) { match = false; failReason = `subtotal (${group.subtotal}) < min_amount (${condition.min_amount})`; }
+                 if (match && condition.max_amount !== undefined && group.subtotal > condition.max_amount) { match = false; failReason = `subtotal (${group.subtotal}) > max_amount (${condition.max_amount})`; }
+                 if (match && condition.min_weight !== undefined && group.weight < condition.min_weight) { match = false; failReason = `weight (${group.weight}) < min_weight (${condition.min_weight})`; }
+                 if (match && condition.max_weight !== undefined && group.weight > condition.max_weight) { match = false; failReason = `weight (${group.weight}) > max_weight (${condition.max_weight})`; }
+                 if (match && condition.min_quantity !== undefined && group.qty < condition.min_quantity) { match = false; failReason = `qty (${group.qty}) < min_quantity (${condition.min_quantity})`; }
+                 if (match && condition.max_quantity !== undefined && group.qty > condition.max_quantity) { match = false; failReason = `qty (${group.qty}) > max_quantity (${condition.max_quantity})`; }
+                 
+                 if (match && condition.metric && condition.operator && condition.value !== undefined) {
+                     let metricValue = 0;
+                     if (condition.metric === 'weight') metricValue = group.weight;
+                     else if (condition.metric === 'amount') metricValue = group.subtotal;
+                     else if (condition.metric === 'quantity') metricValue = group.qty;
+                     
+                     const ruleValue = condition.value;
+                     switch (condition.operator) {
+                         case '<': if (!(metricValue < ruleValue)) { match = false; failReason = `${condition.metric} (${metricValue}) !< ${ruleValue}`; } break;
+                         case '<=': if (!(metricValue <= ruleValue)) { match = false; failReason = `${condition.metric} (${metricValue}) !<= ${ruleValue}`; } break;
+                         case '>': if (!(metricValue > ruleValue)) { match = false; failReason = `${condition.metric} (${metricValue}) !> ${ruleValue}`; } break;
+                         case '>=': if (!(metricValue >= ruleValue)) { match = false; failReason = `${condition.metric} (${metricValue}) !>= ${ruleValue}`; } break;
+                         case '==': 
+                         case '=': if (!(metricValue == ruleValue)) { match = false; failReason = `${condition.metric} (${metricValue}) != ${ruleValue}`; } break;
+                     }
+                 }
+                 
+                 if (match) {
+                     let cost = 0;
+                     switch (rule.calculation_mode) {
+                        case 'fixed': cost = rule.shipping_fee || 0; break;
+                        case 'weight_first_additional':
+                            cost = (rule.first_price || 0) + Math.ceil(Math.max(0, group.weight - (rule.first_weight || 0)) / (rule.additional_weight || 1)) * (rule.additional_price || 0);
+                            break;
+                        case 'quantity_first_additional':
+                            cost = (rule.first_price || 0) + Math.ceil(Math.max(0, group.qty - (rule.first_quantity || 0)) / (rule.additional_quantity || 1)) * (rule.additional_price || 0);
+                            break;
+                        case 'per_item': cost = group.qty * (rule.price_per_item || 0); break;
+                        case 'per_kg': cost = group.weight * (rule.price_per_kg || 0); break;
+                        case 'base_plus_per_kg': cost = (rule.base_fee || 0) + group.weight * (rule.price_per_kg || 0); break;
+                        case 'base_plus_per_item': cost = (rule.base_fee || 0) + group.qty * (rule.price_per_item || 0); break;
+                        case 'percentage_of_amount': cost = group.subtotal * (rule.percentage || 0) / 100; break;
+                        default: cost = rule.shipping_fee || 0;
+                     }
+                     accumulatedCost += cost;
+                     groupMatched = true;
+                     matchedRuleIds.push(rule.id);
+                     if (rule.name && !matchedRuleNames.includes(rule.name)) matchedRuleNames.push(rule.name);
+                     
+                     console.log(`  -> Rule [${rule.id}] MATCHED! Calculated Cost: ${cost} (Accumulated: ${accumulatedCost})`);
+                     
+                     if (shippingRules.match_type === 'first_match') {
+                         break;
+                     }
+                 } else {
+                     // Log why exactly it failed so user can see in browser devtools:
+                     console.log(`  -> Rule [${rule.id}] skipped. Reason: ${failReason}`);
+                 }
+             }
+             if (!groupMatched) {
+                 console.warn(`  -> NO MATCHING RULE for Group [${sClass || 'none'}]`);
+                 allGroupsMatched = false;
+             }
+        }
+        
+        if (Object.keys(groups).length > 0 && matchedRuleIds.length > 0) {
+            snippetMethods.push({
+                method_id: 'combined_shipping',
+                id: matchedRuleIds.join('_') || 'standard',
+                title: matchedRuleNames.join(' + ') || 'Shipping',
+                settings: { cost: { value: accumulatedCost.toFixed(2) } }
+            });
+            console.log("--- Final Built Snippet Method:", snippetMethods);
+        }
+        
+        const hasFreeShippingCoupon = cart?.coupons?.some(c => c.discount === subtotal.toString() || parseFloat(c.discount) >= subtotal || c.code.toLowerCase() === 'freeship');
+        if (hasFreeShippingCoupon) {
+           snippetMethods = [{ method_id: 'free_shipping', id: 'coupon_free', title: 'Free Shipping (Coupon)', settings: { cost: { value: '0.00' } } }];
+        }
+
+        // --- ADDED FALLBACK ---
+        // If the cart doesn't match any of the strict shipping class rules for the country, provide a fallback.
+        if (snippetMethods.length === 0 && billing.country) {
+            let defaultCost = '15.00';
+            if (billing.country === 'US') defaultCost = '10.00';
+            snippetMethods = [{ method_id: 'default_fallback', id: 'default', title: 'Standard Shipping (Fallback)', settings: { cost: { value: defaultCost } } }];
         }
 
         if (isMounted) {
-           setShippingMethods(methods.filter((m: any) => m.enabled));
-           if (methods.length > 0) {
-             setSelectedShippingMethod(methods.find((m: any) => m.enabled) || null);
+           setShippingMethods(snippetMethods);
+           if (snippetMethods.length > 0) {
+             setSelectedShippingMethod(snippetMethods[0] || null);
            }
         }
       } catch (err) {
@@ -134,7 +276,7 @@ export const CheckoutPage = () => {
     };
     fetchShipping();
     return () => { isMounted = false; };
-  }, [billing.country]);
+  }, [billing.country, billing.state, billing.postcode, cart?.totals?.total_items, cart?.totals?.total_price]);
 
   const handleApplyCoupon = async () => {
     if (!couponCode.trim()) return;
@@ -450,7 +592,9 @@ export const CheckoutPage = () => {
                     ))}
                   </div>
                 ) : (
-                  <div className="text-slate-500 italic text-sm">Please enter a valid address to view shipping options.</div>
+                  <div className="text-slate-500 italic text-sm">
+                    {billing.country ? "No shipping options available for the selected address." : "Please enter a valid address to view shipping options."}
+                  </div>
                 )}
               </div>
 

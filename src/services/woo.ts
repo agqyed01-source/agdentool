@@ -9,6 +9,7 @@
 
 export interface WooVariation {
   id: number;
+  weight?: string;
   price: string;
   regular_price: string;
   sale_price: string;
@@ -23,6 +24,8 @@ export interface WooVariation {
 
 export interface WooProduct {
   id: number;
+  weight?: string;
+  shipping_class?: string;
   name: string;
   slug: string;
   type: string;
@@ -56,6 +59,8 @@ const mockProducts: WooProduct[] = [
   {
     id: 1,
     name: "High-Speed Air Turbine Handpiece",
+    shipping_class: "small-light",
+    weight: "0.2",
     slug: "high-speed-air-turbine-handpiece",
     permalink: "/product/high-speed-air-turbine-handpiece",
     description: "<p>Premium German-engineered high-speed handpiece.</p>",
@@ -80,6 +85,8 @@ const mockProducts: WooProduct[] = [
   {
     id: 2,
     name: "LED Ultrasonic Scaler System",
+    shipping_class: "heavy-tools",
+    weight: "2.5",
     slug: "led-ultrasonic-scaler",
     permalink: "/product/led-ultrasonic-scaler",
     description:
@@ -977,6 +984,16 @@ export const wooApi = {
   getShippingZoneMethods: async (zoneId: number): Promise<any[]> => {
     try {
       const res = await fetchWoo(`/shipping/zones/${zoneId}/methods`);
+      if (Array.isArray(res)) return res;
+      return [];
+    } catch {
+      return [];
+    }
+  },
+
+  getShippingZoneLocations: async (zoneId: number): Promise<any[]> => {
+    try {
+      const res = await fetchWoo(`/shipping/zones/${zoneId}/locations`);
       if (Array.isArray(res)) return res;
       return [];
     } catch {
