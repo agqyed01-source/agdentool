@@ -27,7 +27,7 @@ export const Home = () => {
       <TrustBar />
       <Hero />
       <ShopByCategoryBlock />
-      <ProductGrid title="Best Sellers" />
+      <ProductGrid title="Best Sellers" featured={true} limit={16} />
       <div className="bg-white py-12 border-t border-slate-100">
         <ProductGrid title="New Arrivals" />
       </div>

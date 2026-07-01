@@ -132,6 +132,14 @@ export const CheckoutPage = () => {
                    if (product.shipping_class) itemShippingClass = product.shipping_class;
                 }
              }
+             
+             // Dynamic Fallback: if STILL no shipping class found, assign a default 
+             // so it can at least match SOME rule in the rules JSON instead of failing.
+             if (!itemShippingClass) {
+                 itemShippingClass = 'small-light';
+                 console.warn(`Product ${item.id} has no shipping_class. Defaulting to 'small-light'`);
+             }
+             
              if (isNaN(itemWeight)) itemWeight = 0;
              
              const itemQty = item.quantity;

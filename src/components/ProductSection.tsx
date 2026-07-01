@@ -256,8 +256,12 @@ export const ProductCard = ({ product }: { product: WooProduct }) => {
 
 export const ProductGrid = ({
   title = "Featured Products",
+  featured,
+  limit = 8
 }: {
   title?: string;
+  featured?: boolean;
+  limit?: number;
 }) => {
   const [products, setProducts] = useState<WooProduct[]>([]);
   const [loading, setLoading] = useState(true);
@@ -270,7 +274,7 @@ export const ProductGrid = ({
     setLoading(true);
     setError(null);
     wooApi
-      .getProducts({ category: slug, search: searchQuery, per_page: 8 })
+      .getProducts({ category: slug, search: searchQuery, per_page: limit, featured })
       .then((res) => {
         setProducts(res.products);
         setLoading(false);
@@ -280,7 +284,7 @@ export const ProductGrid = ({
         setError(err.message || "Failed to load products");
         setLoading(false);
       });
-  }, [slug, searchQuery]);
+  }, [slug, searchQuery, limit, featured]);
 
   return (
     <section className="container mx-auto px-4 py-8 md:py-12">

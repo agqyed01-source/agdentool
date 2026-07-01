@@ -289,6 +289,7 @@ export const wooApi = {
     orderby?: string;
     order?: string;
     status?: string;
+    featured?: boolean;
   }): Promise<{ products: WooProduct[], totalPages: number, total: number }> => {
     try {
       const query: Record<string, string> = { status: params?.status || "publish" };
@@ -297,6 +298,7 @@ export const wooApi = {
       if (params?.per_page) query.per_page = params.per_page.toString();
       if (params?.orderby) query.orderby = params.orderby;
       if (params?.order) query.order = params.order;
+      if (params?.featured) query.featured = "true";
 
       if (params?.category) {
         // fetch category id by slug first
