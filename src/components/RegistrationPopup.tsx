@@ -15,23 +15,46 @@ export function RegistrationPopup() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    // Only show once per session to avoid infinite loops if they navigate away
-    if (hasShown) return;
+    if (sessionStorage.getItem('registration_popup_shown') === 'true') {
+      setHasShown(true);
+      return;
+    }
 
-    const timer = setTimeout(async () => {
-      // Don't show if already on account page or checkout
-      if (location.pathname.includes('/account') || location.pathname.includes('/checkout')) return;
-      
-      const user = await wooApi.getCurrentUser();
-      // If no valid user session, show popup
-      if (!user || !user.id || user.id > 1000000000) {
-        setIsOpen(true);
-        setHasShown(true);
+    let startTime = sessionStorage.getItem('site_visit_start');
+    if (!startTime) {
+      startTime = Date.now().toString();
+      sessionStorage.setItem('site_visit_start', startTime);
+    }
+
+    const interval = setInterval(async () => {
+      if (sessionStorage.getItem('registration_popup_shown') === 'true') {
+        clearInterval(interval);
+        return;
       }
-    }, 60000); // 60 seconds delay
 
-    return () => clearTimeout(timer);
-  }, [location.pathname, hasShown]);
+      const currentElapsed = Date.now() - parseInt(startTime!, 10);
+      if (currentElapsed >= 60000) {
+        const currentPath = window.location.pathname;
+        // Don't show if already on account page or checkout
+        if (!currentPath.includes('/account') && !currentPath.includes('/checkout')) {
+          const user = await wooApi.getCurrentUser();
+          // If no valid user session, show popup
+          if (!user || !user.id || user.id > 1000000000) {
+            setIsOpen(true);
+            setHasShown(true);
+            sessionStorage.setItem('registration_popup_shown', 'true');
+            clearInterval(interval);
+          } else {
+            // Already logged in
+            sessionStorage.setItem('registration_popup_shown', 'true');
+            clearInterval(interval);
+          }
+        }
+      }
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, []);
 
   if (!isOpen) return null;
 
@@ -63,7 +86,7 @@ export function RegistrationPopup() {
   };
 
   return (
-    <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-slate-900/30 backdrop-blur-sm p-4 animate-in fade-in duration-300">
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-transparent backdrop-blur-sm p-4 animate-in fade-in duration-300">
       <div className="bg-white w-full max-w-md rounded-2xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-300 relative">
         <div className="bg-brand-primary p-8 text-white text-center relative">
           <div className="mx-auto w-16 h-16 bg-white/20 rounded-full flex items-center justify-center mb-4">
