@@ -9,6 +9,7 @@ import { Header } from './components/Header';
 import { Footer } from './components/FeaturedAndFooter';
 import { MobileBottomNav } from './components/FooterAndNav';
 import { Analytics } from './components/Analytics';
+import { RegistrationPopup } from './components/RegistrationPopup';
 import { Home } from './pages/Home';
 import { ProductPage } from './pages/ProductPage';
 import { CartPage } from './pages/CartPage';
@@ -40,6 +41,7 @@ export default function App() {
     <div className="min-h-screen flex flex-col bg-slate-50">
       <ScrollToTop />
       <Analytics />
+      <RegistrationPopup />
       {/* Navigation */}
       <Header />
       
