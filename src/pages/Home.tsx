@@ -3,6 +3,7 @@ import { Seo } from "../components/Seo";
 import { TrustBar, Hero } from "../components/TrustBarAndHero";
 import { ProductGrid, ShopByCategoryBlock } from "../components/ProductSection";
 import { Newsletter, WhatsAppAgents } from "../components/FooterAndNav";
+import { CouponSection } from "../components/CouponSection";
 
 export const Home = () => {
   return (
@@ -26,6 +27,7 @@ export const Home = () => {
       />
       <TrustBar />
       <Hero />
+      <CouponSection />
       <ShopByCategoryBlock />
       <ProductGrid title="Best Sellers" featured={true} limit={16} />
       <div className="bg-slate-50 py-12 border-t border-slate-100">

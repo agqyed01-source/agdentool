@@ -86,7 +86,7 @@ export function RegistrationPopup() {
   };
 
   return (
-    <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-transparent backdrop-blur-sm p-4 animate-in fade-in duration-300">
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-transparent p-4 animate-in fade-in duration-300">
       <div className="bg-white w-full max-w-md rounded-2xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-300 relative">
         <div className="bg-brand-primary p-8 text-white text-center relative">
           <div className="mx-auto w-16 h-16 bg-white/20 rounded-full flex items-center justify-center mb-4">
