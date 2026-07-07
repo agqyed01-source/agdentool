@@ -162,7 +162,7 @@ export interface WooCart {
     total_price: string;
     total_discount?: string;
   };
-  coupons?: { code: string; discount: string }[];
+  coupons?: { code: string; discount: string; discount_type?: string; amount?: string; minimum_amount?: string; individual_use?: boolean; free_shipping?: boolean }[];
 }
 
 export interface WooUser {
@@ -191,6 +191,7 @@ export interface WooOrder {
     product_id: number;
     quantity: number;
     total: string;
+    meta_data?: { id?: number; key: string; value: string }[];
   }[];
 }
 
@@ -477,6 +478,65 @@ export const wooApi = {
 
   // ---- Mock Cart API ----
   getCart: async (): Promise<WooCart> => {
+    // Validate coupons already in cart
+    if (mockCartState.coupons && mockCartState.coupons.length > 0) {
+      let subtotal = mockCartState.items.reduce(
+         (acc, item) => acc + parseFloat(item.price || "0") * item.quantity, 0
+      );
+      
+      let validCoupons = [];
+      let isAnyIndividual = false;
+      
+      for (const cartCoupon of mockCartState.coupons) {
+          try {
+             const couponsArr = await fetchWoo("/coupons", { code: cartCoupon.code });
+             const c = couponsArr && couponsArr.length > 0 ? couponsArr[0] : null;
+             if (c) {
+                 let minAmount = parseFloat(c.minimum_amount) || 0;
+                 if (minAmount === 0 && c.meta_data) {
+                     const meta = c.meta_data.find((m: any) => String(m.key).includes('minimum_amount'));
+                     if (meta) minAmount = parseFloat(meta.value) || 0;
+                 }
+
+                 if (minAmount > 0 && subtotal < minAmount) {
+                     continue; // Exclude due to min spend
+                 }
+                 
+                 const indVal = String(c.individual_use).toLowerCase();
+                 let isIndividual = indVal === 'true' || indVal === 'yes' || indVal === '1';
+                 if (!isIndividual && c.meta_data) {
+                     const meta = c.meta_data.find((m: any) => String(m.key).includes('individual'));
+                     if (meta) {
+                        const v = String(meta.value).toLowerCase();
+                        if (v === 'yes' || v === 'true' || v === '1') isIndividual = true;
+                     }
+                 }
+                 
+                 if (isIndividual) {
+                     if (validCoupons.length > 0 || isAnyIndividual) continue;
+                     isAnyIndividual = true;
+                 } else {
+                     if (isAnyIndividual) continue;
+                 }
+                 validCoupons.push({
+                     ...cartCoupon,
+                     discount_type: c.discount_type,
+                     amount: c.amount,
+                     minimum_amount: minAmount.toString(),
+                     individual_use: isIndividual
+                 });
+             } else {
+                 validCoupons.push(cartCoupon); // Fallback for mock coupons
+             }
+          } catch(e) {
+             validCoupons.push(cartCoupon);
+          }
+      }
+      
+      mockCartState.coupons = validCoupons;
+      recalculateCart();
+    }
+
     return new Promise((resolve) =>
       setTimeout(() => {
         resolve(JSON.parse(JSON.stringify(mockCartState)));
@@ -591,18 +651,69 @@ export const wooApi = {
           (c: any) => c.code.toLowerCase() === code.toLowerCase(),
         );
         if (coupon) {
+          if (mockCartState.coupons && mockCartState.coupons.find((c) => c.code.toLowerCase() === code.toLowerCase())) {
+             return { ...mockCartState };
+          }
+          const subtotal = mockCartState.items.reduce(
+            (acc, item) => acc + parseFloat(item.price || "0") * item.quantity,
+            0,
+          );
+
+          let minAmount = parseFloat(coupon.minimum_amount) || 0;
+          if (minAmount === 0 && coupon.meta_data) {
+             const meta = coupon.meta_data.find((m: any) => String(m.key).includes('minimum_amount'));
+             if (meta) minAmount = parseFloat(meta.value) || 0;
+          }
+
+          if (minAmount > 0) {
+            if (subtotal < minAmount) {
+              throw new Error(`Minimum spend of $${minAmount.toFixed(2)} is required.`);
+            }
+          }
+
+          if (!mockCartState.coupons) mockCartState.coupons = [];
+
+          const indVal = String(coupon.individual_use).toLowerCase();
+          let isIndividual = indVal === 'true' || indVal === 'yes' || indVal === '1';
+          if (!isIndividual && coupon.meta_data) {
+             const meta = coupon.meta_data.find((m: any) => String(m.key).includes('individual'));
+             if (meta) {
+                 const v = String(meta.value).toLowerCase();
+                 if (v === 'yes' || v === 'true' || v === '1') isIndividual = true;
+             }
+          }
+          
+          // Check if any EXISTING coupon is individual_use
+          for (const existing of mockCartState.coupons) {
+             const existingDataArr = await fetchWoo("/coupons", { code: existing.code });
+             const existingData = existingDataArr && existingDataArr.length > 0 ? existingDataArr[0] : null;
+             if (existingData) {
+                 const eIndVal = String(existingData.individual_use).toLowerCase();
+                 let existingIsIndividual = eIndVal === 'true' || eIndVal === 'yes' || eIndVal === '1';
+                 if (!existingIsIndividual && existingData.meta_data) {
+                     const meta = existingData.meta_data.find((m: any) => String(m.key).includes('individual'));
+                     if (meta) {
+                         const v = String(meta.value).toLowerCase();
+                         if (v === 'yes' || v === 'true' || v === '1') existingIsIndividual = true;
+                     }
+                 }
+                 if (existingIsIndividual) {
+                     throw new Error(`Coupon "${existing.code}" cannot be used in conjunction with other coupons.`);
+                 }
+             }
+          }
+
+          if (isIndividual && mockCartState.coupons.length > 0) {
+              throw new Error(`Coupon "${coupon.code}" cannot be used in conjunction with other coupons.`);
+          }
+
           let discount = 0;
           if (coupon.discount_type === "percent") {
-            const subtotal = mockCartState.items.reduce(
-              (acc, item) => acc + parseFloat(item.price) * item.quantity,
-              0,
-            );
             discount = subtotal * (parseFloat(coupon.amount) / 100);
           } else {
             discount = parseFloat(coupon.amount);
           }
 
-          if (!mockCartState.coupons) mockCartState.coupons = [];
           if (
             !mockCartState.coupons.find(
               (c) => c.code.toLowerCase() === code.toLowerCase(),
@@ -611,10 +722,15 @@ export const wooApi = {
             mockCartState.coupons.push({
               code: coupon.code,
               discount: discount.toFixed(2),
+              discount_type: coupon.discount_type,
+              amount: coupon.amount,
+              minimum_amount: minAmount.toString(),
+              individual_use: isIndividual,
+              free_shipping: coupon.free_shipping === true,
             });
             recalculateCart();
           }
-          return mockCartState;
+          return { ...mockCartState };
         }
       }
       throw new Error("Invalid coupon code");
@@ -629,7 +745,7 @@ export const wooApi = {
           )
         ) {
           const subtotal = mockCartState.items.reduce(
-            (acc, item) => acc + parseFloat(item.price) * item.quantity,
+            (acc, item) => acc + parseFloat(item.price || "0") * item.quantity,
             0,
           );
           mockCartState.coupons.push({
@@ -638,8 +754,9 @@ export const wooApi = {
           });
           recalculateCart();
         }
-        return mockCartState;
+        return { ...mockCartState };
       }
+      if (err.message && err.message !== "Invalid coupon code") throw err; // throw min spend or stacking errors up!
       throw new Error(err.message || "Invalid coupon code");
     }
   },
@@ -1243,20 +1360,28 @@ function saveMockUser(data: MockUserData) {
   localStorage.setItem(MOCK_USERS_KEY, JSON.stringify(users));
 }
 
-let mockCartState: WooCart = JSON.parse(
-  localStorage.getItem(CART_STORAGE_KEY) || "null",
-) || {
+let mockCartState: WooCart = {
   items: [],
   coupons: [],
   totals: { total_items: 0, total_price: "0.00", total_discount: "0.00" },
 };
+if (typeof localStorage !== 'undefined') {
+  mockCartState = JSON.parse(
+    localStorage.getItem(CART_STORAGE_KEY) || "null",
+  ) || mockCartState;
+}
 
-let mockCurrentUser: WooUser | null = JSON.parse(
-  localStorage.getItem(USER_STORAGE_KEY) || "null",
-);
+let mockCurrentUser: WooUser | null = null;
+if (typeof localStorage !== 'undefined') {
+  mockCurrentUser = JSON.parse(
+    localStorage.getItem(USER_STORAGE_KEY) || "null",
+  );
+}
 
 function saveCart() {
-  localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(mockCartState));
+  if (typeof localStorage !== 'undefined') {
+    localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(mockCartState));
+  }
 }
 
 function saveUser() {
@@ -1273,15 +1398,46 @@ function recalculateCart() {
     0,
   );
   const subtotal = mockCartState.items.reduce(
-    (acc, item) => acc + parseFloat(item.price) * item.quantity,
+    (acc, item) => acc + parseFloat(item.price || "0") * item.quantity,
     0,
   );
 
   let totalDiscount = 0;
   if (mockCartState.coupons) {
-    mockCartState.coupons.forEach((c) => {
-      totalDiscount += parseFloat(c.discount);
-    });
+    let validCoupons: any[] = [];
+    let isAnyIndividual = false;
+    
+    for (let c of mockCartState.coupons) {
+      if (c.minimum_amount && parseFloat(c.minimum_amount) > 0 && subtotal < parseFloat(c.minimum_amount)) {
+        continue;
+      }
+      if (c.individual_use) {
+        if (validCoupons.length > 0 || isAnyIndividual) continue;
+        isAnyIndividual = true;
+      } else {
+        if (isAnyIndividual) continue;
+      }
+      
+      let discount = 0;
+      if (c.discount_type === "percent" && c.amount) {
+        discount = subtotal * (parseFloat(c.amount) / 100);
+      } else if (c.amount) {
+         discount = parseFloat(c.amount);
+      } else {
+         discount = parseFloat(c.discount || "0");
+      }
+      
+      // Cap discount to remaining subtotal
+      const maxDiscount = Math.max(0, subtotal - totalDiscount);
+      if (discount > maxDiscount) {
+        discount = maxDiscount;
+      }
+      
+      c.discount = discount.toFixed(2);
+      totalDiscount += discount;
+      validCoupons.push(c);
+    }
+    mockCartState.coupons = validCoupons;
   }
 
   const totalPrice = Math.max(0, subtotal - totalDiscount);

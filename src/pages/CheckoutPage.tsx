@@ -162,7 +162,7 @@ export const CheckoutPage = () => {
         }
         
         let snippetMethods: any[] = [];
-        const enabledRules = (shippingRules.rules || []).filter((r: any) => r.enabled).sort((a: any, b: any) => (a.priority || 0) - (b.priority || 0));
+        const enabledRules: any[] = (shippingRules.rules || []).filter((r: any) => r.enabled).sort((a: any, b: any) => (a.priority || 0) - (b.priority || 0));
 
         let accumulatedCost = 0;
         let matchedRuleNames: string[] = [];
@@ -259,12 +259,11 @@ export const CheckoutPage = () => {
             console.log("--- Final Built Snippet Method:", snippetMethods);
         }
         
-        const hasFreeShippingCoupon = cart?.coupons?.some(c => c.discount === subtotal.toString() || parseFloat(c.discount) >= subtotal || c.code.toLowerCase() === 'freeship');
+        const hasFreeShippingCoupon = cart?.coupons?.some(c => c.free_shipping === true || c.code.toLowerCase() === 'freeship');
         if (hasFreeShippingCoupon) {
            snippetMethods = [{ method_id: 'free_shipping', id: 'coupon_free', title: 'Free Shipping (Coupon)', settings: { cost: { value: '0.00' } } }];
         }
 
-        // --- ADDED FALLBACK ---
         // If the cart doesn't match any of the strict shipping class rules for the country, provide a fallback.
         if (snippetMethods.length === 0 && billing.country) {
             let defaultCost = '15.00';
@@ -637,7 +636,7 @@ export const CheckoutPage = () => {
             <button 
               type="submit"
               form="checkout-form"
-              disabled={loading}
+              disabled={loading || shippingMethods.length === 0}
               className="w-full bg-brand-primary text-white font-bold text-lg py-4 rounded-lg shadow-[0_4px_14px_0_rgba(37,99,235,0.39)] hover:shadow-[0_6px_20px_rgba(37,99,235,0.23)] hover:-translate-y-0.5 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-3"
             >
               {loading ? (
@@ -645,6 +644,8 @@ export const CheckoutPage = () => {
                   <Loader2 size={24} className="animate-spin" />
                   Processing...
                 </>
+              ) : shippingMethods.length === 0 ? (
+                'Shipping Not Available'
               ) : `Continue to Payment ($${(parseFloat(cart.totals.total_price) + (selectedShippingMethod?.settings?.cost?.value ? parseFloat(selectedShippingMethod.settings.cost.value) : 0)).toFixed(2)})`}
             </button>
           </div>

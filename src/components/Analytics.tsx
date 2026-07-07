@@ -13,7 +13,7 @@ export function Analytics() {
 
   useEffect(() => {
     // Initialize Google Tag Manager (GTM)
-    const gtmId = import.meta.env.VITE_GTM_ID;
+    const gtmId = (import.meta as any).env.VITE_GTM_ID;
     console.log('[Analytics] Initialization check - GTM ID:', gtmId);
     
     if (gtmId && gtmId !== 'GTM-XXXXXXX' && gtmId !== 'undefined') {
@@ -41,7 +41,7 @@ export function Analytics() {
     }
 
     // Initialize Google Analytics (GA4)
-    const gaId = import.meta.env.VITE_GA_MEASUREMENT_ID;
+    const gaId = (import.meta as any).env.VITE_GA_MEASUREMENT_ID;
     console.log('[Analytics] Initialization check - GA ID:', gaId);
     
     if (gaId && gaId !== 'G-XXXXXXXXXX' && gaId !== 'undefined') {
@@ -62,7 +62,7 @@ export function Analytics() {
 
   // Track page views on route change (for Single Page Application)
   useEffect(() => {
-    const gaId = import.meta.env.VITE_GA_MEASUREMENT_ID;
+    const gaId = (import.meta as any).env.VITE_GA_MEASUREMENT_ID;
     if (gaId && gaId !== 'G-XXXXXXXXXX' && gaId !== 'undefined' && window.gtag) {
       // Delay tracking slightly to allow React Helmet to update document.title
       const timer = setTimeout(() => {
