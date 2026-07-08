@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { wooApi } from '../services/woo';
-import { UserPlus, Loader2 } from 'lucide-react';
+import { UserPlus, Loader2, X, Check } from 'lucide-react';
 
 export function RegistrationPopup() {
   const [isOpen, setIsOpen] = useState(false);
@@ -15,38 +15,41 @@ export function RegistrationPopup() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (sessionStorage.getItem('registration_popup_shown') === 'true') {
+    if (sessionStorage.getItem('wholesale_popup_shown_v3') === 'true') {
       setHasShown(true);
       return;
     }
 
-    let startTime = sessionStorage.getItem('site_visit_start');
+    let startTime = sessionStorage.getItem('site_visit_start_v3');
     if (!startTime) {
       startTime = Date.now().toString();
-      sessionStorage.setItem('site_visit_start', startTime);
+      sessionStorage.setItem('site_visit_start_v3', startTime);
     }
 
     const interval = setInterval(async () => {
-      if (sessionStorage.getItem('registration_popup_shown') === 'true') {
+      if (sessionStorage.getItem('wholesale_popup_shown_v3') === 'true') {
         clearInterval(interval);
         return;
       }
 
       const currentElapsed = Date.now() - parseInt(startTime!, 10);
-      if (currentElapsed >= 60000) {
+      
+      if (currentElapsed >= 20000) {
         const currentPath = window.location.pathname;
+        
         // Don't show if already on account page or checkout
         if (!currentPath.includes('/account') && !currentPath.includes('/checkout')) {
           const user = await wooApi.getCurrentUser();
+          
           // If no valid user session, show popup
           if (!user || !user.id || user.id > 1000000000) {
             setIsOpen(true);
             setHasShown(true);
-            sessionStorage.setItem('registration_popup_shown', 'true');
+            sessionStorage.setItem('wholesale_popup_shown_v3', 'true');
             clearInterval(interval);
           } else {
             // Already logged in
-            sessionStorage.setItem('registration_popup_shown', 'true');
+            sessionStorage.setItem('wholesale_popup_shown_v3', 'true');
             clearInterval(interval);
           }
         }
@@ -62,6 +65,7 @@ export function RegistrationPopup() {
     e.preventDefault();
     setLoading(true);
     setError('');
+    
     try {
       await wooApi.register({ email, password });
       setIsOpen(false);
@@ -80,20 +84,29 @@ export function RegistrationPopup() {
     }
   };
 
-  const handleLoginRedirect = () => {
+  const handleClose = () => {
     setIsOpen(false);
-    navigate('/account');
   };
 
   return (
-    <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-transparent p-4 animate-in fade-in duration-300">
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/60 p-4 animate-in fade-in duration-300">
       <div className="bg-white w-full max-w-md rounded-2xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-300 relative">
+        <button 
+          onClick={handleClose}
+          className="absolute top-4 right-4 text-white hover:text-slate-200 z-10 bg-black/20 hover:bg-black/40 rounded-full p-1 transition-colors"
+        >
+          <X size={20} />
+        </button>
+        
         <div className="bg-brand-primary p-8 text-white text-center relative">
-          <div className="mx-auto w-16 h-16 bg-white/20 rounded-full flex items-center justify-center mb-4">
-            <UserPlus size={32} className="text-white" />
+          <h2 className="text-2xl font-bold mb-2">🎁 Unlock Wholesale Benefits</h2>
+          <div className="text-blue-100 text-sm text-left mt-4 max-w-[250px] mx-auto space-y-2 font-medium">
+            <p className="font-bold text-white mb-3">Register to get:</p>
+            <p className="flex items-center gap-2"><Check size={16} className="text-green-400" /> Wholesale Price</p>
+            <p className="flex items-center gap-2"><Check size={16} className="text-green-400" /> PDF Catalog</p>
+            <p className="flex items-center gap-2"><Check size={16} className="text-green-400" /> CE & ISO Documents</p>
+            <p className="flex items-center gap-2"><Check size={16} className="text-green-400" /> Faster Quotation</p>
           </div>
-          <h2 className="text-2xl font-bold mb-2">Create an Account</h2>
-          <p className="text-blue-100 text-sm">Join us for exclusive professional dental supplies, order tracking, and special offers.</p>
         </div>
         
         <div className="p-8">
@@ -133,19 +146,16 @@ export function RegistrationPopup() {
               disabled={loading}
               className="w-full bg-brand-primary hover:bg-brand-secondary text-white font-bold py-3.5 rounded-lg transition-colors flex items-center justify-center gap-2 mt-2 shadow-[0_4px_14px_0_rgba(37,99,235,0.39)] hover:shadow-[0_6px_20px_rgba(37,99,235,0.23)]"
             >
-              {loading ? <Loader2 size={20} className="animate-spin" /> : 'Register Now'}
+              {loading ? <Loader2 size={20} className="animate-spin" /> : 'Create Free Account'}
             </button>
             
-            <div className="text-center pt-4 border-t border-slate-100 mt-6">
-              <span className="text-sm text-slate-500 mr-2">Already have an account?</span>
-              <button 
-                type="button" 
-                onClick={handleLoginRedirect}
-                className="text-sm text-brand-primary hover:text-brand-secondary font-bold"
-              >
-                Log in
-              </button>
-            </div>
+            <button 
+              type="button" 
+              onClick={handleClose}
+              className="w-full text-center text-sm font-semibold text-slate-500 hover:text-slate-800 transition-colors mt-2 py-2"
+            >
+              Continue Browsing
+            </button>
           </form>
         </div>
       </div>

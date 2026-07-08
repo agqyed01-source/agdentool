@@ -57,6 +57,7 @@ export const MobileBottomNav = () => {
     }, 2000);
     return () => clearInterval(intervalId);
   }, []);
+
   return (
     <div className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-slate-100 flex items-center justify-around py-2 px-2 shadow-[0_-4px_12px_rgba(0,0,0,0.05)]">
       <Link to="/" className="flex flex-col items-center gap-1 p-1 text-slate-400 hover:text-brand-primary">
