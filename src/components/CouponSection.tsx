@@ -4,7 +4,7 @@ import { Copy, CheckCircle2, Ticket } from 'lucide-react';
 
 export const CouponSection = () => {
   const [coupons, setCoupons] = useState<any[]>([]);
-  const [copied, setCopied] = useState<string | null>(null);
+  const [claimedCodes, setClaimedCodes] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -37,12 +37,24 @@ export const CouponSection = () => {
       setCoupons(activeCoupons);
       setLoading(false);
     });
+
+    const saved = localStorage.getItem('claimed_coupons') || '[]';
+    try {
+      setClaimedCodes(new Set(JSON.parse(saved)));
+    } catch(e) {}
   }, []);
 
-  const handleCopy = (code: string) => {
-    navigator.clipboard.writeText(code);
-    setCopied(code);
-    setTimeout(() => setCopied(null), 2000);
+  const handleClaim = async (code: string) => {
+    const user = await wooApi.getCurrentUser();
+    if (!user) {
+      window.dispatchEvent(new CustomEvent('show-registration-popup', { detail: { type: 'timer' } }));
+      return;
+    }
+
+    const newClaimed = new Set(claimedCodes);
+    newClaimed.add(code);
+    setClaimedCodes(newClaimed);
+    localStorage.setItem('claimed_coupons', JSON.stringify(Array.from(newClaimed)));
   };
 
   if (loading) return null;
@@ -70,16 +82,21 @@ export const CouponSection = () => {
             </div>
             
             <button
-              onClick={() => handleCopy(coupon.code)}
-              className="bg-white border border-brand-primary/20 hover:bg-brand-primary hover:text-white hover:border-brand-primary transition-all text-brand-primary text-xs font-bold py-2 px-4 rounded-full flex items-center gap-1.5 w-full justify-center shadow-sm relative z-10"
+              onClick={() => handleClaim(coupon.code)}
+              disabled={claimedCodes.has(coupon.code)}
+              className={`border text-xs font-bold py-2 px-4 rounded-full flex items-center gap-1.5 w-full justify-center shadow-sm relative z-10 transition-all ${
+                claimedCodes.has(coupon.code)
+                  ? 'bg-emerald-50 text-emerald-600 border-emerald-200 cursor-default'
+                  : 'bg-white border-brand-primary/20 hover:bg-brand-primary hover:text-white hover:border-brand-primary text-brand-primary'
+              }`}
             >
-              {copied === coupon.code ? (
+              {claimedCodes.has(coupon.code) ? (
                 <>
-                  <CheckCircle2 size={14} /> Copied!
+                  <CheckCircle2 size={14} /> Claimed!
                 </>
               ) : (
                 <>
-                  <Copy size={14} /> Copy Code
+                  <Copy size={14} /> Claim Coupon
                 </>
               )}
             </button>

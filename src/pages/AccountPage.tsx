@@ -62,7 +62,15 @@ export const AccountPage = () => {
         setUser(u);
         if (u) {
           wooApi.getOrders().then(setOrders);
-          wooApi.getCoupons().then(setCoupons);
+          wooApi.getCoupons().then(allCoupons => {
+            const saved = localStorage.getItem('claimed_coupons') || '[]';
+            let claimedCodes: string[] = [];
+            try {
+              claimedCodes = JSON.parse(saved);
+            } catch(e) {}
+            const claimedCoupons = allCoupons.filter(c => claimedCodes.includes(c.code));
+            setCoupons(claimedCoupons);
+          });
         }
       }
       setLoading(false);
@@ -96,7 +104,15 @@ export const AccountPage = () => {
       }
       setUser(u);
       wooApi.getOrders().then(setOrders);
-      wooApi.getCoupons().then(setCoupons);
+      wooApi.getCoupons().then(allCoupons => {
+        const saved = localStorage.getItem('claimed_coupons') || '[]';
+        let claimedCodes: string[] = [];
+        try {
+          claimedCodes = JSON.parse(saved);
+        } catch(e) {}
+        const claimedCoupons = allCoupons.filter(c => claimedCodes.includes(c.code));
+        setCoupons(claimedCoupons);
+      });
       setActiveTab('dashboard');
     } catch (err: any) {
       let msg = err.message || (isLoginView ? 'Login failed' : 'Registration failed');
@@ -831,7 +847,7 @@ export const AccountPage = () => {
 
   const renderCoupons = () => (
     <div className="space-y-6">
-      <h1 className="text-2xl font-bold text-slate-900 mb-6">Available Coupons</h1>
+      <h1 className="text-2xl font-bold text-slate-900 mb-6">Your Coupons</h1>
       
       {updateMessage && (
         <div className={`p-4 rounded-xl flex items-center gap-3 font-medium text-sm border ${updateMessage.type === 'success' ? 'bg-emerald-50 text-emerald-700 border-emerald-100' : 'bg-red-50 text-red-700 border-red-100'}`}>
