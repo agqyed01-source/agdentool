@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { wooApi } from '../services/woo';
-import { UserPlus, Loader2, X, Check } from 'lucide-react';
+import { UserPlus, Loader2, X, Check, ShoppingCart } from 'lucide-react';
 
 export function RegistrationPopup() {
   const [isOpen, setIsOpen] = useState(false);
@@ -10,24 +10,37 @@ export function RegistrationPopup() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [hasShown, setHasShown] = useState(false);
+  const [popupType, setPopupType] = useState<'timer' | 'cart'>('timer');
   
   const location = useLocation();
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (sessionStorage.getItem('wholesale_popup_shown_v3') === 'true') {
+    const handleShowPopup = (e: any) => {
+      if (e.detail?.type === 'cart') {
+        setPopupType('cart');
+        setIsOpen(true);
+      }
+    };
+    
+    window.addEventListener('show-registration-popup', handleShowPopup);
+    return () => window.removeEventListener('show-registration-popup', handleShowPopup);
+  }, []);
+
+  useEffect(() => {
+    if (sessionStorage.getItem('wholesale_popup_shown_v4') === 'true') {
       setHasShown(true);
       return;
     }
 
-    let startTime = sessionStorage.getItem('site_visit_start_v3');
+    let startTime = sessionStorage.getItem('site_visit_start_v4');
     if (!startTime) {
       startTime = Date.now().toString();
-      sessionStorage.setItem('site_visit_start_v3', startTime);
+      sessionStorage.setItem('site_visit_start_v4', startTime);
     }
 
     const interval = setInterval(async () => {
-      if (sessionStorage.getItem('wholesale_popup_shown_v3') === 'true') {
+      if (sessionStorage.getItem('wholesale_popup_shown_v4') === 'true') {
         clearInterval(interval);
         return;
       }
@@ -43,13 +56,14 @@ export function RegistrationPopup() {
           
           // If no valid user session, show popup
           if (!user || !user.id || user.id > 1000000000) {
+            setPopupType('timer');
             setIsOpen(true);
             setHasShown(true);
-            sessionStorage.setItem('wholesale_popup_shown_v3', 'true');
+            sessionStorage.setItem('wholesale_popup_shown_v4', 'true');
             clearInterval(interval);
           } else {
             // Already logged in
-            sessionStorage.setItem('wholesale_popup_shown_v3', 'true');
+            sessionStorage.setItem('wholesale_popup_shown_v4', 'true');
             clearInterval(interval);
           }
         }
@@ -100,13 +114,19 @@ export function RegistrationPopup() {
         
         <div className="bg-brand-primary p-8 text-white text-center relative">
           <h2 className="text-2xl font-bold mb-2">🎁 Unlock Wholesale Benefits</h2>
-          <div className="text-blue-100 text-sm text-left mt-4 max-w-[250px] mx-auto space-y-2 font-medium">
-            <p className="font-bold text-white mb-3">Register to get:</p>
-            <p className="flex items-center gap-2"><Check size={16} className="text-green-400" /> Wholesale Price</p>
-            <p className="flex items-center gap-2"><Check size={16} className="text-green-400" /> PDF Catalog</p>
-            <p className="flex items-center gap-2"><Check size={16} className="text-green-400" /> CE & ISO Documents</p>
-            <p className="flex items-center gap-2"><Check size={16} className="text-green-400" /> Faster Quotation</p>
-          </div>
+          {popupType === 'cart' ? (
+            <p className="text-blue-100 text-sm mt-4 font-medium max-w-[280px] mx-auto">
+              Create an account to save your cart and get a wholesale quotation.
+            </p>
+          ) : (
+            <div className="text-blue-100 text-sm text-left mt-4 max-w-[250px] mx-auto space-y-2 font-medium">
+              <p className="font-bold text-white mb-3">Register to get:</p>
+              <p className="flex items-center gap-2"><Check size={16} className="text-green-400" /> Wholesale Price</p>
+              <p className="flex items-center gap-2"><Check size={16} className="text-green-400" /> PDF Catalog</p>
+              <p className="flex items-center gap-2"><Check size={16} className="text-green-400" /> CE & ISO Documents</p>
+              <p className="flex items-center gap-2"><Check size={16} className="text-green-400" /> Faster Quotation</p>
+            </div>
+          )}
         </div>
         
         <div className="p-8">

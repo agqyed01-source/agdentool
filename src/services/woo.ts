@@ -598,6 +598,10 @@ export const wooApi = {
             });
           }
           recalculateCart();
+          
+          if (typeof window !== 'undefined' && !mockCurrentUser) {
+            window.dispatchEvent(new CustomEvent('show-registration-popup', { detail: { type: 'cart' } }));
+          }
         }
         resolve({ ...mockCartState });
       }, 100),
@@ -816,30 +820,10 @@ export const wooApi = {
       }
       throw new Error("Failed to create customer");
     } catch (err: any) {
-      if (!err.message?.includes("not configured") && !err.message?.includes("not update default")) {
-        throw err;
+      if (err.message?.includes("not configured") || err.message?.includes("not update default")) {
+        throw new Error("WooCommerce API keys are missing. Please set VITE_WOO_CONSUMER_KEY and VITE_WOO_CONSUMER_SECRET in your Environment Variables (Settings -> Environment variables).");
       }
-      // fallback
-      return new Promise((resolve) => setTimeout(() => {
-        const newUser: WooUser = { 
-          id: Date.now(), 
-          email: data.email, 
-          first_name: data.first_name || 'New', 
-          last_name: data.last_name || 'User', 
-          role: 'customer',
-          username: data.email.split('@')[0]
-        };
-        
-        saveMockUser({
-          email: data.email,
-          password: data.password,
-          user: newUser
-        });
-
-        mockCurrentUser = newUser;
-        saveUser();
-        resolve(mockCurrentUser);
-      }, 500));
+      throw err;
     }
   },
 
@@ -887,74 +871,10 @@ export const wooApi = {
 
       return mockCurrentUser;
     } catch (err: any) {
-      // If server route is missing or not configured, try mock fallback
-      if (!err.message?.includes("not configured") && !err.message?.includes("not update default") && !err.message?.includes("fetch")) {
-        throw err;
+      if (err.message?.includes("not configured") || err.message?.includes("not update default")) {
+        throw new Error("WooCommerce API keys are missing. Please set VITE_WOO_CONSUMER_KEY and VITE_WOO_CONSUMER_SECRET in your Environment Variables (Settings -> Environment variables).");
       }
-      
-      // Mock fallback
-      return new Promise((resolve, reject) =>
-        setTimeout(() => {
-          const mockUsers = getMockUsers();
-          const savedUser = mockUsers[email.toLowerCase()];
-
-          if (savedUser) {
-            if (savedUser.password === password) {
-              mockCurrentUser = savedUser.user;
-              saveUser();
-              resolve(mockCurrentUser);
-            } else {
-              reject(new Error("Invalid password"));
-            }
-            return;
-          }
-
-          // Special case for initial demo user
-          if (email && password === 'admin123') {
-            mockCurrentUser = {
-              id: 1,
-              email,
-              first_name: "Dr.",
-              last_name: "Smith",
-              role: "administrator",
-              username: email.split('@')[0]
-            };
-            saveUser();
-            
-            // Save to mock storage for next time
-            saveMockUser({ email, password, user: mockCurrentUser });
-            
-            // pre-populate some demo orders if brand new user
-            if (!localStorage.getItem(ORDERS_STORAGE_KEY)) {
-              localStorage.setItem(
-                ORDERS_STORAGE_KEY,
-                JSON.stringify([
-                  {
-                    id: 1001,
-                    status: "completed",
-                    date_created: new Date(
-                      Date.now() - 86400000 * 5,
-                    ).toISOString(),
-                    total: "1340.00",
-                    line_items: [
-                      {
-                        id: 1,
-                        name: "High-Speed Air Turbine Handpiece",
-                        product_id: 1,
-                        quantity: 2,
-                        total: "998.00",
-                      },
-                    ],
-                  },
-                ]),
-              );
-            }
-            resolve(mockCurrentUser);
-          } else {
-            reject(new Error("Invalid credentials. If this is a new account, please register. For demo, use password 'admin123'."));
-          }
-        }, 500),
-      );
+      throw err;
     }
   },
 
@@ -1312,28 +1232,10 @@ export const wooApi = {
       }
       throw new Error("Failed to update customer");
     } catch (err: any) {
-      if (!err.message?.includes("not configured")) {
-        throw err;
+      if (err.message?.includes("not configured") || err.message?.includes("not update default")) {
+        throw new Error("WooCommerce API keys are missing. Please set VITE_WOO_CONSUMER_KEY and VITE_WOO_CONSUMER_SECRET in your Environment Variables.");
       }
-      // fallback for demo
-      mockCurrentUser = {
-        ...mockCurrentUser,
-        ...data
-      } as WooUser;
-      saveUser();
-
-      // Update mock storage
-      if (mockCurrentUser) {
-        const mockUsers = getMockUsers();
-        const currentMock = mockUsers[mockCurrentUser.email.toLowerCase()];
-        saveMockUser({
-          email: mockCurrentUser.email,
-          password: data.password || currentMock?.password,
-          user: mockCurrentUser
-        });
-      }
-
-      return mockCurrentUser;
+      throw err;
     }
   },
 };
