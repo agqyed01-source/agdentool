@@ -66,7 +66,10 @@ export const AccountPage = () => {
             const saved = localStorage.getItem('claimed_coupons') || '[]';
             let claimedCodes: string[] = [];
             try {
-              claimedCodes = JSON.parse(saved);
+              const parsed = JSON.parse(saved);
+              if (Array.isArray(parsed)) {
+                claimedCodes = parsed;
+              }
             } catch(e) {}
             const claimedCoupons = allCoupons.filter(c => claimedCodes.includes(c.code));
             setCoupons(claimedCoupons);
@@ -108,7 +111,10 @@ export const AccountPage = () => {
         const saved = localStorage.getItem('claimed_coupons') || '[]';
         let claimedCodes: string[] = [];
         try {
-          claimedCodes = JSON.parse(saved);
+          const parsed = JSON.parse(saved);
+          if (Array.isArray(parsed)) {
+            claimedCodes = parsed;
+          }
         } catch(e) {}
         const claimedCoupons = allCoupons.filter(c => claimedCodes.includes(c.code));
         setCoupons(claimedCoupons);
