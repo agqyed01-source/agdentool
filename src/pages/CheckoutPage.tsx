@@ -215,6 +215,9 @@ export const CheckoutPage = () => {
                      let cost = 0;
                      switch (rule.calculation_mode) {
                         case 'fixed': cost = rule.shipping_fee || 0; break;
+                        case 'incremental':
+                            cost = (rule.base_fee || 0) + Math.ceil(Math.max(0, group.weight - (rule.base_weight || 0)) / (rule.step_weight || 1)) * (rule.step_fee || 0);
+                            break;
                         case 'weight_first_additional':
                             cost = (rule.first_price || 0) + Math.ceil(Math.max(0, group.weight - (rule.first_weight || 0)) / (rule.additional_weight || 1)) * (rule.additional_price || 0);
                             break;
