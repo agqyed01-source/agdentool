@@ -31,7 +31,7 @@ export const Home = () => {
       <ShopByCategoryBlock />
       <ProductGrid title="Best Sellers" featured={true} limit={16} />
       <div className="bg-slate-50 py-12 border-t border-slate-100">
-        <ProductGrid title="Product Zone" />
+        <ProductGrid title="Product Zone" categorySlug="yidimu" />
       </div>
       <div className="bg-white py-12 border-t border-slate-100">
         <ProductGrid title="New Arrivals" />

@@ -257,11 +257,13 @@ export const ProductCard = ({ product }: { product: WooProduct }) => {
 export const ProductGrid = ({
   title = "Featured Products",
   featured,
-  limit = 8
+  limit = 8,
+  categorySlug
 }: {
   title?: string;
   featured?: boolean;
   limit?: number;
+  categorySlug?: string;
 }) => {
   const [products, setProducts] = useState<WooProduct[]>([]);
   const [loading, setLoading] = useState(true);
@@ -270,11 +272,13 @@ export const ProductGrid = ({
   const [searchParams] = useSearchParams();
   const searchQuery = searchParams.get("search") || undefined;
 
+  const targetCategory = categorySlug || slug;
+
   useEffect(() => {
     setLoading(true);
     setError(null);
     wooApi
-      .getProducts({ category: slug, search: searchQuery, per_page: limit, featured })
+      .getProducts({ category: targetCategory, search: searchQuery, per_page: limit, featured })
       .then((res) => {
         setProducts(res.products);
         setLoading(false);
@@ -284,7 +288,7 @@ export const ProductGrid = ({
         setError(err.message || "Failed to load products");
         setLoading(false);
       });
-  }, [slug, searchQuery, limit, featured]);
+  }, [targetCategory, searchQuery, limit, featured]);
 
   return (
     <section className="container mx-auto px-4 py-8 md:py-12">
@@ -305,7 +309,7 @@ export const ProductGrid = ({
         </div>
         {!searchQuery && !slug && (
           <Link
-            to="/shop"
+            to={categorySlug ? `/category/${categorySlug}` : "/shop"}
             className="text-brand-primary font-bold text-sm hover:underline"
           >
             View All Products →
