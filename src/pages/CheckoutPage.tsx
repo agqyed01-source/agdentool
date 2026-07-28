@@ -185,7 +185,9 @@ export const CheckoutPage = () => {
                     if (!condition.countries.includes(billing.country)) { match = false; failReason = `Country ${billing.country} not in [${condition.countries}]`; }
                  }
                  if (match && condition.shipping_classes && Array.isArray(condition.shipping_classes) && condition.shipping_classes.length > 0) {
-                    if (!condition.shipping_classes.includes(sClass)) { match = false; failReason = `Class '${sClass}' not in [${condition.shipping_classes}]`; }
+                    const normalizedClasses = condition.shipping_classes.map((c: string) => c.toLowerCase());
+                    const normalizedSClass = sClass.toLowerCase();
+                    if (!normalizedClasses.includes(normalizedSClass)) { match = false; failReason = `Class '${sClass}' not in [${condition.shipping_classes}]`; }
                  }
                  if (match && condition.min_amount !== undefined && group.subtotal < condition.min_amount) { match = false; failReason = `subtotal (${group.subtotal}) < min_amount (${condition.min_amount})`; }
                  if (match && condition.max_amount !== undefined && group.subtotal > condition.max_amount) { match = false; failReason = `subtotal (${group.subtotal}) > max_amount (${condition.max_amount})`; }
@@ -238,9 +240,7 @@ export const CheckoutPage = () => {
                      
                      console.log(`  -> Rule [${rule.id}] MATCHED! Calculated Cost: ${cost} (Accumulated: ${accumulatedCost})`);
                      
-                     if (shippingRules.match_type === 'first_match') {
-                         break;
-                     }
+                     break;
                  } else {
                      // Log why exactly it failed so user can see in browser devtools:
                      console.log(`  -> Rule [${rule.id}] skipped. Reason: ${failReason}`);
