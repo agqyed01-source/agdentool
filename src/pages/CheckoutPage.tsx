@@ -140,6 +140,12 @@ export const CheckoutPage = () => {
                  console.warn(`Product ${item.id} has no shipping_class. Defaulting to 'small-light'`);
              }
              
+             itemShippingClass = itemShippingClass.trim();
+             let lowerClass = itemShippingClass.toLowerCase();
+             if (lowerClass === 'bulky' || lowerClass === 'heavy-tools') {
+                 itemShippingClass = 'no-free-ship';
+             }
+             
              if (isNaN(itemWeight)) itemWeight = 0;
              
              const itemQty = item.quantity;
@@ -267,11 +273,10 @@ export const CheckoutPage = () => {
            snippetMethods = [{ method_id: 'free_shipping', id: 'coupon_free', title: 'Free Shipping (Coupon)', settings: { cost: { value: '0.00' } } }];
         }
 
-        // If the cart doesn't match any of the strict shipping class rules for the country, provide a fallback.
-        if (snippetMethods.length === 0 && billing.country) {
-            let defaultCost = '15.00';
-            if (billing.country === 'US') defaultCost = '10.00';
-            snippetMethods = [{ method_id: 'default_fallback', id: 'default', title: 'Standard Shipping (Fallback)', settings: { cost: { value: defaultCost } } }];
+        // If any group failed to match a rule, we shouldn't show a fallback.
+        // It means this cart cannot be shipped to the selected country.
+        if (!allGroupsMatched) {
+            snippetMethods = [];
         }
 
         if (isMounted) {
