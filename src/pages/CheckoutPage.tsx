@@ -56,7 +56,7 @@ export const CheckoutPage = () => {
     wooApi.getCurrentUser().then(user => {
       if (user) {
         // If logged in, we check if we should override local billing with profile billing
-        setBilling(prev => {
+        setBilling((prev: any) => {
           // If local billing is mostly empty, or if we want to sync with profile
           // A good compromise: use profile if local is empty OR if we are doing a "fresh" load
           const isLocalEmpty = !prev.address_1 && !prev.city;
@@ -97,11 +97,12 @@ export const CheckoutPage = () => {
   // Fetch shipping options based on country/state
   useEffect(() => {
     let isMounted = true;
+    
     const fetchShipping = async () => {
       try {
         if (!isMounted) return;
-
-        // Using a custom shipping snippet here as requested:
+        setShippingError('');
+        
         const subtotal = cart?.totals?.total_price ? parseFloat(cart.totals.total_price) : 0;
         
         interface GroupData {
@@ -111,50 +112,35 @@ export const CheckoutPage = () => {
         }
         
         const groups: Record<string, GroupData> = {};
-        let overallWeight = 0;
-        let overallQty = 0;
-        let overallSubtotal = 0;
         
-        if (cart) {
+        if (cart && cart.items && cart.items.length > 0) {
           for (const item of cart.items) {
              let itemWeight = 0;
              let itemShippingClass = '';
-             if (item.variation_id) {
-                const variations = await wooApi.getProductVariations(item.id);
-                const variation = variations.find(v => v.id === item.variation_id);
-                if (variation && variation.weight) {
-                   itemWeight = parseFloat(variation.weight);
-                }
-             }
-             if (!itemWeight || !itemShippingClass) {
-                const product = await wooApi.getProductBySlug(item.id.toString());
-                if (product) {
-                   if (!itemWeight && product.weight) itemWeight = parseFloat(product.weight);
-                   if (product.shipping_class) itemShippingClass = product.shipping_class;
-                }
+             try {
+                 if (item.variation_id) {
+                    const variations = await wooApi.getProductVariations(item.id);
+                    const variation = variations.find((v: any) => v.id === item.variation_id);
+                    if (variation && variation.weight) {
+                       itemWeight = parseFloat(variation.weight);
+                    }
+                 }
+                 if (!itemWeight || !itemShippingClass) {
+                    const product = await wooApi.getProductBySlug(item.id.toString());
+                    if (product) {
+                       if (!itemWeight && product.weight) itemWeight = parseFloat(product.weight);
+                       if (product.shipping_class) itemShippingClass = product.shipping_class;
+                    }
+                 }
+             } catch (err) {
+                 console.warn("Failed to fetch product data for item " + item.id);
              }
              
-             // Dynamic Fallback: if STILL no shipping class found, assign a default 
-             // so it can at least match SOME rule in the rules JSON instead of failing.
              if (!itemShippingClass) {
-                 itemShippingClass = 'small-light';
-                 console.warn(`Product ${item.id} has no shipping_class. Defaulting to 'small-light'`);
-             }
-             
-             itemShippingClass = itemShippingClass.trim();
-             let lowerClass = itemShippingClass.toLowerCase();
-             if (lowerClass === 'bulky' || lowerClass === 'heavy-tools') {
-                 itemShippingClass = 'no-free-ship';
-             } else if (lowerClass !== 'small-light' && lowerClass !== 'no-free-ship' && lowerClass !== 'orthodontics') {
-                 console.warn(`Unknown shipping class: ${itemShippingClass}. Falling back to 'small-light'`);
-                 itemShippingClass = 'small-light';
-             } else if (lowerClass === 'bulky' || lowerClass === 'heavy-tools') {
-                 itemShippingClass = 'no-free-ship';
+                 itemShippingClass = 'small-light'; // Default
              }
              
              if (isNaN(itemWeight)) itemWeight = 0;
-             // Convert kg to grams
-             
              const itemQty = item.quantity;
              const itemPriceStr = typeof item.price === "string" ? item.price : String(item.price);
              const matchedPriceStr = itemPriceStr.match(/[\d.]+/);
@@ -167,27 +153,17 @@ export const CheckoutPage = () => {
              groups[itemShippingClass].weight += itemWeight * itemQty;
              groups[itemShippingClass].qty += itemQty;
              groups[itemShippingClass].subtotal += itemSubtotal;
-             
-             overallWeight += itemWeight * itemQty;
-             overallQty += itemQty;
-             overallSubtotal += itemSubtotal;
           }
         }
         
         let snippetMethods: any[] = [];
         const enabledRules: any[] = (shippingRules.rules || []).filter((r: any) => r.enabled).sort((a: any, b: any) => (a.priority || 0) - (b.priority || 0));
-
+        
         let groupCosts: Record<string, number> = {};
-        let matchedRuleNames: string[] = [];
         let matchedRuleIds: string[] = [];
         let allGroupsMatched = true;
         let failureDetails = '';
-        setShippingError('');
-        console.log('Current billing country:', billing.country);
-
-        console.log("--- Shipping Evaluation Started ---");
-        console.log("Groups to evaluate:", groups);
-
+        
         let groupsToProcess = Object.keys(groups);
         
         while (groupsToProcess.length > 0) {
@@ -196,7 +172,6 @@ export const CheckoutPage = () => {
              if (!group || (group.weight === 0 && group.qty === 0 && group.subtotal === 0)) continue;
 
              let groupMatched = false;
-             console.log(`\nEvaluating Group [${sClass || 'none'}]:`, group);
              
              for (const rule of enabledRules) {
                  const condition = rule.condition || {};
@@ -207,8 +182,8 @@ export const CheckoutPage = () => {
                     if (!condition.countries.includes(billing.country)) { match = false; failReason = `Country ${billing.country} not in [${condition.countries}]`; }
                  }
                  if (match && condition.shipping_classes && Array.isArray(condition.shipping_classes) && condition.shipping_classes.length > 0) {
-                    const normalizedClasses = condition.shipping_classes.map((c: string) => c.toLowerCase());
-                    const normalizedSClass = sClass.toLowerCase();
+                    const normalizedClasses = condition.shipping_classes.map((c: string) => String(c).toLowerCase());
+                    const normalizedSClass = String(sClass).toLowerCase();
                     if (!normalizedClasses.includes(normalizedSClass)) { match = false; failReason = `Class '${sClass}' not in [${condition.shipping_classes}]`; }
                  }
                  if (match && condition.min_amount !== undefined && group.subtotal < condition.min_amount) { match = false; failReason = `subtotal (${group.subtotal}) < min_amount (${condition.min_amount})`; }
@@ -224,7 +199,7 @@ export const CheckoutPage = () => {
                      else if (condition.metric === 'amount') metricValue = group.subtotal;
                      else if (condition.metric === 'quantity') metricValue = group.qty;
                      
-                     const ruleValue = condition.value;
+                     const ruleValue = Number(condition.value);
                      switch (condition.operator) {
                          case '<': if (!(metricValue < ruleValue)) { match = false; failReason = `${condition.metric} (${metricValue}) !< ${ruleValue}`; } break;
                          case '<=': if (!(metricValue <= ruleValue)) { match = false; failReason = `${condition.metric} (${metricValue}) !<= ${ruleValue}`; } break;
@@ -258,80 +233,64 @@ export const CheckoutPage = () => {
                      groupCosts[sClass] = cost;
                      groupMatched = true;
                      matchedRuleIds.push(rule.id);
-                     if (rule.name && !matchedRuleNames.includes(rule.name)) matchedRuleNames.push(rule.name);
-                     
-                     console.log(`  -> Rule [${rule.id}] MATCHED! Calculated Cost: ${cost} `);
-                     
                      break;
-                 } else {
-                     // Log why exactly it failed so user can see in browser devtools:
-                     console.log(`  -> Rule [${rule.id}] skipped. Reason: ${failReason}`);
                  }
              }
 
              if (!groupMatched) {
                  if (sClass === 'small-light') {
-                     console.warn(`  -> NO MATCHING RULE for small-light (weight: ${group.weight}). Falling back to no-free-ship!`);
                      if (!groups['no-free-ship']) groups['no-free-ship'] = { weight: 0, qty: 0, subtotal: 0 };
                      groups['no-free-ship'].weight += group.weight;
                      groups['no-free-ship'].qty += group.qty;
                      groups['no-free-ship'].subtotal += group.subtotal;
                      groupsToProcess.push('no-free-ship');
                      
-                     // empty it so we don't count it twice or break things
                      group.weight = 0; 
                      group.qty = 0;
                      group.subtotal = 0;
-                     continue; // Don't fail the whole checkout yet!
+                     continue; 
                  }
-                 console.warn(`  -> NO MATCHING RULE for Group [${sClass || 'none'}]`);
                  allGroupsMatched = false;
                  failureDetails = `No rule matched for ${sClass || 'none'}`;
              }
         }
         
-        if (Object.keys(groups).length > 0 && matchedRuleIds.length > 0) {
+        let totalCost = 0;
+        Object.values(groupCosts).forEach(c => totalCost += c);
+        
+        if (Object.keys(groups).length > 0 && (allGroupsMatched || matchedRuleIds.length > 0)) {
             snippetMethods.push({
                 method_id: 'combined_shipping',
                 id: Array.from(new Set(matchedRuleIds)).join('_') || 'standard',
-                
-                title: 'Standard Shipping', // Hide internal rule names from customer
-                settings: { cost: { value: Object.values(groupCosts).reduce((a,b) => a+b, 0).toFixed(2) } }
+                title: 'Standard Shipping', 
+                settings: { cost: { value: totalCost.toFixed(2) } }
             });
-            console.log("--- Final Built Snippet Method:", snippetMethods);
         }
         
         const hasFreeShippingCoupon = cart?.coupons?.some(c => c.free_shipping === true || c.code.toLowerCase() === 'freeship');
         if (hasFreeShippingCoupon) {
            snippetMethods = [{ method_id: 'free_shipping', id: 'coupon_free', title: 'Free Shipping (Coupon)', settings: { cost: { value: '0.00' } } }];
         }
-
-        // If any group failed to match a rule, we shouldn't show a fallback.
-        // It means this cart cannot be shipped to the selected country.
-        if (!allGroupsMatched) {
-            console.error('Shipping failed:', failureDetails);
-            setShippingError(failureDetails);
-            // FAIL-SAFE: Allow checkout even if rules fail
-            if (snippetMethods.length === 0) {
-                snippetMethods = [{ method_id: 'flat_rate', id: 'flat_rate', title: 'Standard Shipping (Rules Failed: ' + failureDetails + ')', settings: { cost: { value: '15.00' } } }];
-            }
-        } else if (false) {
-            console.error('Shipping failed:', failureDetails);
-            setShippingError(failureDetails);
-            snippetMethods = [{ method_id: 'error', id: 'error', title: 'Error: ' + failureDetails, settings: { cost: { value: '0.00' } } }];
-            
+        
+        if (snippetMethods.length === 0) {
+            snippetMethods = [{ method_id: 'flat_rate', id: 'flat_rate', title: 'Standard Shipping (Rules Failed: ' + failureDetails + ')', settings: { cost: { value: '15.00' } } }];
         }
-
+        
         if (isMounted) {
            setShippingMethods(snippetMethods);
            if (snippetMethods.length > 0) {
-             setSelectedShippingMethod(snippetMethods[0] || null);
+             setSelectedShippingMethod(snippetMethods[0]);
            }
         }
-      } catch (err) {
+      } catch (err: any) {
         console.error("Failed to load shipping methods", err);
+        if (isMounted) {
+            setShippingMethods([{ method_id: 'flat_rate', id: 'flat_rate_error', title: 'Standard Shipping (Error)', settings: { cost: { value: '15.00' } } }]);
+            setSelectedShippingMethod({ method_id: 'flat_rate', id: 'flat_rate_error', title: 'Standard Shipping (Error)', settings: { cost: { value: '15.00' } } });
+        }
       }
     };
+
     fetchShipping();
     return () => { isMounted = false; };
   }, [billing.country, billing.state, billing.postcode, cart?.totals?.total_items, cart?.totals?.total_price]);
@@ -425,7 +384,7 @@ export const CheckoutPage = () => {
   };
 
   const updateBilling = (field: string, value: string) => {
-    setBilling(prev => ({ ...prev, [field]: value }));
+    setBilling((prev: any) => ({ ...prev, [field]: value }));
   };
 
   if (isSuccess) {
