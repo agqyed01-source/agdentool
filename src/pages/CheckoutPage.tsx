@@ -313,7 +313,7 @@ export const CheckoutPage = () => {
             setShippingError(failureDetails);
             // FAIL-SAFE: Allow checkout even if rules fail
             if (snippetMethods.length === 0) {
-                snippetMethods = [{ method_id: 'standard_fallback', id: 'standard_fallback', title: 'Standard Shipping', settings: { cost: { value: '15.00' } } }];
+                snippetMethods = [{ method_id: 'flat_rate', id: 'flat_rate', title: 'Standard Shipping (Rules Failed: ' + failureDetails + ')', settings: { cost: { value: '15.00' } } }];
             }
         } else if (false) {
             console.error('Shipping failed:', failureDetails);
@@ -515,11 +515,11 @@ export const CheckoutPage = () => {
               <div className="grid grid-cols-2 gap-4">
                 <div className="col-span-2">
                   <label className="block text-sm font-bold text-slate-700 mb-1">Email</label>
-                  <input type="email" required pattern="[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$" title="Please enter a valid email address" value={billing.email} onChange={e => updateBilling('email', e.target.value)} className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-lg outline-none focus:ring-2 focus:ring-brand-primary" />
+                  <input type="email" required  title="Please enter a valid email address" value={billing.email} onChange={e => updateBilling('email', e.target.value)} className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-lg outline-none focus:ring-2 focus:ring-brand-primary" />
                 </div>
                 <div className="col-span-2">
                   <label className="block text-sm font-bold text-slate-700 mb-1">Phone</label>
-                  <input type="tel" required pattern="^[+]*[(]{0,1}[0-9]{1,4}[)]{0,1}[-\s\./0-9]*$" title="Please enter a valid phone number" value={billing.phone} onChange={e => updateBilling('phone', e.target.value)} className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-lg outline-none focus:ring-2 focus:ring-brand-primary" />
+                  <input type="tel" required  title="Please enter a valid phone number" value={billing.phone} onChange={e => updateBilling('phone', e.target.value)} className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-lg outline-none focus:ring-2 focus:ring-brand-primary" />
                 </div>
                 <div className="col-span-2 sm:col-span-1">
                   <label className="block text-sm font-bold text-slate-700 mb-1">First Name</label>
@@ -684,9 +684,10 @@ export const CheckoutPage = () => {
               {couponError && <p className="text-red-500 text-xs mt-2 font-medium">{couponError}</p>}
             </div>
 
-            <button 
-              type="submit"
-              form="checkout-form"
+            {error && <div id="checkout-error-bottom" className="bg-red-50 text-red-600 p-4 rounded-lg font-medium border border-red-200 mb-4">{error}</div>}
+                <button
+                  type="submit"
+                  form="checkout-form"
               disabled={loading || shippingMethods.length === 0}
               className="w-full bg-brand-primary text-white font-bold text-lg py-4 rounded-lg shadow-[0_4px_14px_0_rgba(37,99,235,0.39)] hover:shadow-[0_6px_20px_rgba(37,99,235,0.23)] hover:-translate-y-0.5 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-3"
             >
