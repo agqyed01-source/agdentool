@@ -894,7 +894,7 @@ export const wooApi = {
 
   getOrder: async (id: string | number): Promise<WooOrder | null> => {
     try {
-       const order = await fetchWoo(`/orders/${id}`);
+       const order = await fetchWoo(`/orders/${id}`, { _t: Date.now().toString() });
        return order;
     } catch (err) {
        console.error("Failed to fetch order", err);

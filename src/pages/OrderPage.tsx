@@ -27,6 +27,23 @@ export const OrderPage = () => {
   }, [id]);
 
   useEffect(() => {
+    let intervalId: any;
+    if (order && order.status === 'pending') {
+      intervalId = setInterval(() => {
+        wooApi.getOrder(id!).then(data => {
+          if (data && data.status !== 'pending') {
+            setOrder(data);
+            clearInterval(intervalId);
+          }
+        });
+      }, 5000);
+    }
+    return () => {
+      if (intervalId) clearInterval(intervalId);
+    };
+  }, [order?.status, id]);
+
+  useEffect(() => {
     if (order && window.gtag) {
       const trackedKey = `ga_tracked_order_${order.id}`;
       if (!sessionStorage.getItem(trackedKey)) {
