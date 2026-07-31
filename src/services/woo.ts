@@ -153,6 +153,8 @@ export interface WooCartItem {
   price: string;
   image: string;
   variations?: Record<string, string>;
+  weight?: string;
+  shipping_class?: string;
 }
 
 export interface WooCart {
@@ -595,6 +597,8 @@ export const wooApi = {
                   ? product.images[0].src
                   : "",
               variations: variations,
+              weight: product.weight,
+              shipping_class: product.shipping_class,
             });
           }
           recalculateCart();
