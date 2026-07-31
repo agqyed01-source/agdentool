@@ -152,6 +152,7 @@ export const CheckoutPage = () => {
              }
              groups[itemShippingClass].weight += itemWeight * itemQty;
              groups[itemShippingClass].qty += itemQty;
+console.log("SHIPPING ITEM:", item.id, itemShippingClass, itemWeight);
              groups[itemShippingClass].subtotal += itemSubtotal;
           }
         }
@@ -161,6 +162,7 @@ export const CheckoutPage = () => {
         
         let groupCosts: Record<string, number> = {};
         let matchedRuleIds: string[] = [];
+        let matchedRuleNames: string[] = [];
         let allGroupsMatched = true;
         let failureDetails = '';
         
@@ -233,6 +235,7 @@ export const CheckoutPage = () => {
                      groupCosts[sClass] = cost;
                      groupMatched = true;
                      matchedRuleIds.push(rule.id);
+                     matchedRuleNames.push(rule.name || rule.id);
                      break;
                  }
              }
@@ -262,7 +265,7 @@ export const CheckoutPage = () => {
             snippetMethods.push({
                 method_id: 'combined_shipping',
                 id: Array.from(new Set(matchedRuleIds)).join('_') || 'standard',
-                title: 'Standard Shipping', 
+                title: matchedRuleNames.length > 0 ? matchedRuleNames.join(' + ') : 'Standard Shipping', 
                 settings: { cost: { value: totalCost.toFixed(2) } }
             });
         }
