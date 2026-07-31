@@ -260,7 +260,7 @@ async function fetchWoo(
     if (pathParams.length > 0) {
       url += `/-/${pathParams.join('/')}`;
     }
-    fetchOptions = { method: "GET" };
+    fetchOptions = { method: "GET", cache: "no-store" };
   } else {
     url = "/api/woo/fetch";
     fetchOptions = {
@@ -907,10 +907,10 @@ export const wooApi = {
       if (!mockCurrentUser) return [];
       
       // Fetch orders explicitly tied to this user ID
-      const dataByIdResp = fetchWoo('/orders', { customer: mockCurrentUser.id.toString(), per_page: "50" }).catch(() => []);
+      const dataByIdResp = fetchWoo('/orders', { customer: mockCurrentUser.id.toString(), per_page: "50", status: 'any', _t: Date.now().toString() }).catch(() => []);
       
       // Fetch guest orders tied to this user's email 
-      const dataByEmailResp = fetchWoo('/orders', { search: mockCurrentUser.email, per_page: "50" }).catch(() => []);
+      const dataByEmailResp = fetchWoo('/orders', { search: mockCurrentUser.email, per_page: "50", status: 'any', _t: Date.now().toString() }).catch(() => []);
 
       const [dataById, dataByEmail] = await Promise.all([dataByIdResp, dataByEmailResp]);
 

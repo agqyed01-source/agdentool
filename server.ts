@@ -316,6 +316,7 @@ async function startServer() {
 
   // API routing for WooCommerce (POST/PUT/DELETE)
   app.post('/api/woo/fetch', async (req, res) => {
+    res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
     try {
       const { endpoint, queryParams, method, bodyData, includeHeaders } = req.body;
       
@@ -396,6 +397,7 @@ async function startServer() {
 
   // API routing for WooCommerce GET requests directly mapped to path
   app.get('/api/woo/get/*', async (req, res) => {
+    res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
     try {
       let endpoint = req.params[0];
       const queryParams: Record<string, string> = { ...(req.query as Record<string, string>) };
