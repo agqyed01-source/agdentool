@@ -121,7 +121,7 @@ async function startServer() {
         if (req.files && (req.files as Express.Multer.File[]).length > 0) {
           const files = req.files as Express.Multer.File[];
           files.forEach((file) => {
-            const blob = new Blob([file.buffer], { type: file.mimetype || 'image/jpeg' });
+            const blob = new Blob([file.buffer as any], { type: file.mimetype || 'image/jpeg' });
             actionData.append('wcpr_image_upload[]', blob, file.originalname);
           });
           actionData.append('vi_wc_photo_reviews_image_count', files.length.toString());
@@ -176,7 +176,7 @@ async function startServer() {
         if (req.files && (req.files as Express.Multer.File[]).length > 0) {
           const files = req.files as Express.Multer.File[];
           files.forEach((file) => {
-            const blob = new Blob([file.buffer], { type: file.mimetype || 'image/jpeg' });
+            const blob = new Blob([file.buffer as any], { type: file.mimetype || 'image/jpeg' });
             standardData.append('wcpr_image_upload[]', blob, file.originalname);
           });
         }
@@ -399,7 +399,7 @@ async function startServer() {
   app.get('/api/woo/get/*', async (req, res) => {
     res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
     try {
-      let endpoint = req.params[0];
+      let endpoint = (req.params as any)[0];
       const queryParams: Record<string, string> = { ...(req.query as Record<string, string>) };
       let includeHeaders = queryParams.includeHeaders === 'true';
       delete queryParams.includeHeaders;
@@ -451,7 +451,9 @@ async function startServer() {
       const fetchOptions: RequestInit = {
         method: 'GET',
         headers: {
-          'Accept': 'application/json'
+          'Accept': 'application/json',
+          'Cache-Control': 'no-cache, no-store, must-revalidate',
+          'Pragma': 'no-cache'
         }
       };
 
