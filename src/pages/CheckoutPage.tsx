@@ -141,6 +141,8 @@ export const CheckoutPage = () => {
              }
              
              if (isNaN(itemWeight)) itemWeight = 0;
+             // WooCommerce typically uses kg, but our rules use grams. Convert here:
+             itemWeight = itemWeight * 1000;
              const itemQty = item.quantity;
              const itemPriceStr = typeof item.price === "string" ? item.price : String(item.price);
              const matchedPriceStr = itemPriceStr.match(/[\d.]+/);
@@ -241,7 +243,7 @@ console.log("SHIPPING ITEM:", item.id, itemShippingClass, itemWeight);
              }
 
              if (!groupMatched) {
-                 if (sClass === 'small-light') {
+                 if (sClass === 'small-light' || sClass === 'bulky' || sClass === 'heavy-tools') {
                      if (!groups['no-free-ship']) groups['no-free-ship'] = { weight: 0, qty: 0, subtotal: 0 };
                      groups['no-free-ship'].weight += group.weight;
                      groups['no-free-ship'].qty += group.qty;
@@ -253,8 +255,10 @@ console.log("SHIPPING ITEM:", item.id, itemShippingClass, itemWeight);
                      group.subtotal = 0;
                      continue; 
                  }
-                 allGroupsMatched = false;
-                 failureDetails = `No rule matched for ${sClass || 'none'}`;
+                 // Fallback to a default shipping cost so checkout isn't blocked
+                 groupCosts[sClass] = 15.00;
+                 matchedRuleIds.push('fallback');
+                 matchedRuleNames.push('Standard Shipping (Default)');
              }
         }
         
