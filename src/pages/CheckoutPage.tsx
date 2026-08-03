@@ -139,14 +139,14 @@ export const CheckoutPage = () => {
              if (!itemShippingClass) {
                  itemShippingClass = 'small-light'; // Default
              }
-             itemShippingClass = itemShippingClass.toLowerCase();
+             itemShippingClass = itemShippingClass.toLowerCase().trim();
              if (itemShippingClass === 'bulky') {
                  itemShippingClass = 'heavy-tools';
              }
              
              if (isNaN(itemWeight)) itemWeight = 0;
-             // WooCommerce typically uses kg, but our rules use grams. Convert here:
-             itemWeight = itemWeight * 1000;
+             // Assume WooCommerce weight is already in grams or correct unit for rules.
+             // itemWeight = itemWeight * 1000;
              const itemQty = item.quantity;
              const itemPriceStr = typeof item.price === "string" ? item.price : String(item.price);
              const matchedPriceStr = itemPriceStr.match(/[\d.]+/);
@@ -189,8 +189,8 @@ groups[itemShippingClass].subtotal += itemSubtotal;
                  }
                  
                  if (match && condition.shipping_classes && Array.isArray(condition.shipping_classes) && condition.shipping_classes.length > 0) {
-                    const normalizedClasses = condition.shipping_classes.map((c: any) => String(c).toLowerCase());
-                    const normalizedSClass = String(sClass).toLowerCase();
+                    const normalizedClasses = condition.shipping_classes.map((c: any) => String(c).toLowerCase().trim());
+                    const normalizedSClass = String(sClass).toLowerCase().trim();
                     if (!normalizedClasses.includes(normalizedSClass)) { match = false; failReason = `Class '${sClass}' not in [${condition.shipping_classes}]`; }
                  }
                  
