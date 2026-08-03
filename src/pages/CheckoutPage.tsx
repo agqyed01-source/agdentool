@@ -139,6 +139,10 @@ export const CheckoutPage = () => {
              if (!itemShippingClass) {
                  itemShippingClass = 'small-light'; // Default
              }
+             itemShippingClass = itemShippingClass.toLowerCase();
+             if (itemShippingClass === 'bulky') {
+                 itemShippingClass = 'heavy-tools';
+             }
              
              if (isNaN(itemWeight)) itemWeight = 0;
              // WooCommerce typically uses kg, but our rules use grams. Convert here:
@@ -154,8 +158,7 @@ export const CheckoutPage = () => {
              }
              groups[itemShippingClass].weight += itemWeight * itemQty;
              groups[itemShippingClass].qty += itemQty;
-console.log("SHIPPING ITEM:", item.id, itemShippingClass, itemWeight);
-             groups[itemShippingClass].subtotal += itemSubtotal;
+groups[itemShippingClass].subtotal += itemSubtotal;
           }
         }
         
@@ -186,7 +189,7 @@ console.log("SHIPPING ITEM:", item.id, itemShippingClass, itemWeight);
                  }
                  
                  if (match && condition.shipping_classes && Array.isArray(condition.shipping_classes) && condition.shipping_classes.length > 0) {
-                    const normalizedClasses = condition.shipping_classes.map((c) => String(c).toLowerCase());
+                    const normalizedClasses = condition.shipping_classes.map((c: any) => String(c).toLowerCase());
                     const normalizedSClass = String(sClass).toLowerCase();
                     if (!normalizedClasses.includes(normalizedSClass)) { match = false; failReason = `Class '${sClass}' not in [${condition.shipping_classes}]`; }
                  }
@@ -490,7 +493,7 @@ console.log("SHIPPING ITEM:", item.id, itemShippingClass, itemWeight);
                 <div className="col-span-2">
                   <label className="block text-sm font-bold text-slate-700 mb-1">Country</label>
                   <Select
-                    options={countries.map(c => ({ value: c.code, label: c.name }))}
+                    options={countries.map((c: any) => ({ value: c.code, label: c.name }))}
                     value={countries.find(c => c.code === billing.country) ? { value: billing.country, label: countries.find(c => c.code === billing.country)?.name } : null}
                     onChange={handleCountryChange}
                     isSearchable
