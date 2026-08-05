@@ -140,13 +140,11 @@ export const CheckoutPage = () => {
                  itemShippingClass = 'small-light'; // Default
              }
              itemShippingClass = itemShippingClass.toLowerCase().trim();
-             if (itemShippingClass === 'bulky') {
-                 itemShippingClass = 'heavy-tools';
-             }
+             
              
              if (isNaN(itemWeight)) itemWeight = 0;
-             // Assume WooCommerce weight is already in grams or correct unit for rules.
-             // itemWeight = itemWeight * 1000;
+             // WooCommerce typically uses kg, but our rules use grams. Convert here:
+             itemWeight = itemWeight * 1000;
              const itemQty = item.quantity;
              const itemPriceStr = typeof item.price === "string" ? item.price : String(item.price);
              const matchedPriceStr = itemPriceStr.match(/[\d.]+/);
@@ -349,7 +347,7 @@ groups[itemShippingClass].subtotal += itemSubtotal;
         billing,
         shipping: billing, // simplified, just copy billing for now
         payment_method: 'checkout',
-        payment_method_title: 'Continue to Payment',
+        payment_method_title: 'Create order',
         shipping_lines: selectedShippingMethod ? [{
           method_id: selectedShippingMethod.method_id,
           method_title: selectedShippingMethod.title,
@@ -655,7 +653,7 @@ groups[itemShippingClass].subtotal += itemSubtotal;
                 </>
               ) : shippingMethods.length === 0 ? (
                 'Shipping Not Available'
-              ) : `Continue to Payment ($${(parseFloat(cart.totals.total_price) + (selectedShippingMethod?.settings?.cost?.value ? parseFloat(selectedShippingMethod.settings.cost.value) : 0)).toFixed(2)})`}
+              ) : `Create order ($${(parseFloat(cart.totals.total_price) + (selectedShippingMethod?.settings?.cost?.value ? parseFloat(selectedShippingMethod.settings.cost.value) : 0)).toFixed(2)})`}
             </button>
           </div>
         </div>
