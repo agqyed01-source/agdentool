@@ -1046,6 +1046,30 @@ export const wooApi = {
 
   clearCartAndCreateOrder: async (orderData?: any): Promise<WooOrder> => {
     if (mockCartState.items.length === 0) throw new Error("Cart is empty");
+    
+    // Validate stock before placing order
+    for (const item of mockCartState.items) {
+      if (item.variation_id) {
+         try {
+           const variation = await fetchWoo(`/products/${item.id}/variations/${item.variation_id}`);
+           if (variation && variation.stock_status === 'outofstock') {
+             throw new Error(`Item "${item.name}" is out of stock and cannot be purchased.`);
+           }
+         } catch (e: any) {
+           if (e.message?.includes('out of stock')) throw e;
+         }
+      } else {
+         try {
+           const product = await fetchWoo(`/products/${item.id}`);
+           if (product && product.stock_status === 'outofstock') {
+             throw new Error(`Item "${item.name}" is out of stock and cannot be purchased.`);
+           }
+         } catch (e: any) {
+           if (e.message?.includes('out of stock')) throw e;
+         }
+      }
+    }
+
     try {
       const payload = {
         customer_id: mockCurrentUser?.id || 0,

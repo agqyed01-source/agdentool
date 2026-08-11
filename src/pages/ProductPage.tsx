@@ -166,6 +166,10 @@ export const ProductPage = () => {
     ? (currentVariation.price || currentVariation.sale_price || currentVariation.regular_price)
     : product?.price;
 
+  const isOutOfStock = (product?.type === 'variable' && currentVariation)
+    ? currentVariation.stock_status === 'outofstock'
+    : product?.stock_status === 'outofstock';
+
   if (loading) {
     return (
       <div className="container mx-auto px-4 py-8 md:py-12 animate-pulse">
@@ -460,7 +464,9 @@ export const ProductPage = () => {
                 <button onClick={() => setQuantity(quantity + 1)} className="px-4 py-3 text-slate-500 hover:bg-slate-50 transition-colors font-bold cursor-pointer">+</button>
               </div>
               <button 
+                disabled={isOutOfStock}
                 onClick={() => {
+                  if (isOutOfStock) return;
                   if (product.type === 'variable') {
                     const requiredAttributes = product.attributes?.filter(a => a.variation) || [];
                     const missingAttributes = requiredAttributes.filter(a => !selectedVariations[a.name]);
@@ -502,9 +508,13 @@ export const ProductPage = () => {
                   }
                 }}
                 id="add-btn"
-                className="flex-grow bg-brand-primary text-white font-bold text-lg rounded-lg shadow-[0_4px_14px_0_rgba(37,99,235,0.39)] hover:shadow-[0_6px_20px_rgba(37,99,235,0.23)] hover:-translate-y-0.5 transition-all flex items-center justify-center gap-2 py-4"
+                className={`flex-grow font-bold text-lg rounded-lg shadow-sm transition-all flex items-center justify-center gap-2 py-4 ${
+                  isOutOfStock
+                    ? 'bg-slate-300 text-slate-500 cursor-not-allowed'
+                    : 'bg-brand-primary text-white shadow-[0_4px_14px_0_rgba(37,99,235,0.39)] hover:shadow-[0_6px_20px_rgba(37,99,235,0.23)] hover:-translate-y-0.5'
+                }`}
               >
-                <ShoppingCart size={20} /> Add to Cart
+                <ShoppingCart size={20} /> {isOutOfStock ? 'Out of Stock' : 'Add to Cart'}
               </button>
             </div>
           </div>
@@ -566,14 +576,20 @@ export const ProductPage = () => {
             <span className="text-lg font-bold text-slate-900">${currentPrice}</span>
           </div>
           <button 
+            disabled={isOutOfStock}
             onClick={() => {
+               if (isOutOfStock) return;
                if (addToCartRef.current) {
                  addToCartRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
                }
             }}
-            className="bg-brand-primary text-white font-bold px-6 py-3 rounded-lg shadow-sm whitespace-nowrap"
+            className={`font-bold px-6 py-3 rounded-lg shadow-sm whitespace-nowrap ${
+              isOutOfStock
+                ? 'bg-slate-300 text-slate-500 cursor-not-allowed'
+                : 'bg-brand-primary text-white'
+            }`}
           >
-            {product.type === 'variable' ? 'Select Options' : 'Add to Cart'}
+            {isOutOfStock ? 'Out of Stock' : (product.type === 'variable' ? 'Select Options' : 'Add to Cart')}
           </button>
         </div>
       </div>

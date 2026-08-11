@@ -392,7 +392,11 @@ export const ShopPage = () => {
                                  </>
                                )}
                              </div>
-                             {product.type === 'variable' ? (
+                             {product.stock_status === 'outofstock' ? (
+                               <span className="hidden sm:inline-flex bg-slate-100 text-slate-500 px-4 py-2 rounded-lg font-bold text-sm">
+                                 Out of Stock
+                               </span>
+                             ) : product.type === 'variable' ? (
                                <Link
                                  to={`/product/${product.slug}`}
                                  className="hidden sm:flex bg-brand-primary text-white px-4 py-2 rounded-lg font-bold text-sm hover:bg-brand-secondary transition-colors shadow-sm items-center justify-center gap-2"

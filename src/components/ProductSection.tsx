@@ -216,10 +216,12 @@ export const ProductCard = ({ product }: { product: WooProduct }) => {
               </>
             )}
             <span className="block text-[9px] text-slate-400 font-medium">
-              In Stock
+              {product.stock_status === 'outofstock' ? 'Out of Stock' : 'In Stock'}
             </span>
           </div>
-          {product.type === 'variable' ? (
+          {product.stock_status === 'outofstock' ? (
+            <span className="text-[10px] text-slate-500 font-bold px-2 py-1.5 bg-slate-100 rounded-lg">Out of Stock</span>
+          ) : product.type === 'variable' ? (
             <Link
               to={`/product/${product.slug}`}
               className="bg-brand-primary text-white px-3 py-1.5 rounded-lg hover:bg-brand-secondary transition-colors shadow-sm text-[11px] font-bold"
