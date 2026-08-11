@@ -258,7 +258,7 @@ groups[itemShippingClass].subtotal += itemSubtotal;
             snippetMethods.push({
                 method_id: 'combined_shipping',
                 id: Array.from(new Set(matchedRuleIds)).join('_') || 'standard',
-                title: matchedRuleNames.length > 0 ? matchedRuleNames.join(' + ') : 'Standard Shipping', 
+                title: matchedRuleNames.length > 0 ? Array.from(new Set(matchedRuleNames)).join(' + ') : 'Standard Shipping', 
                 settings: { cost: { value: totalCost.toFixed(2) } }
             });
         }
