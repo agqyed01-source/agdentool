@@ -144,7 +144,7 @@ export const CheckoutPage = () => {
              
              if (isNaN(itemWeight)) itemWeight = 0;
              // WooCommerce typically uses kg, but our rules use grams. Convert here:
-             itemWeight = itemWeight * 1000;
+             // itemWeight = itemWeight * 1000;
              const itemQty = item.quantity;
              const itemPriceStr = typeof item.price === "string" ? item.price : String(item.price);
              const matchedPriceStr = itemPriceStr.match(/[\d.]+/);
