@@ -574,6 +574,10 @@ export const wooApi = {
             reject(new Error("Product has no price set"));
             return;
           }
+          if (product.stock_status === 'outofstock') {
+            reject(new Error("Product is out of stock"));
+            return;
+          }
           const varString = variations ? JSON.stringify(variations) : '{}';
           const existingItem = mockCartState.items.find(
             (i) => i.id === product!.id && JSON.stringify(i.variations || {}) === varString,
