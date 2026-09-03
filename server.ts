@@ -388,6 +388,20 @@ async function startServer() {
         });
       }
 
+      // Automatically rewrite payment_url to match the API host
+      if (data && typeof data === 'object') {
+        const apiOrigin = new URL(WOO_URL).origin;
+        if (data.payment_url) {
+          try {
+            const u = new URL(data.payment_url);
+            const aUrl = new URL(apiOrigin);
+            u.protocol = aUrl.protocol;
+            u.host = aUrl.host;
+            data.payment_url = u.toString();
+          } catch(e) {}
+        }
+      }
+
       return res.json(data);
     } catch (error: any) {
       console.error('[Woo API Proxy] Error:', error);
