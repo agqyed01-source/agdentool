@@ -141,6 +141,12 @@ export const CheckoutPage = () => {
              }
              itemShippingClass = itemShippingClass.toLowerCase().trim();
              
+             // Map unknown shipping classes to small-light to ensure template rules apply
+             const knownClasses = ['small-light', 'heavy-tools', 'no-free-ship'];
+             if (!knownClasses.includes(itemShippingClass)) {
+                 itemShippingClass = 'small-light';
+             }
+             
              
              if (isNaN(itemWeight)) itemWeight = 0;
              // WooCommerce typically uses kg, but our rules use grams. Convert here:
