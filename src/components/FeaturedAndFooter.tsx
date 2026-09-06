@@ -29,11 +29,12 @@ const getCategoryColor = (idx: number) => {
 };
 
 export const FeaturedCategories = () => {
+  const { i18n } = useTranslation();
   const [categories, setCategories] = useState<WooCategory[]>([]);
 
   useEffect(() => {
     wooApi.getCategories().then(setCategories);
-  }, []);
+  }, [i18n.language]);
 
   return (
     <section className="container mx-auto px-4 py-12">

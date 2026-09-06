@@ -42,5 +42,10 @@
     "error": "Произошла ошибка",
     "language": "Язык",
     "read_more": "Читать далее"
+  },
+  "product": {
+    "select_options": "Выбрать опции",
+    "reviews": "Отзывы",
+    "details": "О товаре"
   }
 }

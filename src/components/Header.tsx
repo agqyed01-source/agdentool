@@ -49,7 +49,7 @@ const MobileCategoryNode = ({ node, depth = 0, setIsMenuOpen }: { node: any, dep
 };
 
 export const Header = () => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isMobileSearchOpen, setIsMobileSearchOpen] = useState(false);
   const [menus, setMenus] = useState<

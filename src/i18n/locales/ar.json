@@ -42,5 +42,10 @@
     "error": "حدث خطأ",
     "language": "اللغة",
     "read_more": "اقرأ المزيد"
+  },
+  "product": {
+    "select_options": "تحديد الخيارات",
+    "reviews": "التقييمات",
+    "details": "تفاصيل المنتج"
   }
 }

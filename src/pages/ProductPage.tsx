@@ -9,7 +9,7 @@ import { ProductReviews } from '../components/ProductReviews';
 import { WhatsAppAgents } from '../components/FooterAndNav';
 
 export const ProductPage = () => {
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { slug } = useParams<{ slug: string }>();
   const [product, setProduct] = useState<WooProduct | null>(null);
   const [loading, setLoading] = useState(true);
@@ -238,7 +238,7 @@ export const ProductPage = () => {
       <div className="container mx-auto px-4 py-16 text-center">
         <h1 className="text-2xl font-bold text-red-600 mb-4">Error Loading Product</h1>
         <p className="text-red-500 max-w-lg mx-auto">{error}</p>
-        <Link to="/" className="inline-block mt-8 bg-brand-primary text-white font-bold py-2 px-6 rounded-lg">Return to Home</Link>
+        <Link to="/" className="inline-block mt-8 bg-brand-primary text-white font-bold py-2 px-6 rounded-lg">Return to {t('nav.home', 'Home')}</Link>
       </div>
     );
   }
@@ -278,7 +278,7 @@ export const ProductPage = () => {
       />
 
       <div className="mb-6 text-sm text-slate-500 font-medium">
-        <Link to="/" className="hover:text-brand-primary">Home</Link>
+        <Link to="/" className="hover:text-brand-primary">{t('nav.home', 'Home')}</Link>
         <span className="mx-2">/</span>
         <Link to={`/category/${product.categories[0]?.slug}`} className="hover:text-brand-primary">
           {decodeHtmlEntities(product.categories[0]?.name)}
@@ -306,7 +306,7 @@ export const ProductPage = () => {
              </span>
           ) : (
              <span className="text-sm text-slate-500 mt-1 truncate">
-                 {Object.values(selectedVariations).filter(v => v).join(', ') || 'Select options'}
+                 {Object.values(selectedVariations).filter(v => v).join(', ') || t('product.select_options', 'Select options')}
              </span>
           )}
           <div className="font-bold text-slate-900 mt-1">
@@ -400,7 +400,7 @@ export const ProductPage = () => {
              </div>
              <span className="text-slate-300">|</span>
              <a href="#reviews" onClick={(e) => { e.preventDefault(); setActiveTab('reviews'); document.getElementById('details-section')?.scrollIntoView({ behavior: 'smooth' }); }} className="text-sm font-medium text-brand-primary hover:underline">
-               {product.rating_count} Reviews
+               {product.rating_count} {t('product.reviews', 'Reviews')}
              </a>
           </div>
 
@@ -516,7 +516,7 @@ export const ProductPage = () => {
                     : 'bg-brand-primary text-white shadow-[0_4px_14px_0_rgba(37,99,235,0.39)] hover:shadow-[0_6px_20px_rgba(37,99,235,0.23)] hover:-translate-y-0.5'
                 }`}
               >
-                <ShoppingCart size={20} /> {isOutOfStock ? 'Out of Stock' : 'Add to Cart'}
+                <ShoppingCart size={20} /> {isOutOfStock ? t('cart.out_of_stock', 'Out of Stock') : t('cart.add_to_cart', 'Add to Cart')}
               </button>
             </div>
           </div>
@@ -541,7 +541,7 @@ export const ProductPage = () => {
             onClick={() => setActiveTab('description')}
             className={`pb-4 text-lg font-bold transition-colors relative ${activeTab === 'description' ? 'text-brand-primary' : 'text-slate-500 hover:text-slate-900'}`}
           >
-            Product Details
+            {t('product.details', 'Product Details')}
             {activeTab === 'description' && (
               <span className="absolute bottom-0 left-0 w-full h-0.5 bg-brand-primary rounded-t-full" />
             )}
@@ -550,7 +550,7 @@ export const ProductPage = () => {
             onClick={() => setActiveTab('reviews')}
             className={`pb-4 text-lg font-bold transition-colors relative ${activeTab === 'reviews' ? 'text-brand-primary' : 'text-slate-500 hover:text-slate-900'}`}
           >
-            Reviews ({product.rating_count})
+            {t('product.reviews', 'Reviews')} ({product.rating_count})
             {activeTab === 'reviews' && (
               <span className="absolute bottom-0 left-0 w-full h-0.5 bg-brand-primary rounded-t-full" />
             )}
@@ -591,7 +591,7 @@ export const ProductPage = () => {
                 : 'bg-brand-primary text-white'
             }`}
           >
-            {isOutOfStock ? 'Out of Stock' : (product.type === 'variable' ? 'Select Options' : 'Add to Cart')}
+            {isOutOfStock ? t('cart.out_of_stock', 'Out of Stock') : (product.type === 'variable' ? t('product.select_options', 'Select Options') : t('cart.add_to_cart', 'Add to Cart'))}
           </button>
         </div>
       </div>

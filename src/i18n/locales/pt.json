@@ -42,5 +42,10 @@
     "error": "Ocorreu um erro",
     "language": "Idioma",
     "read_more": "Leia mais"
+  },
+  "product": {
+    "select_options": "Selecionar opções",
+    "reviews": "Avaliações",
+    "details": "Detalhes do Produto"
   }
 }
