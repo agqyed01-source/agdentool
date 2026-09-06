@@ -1,0 +1,37 @@
+{
+  "nav": {
+    "home": "الرئيسية",
+    "shop": "المتجر",
+    "categories": "الفئات",
+    "about": "معلومات عنا",
+    "contact": "اتصل بنا",
+    "account": "الحساب",
+    "logout": "تسجيل الخروج",
+    "search": "البحث عن المنتجات..."
+  },
+  "cart": {
+    "cart": "عربة التسوق",
+    "checkout": "الدفع",
+    "add_to_cart": "أضف إلى السلة",
+    "out_of_stock": "نفذت الكمية",
+    "total": "المجموع",
+    "empty": "عربة التسوق فارغة",
+    "buy_now": "اشتري الآن"
+  },
+  "footer": {
+    "copyright": "جميع الحقوق محفوظة.",
+    "privacy_policy": "سياسة الخصوصية",
+    "terms": "شروط الخدمة",
+    "shipping_policy": "سياسة الشحن",
+    "return_policy": "سياسة الاسترجاع",
+    "quick_links": "روابط سريعة",
+    "customer_service": "خدمة العملاء",
+    "compliance": "الامتثال"
+  },
+  "general": {
+    "loading": "جاري التحميل...",
+    "error": "حدث خطأ",
+    "language": "اللغة",
+    "read_more": "اقرأ المزيد"
+  }
+}

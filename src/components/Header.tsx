@@ -2,6 +2,8 @@ import React, { useState, useEffect, useRef } from "react";
 import { Search, ShoppingBag, Menu, Phone, User, X, Loader2, MessageCircle, ChevronDown } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
+import { useTranslation } from "react-i18next";
+import { LanguageSwitcher } from "./LanguageSwitcher";
 import { wooApi, WooProduct, WooUser, WooCategory } from "../services/woo";
 import { decodeHtmlEntities } from "../utils/format";
 
@@ -47,6 +49,7 @@ const MobileCategoryNode = ({ node, depth = 0, setIsMenuOpen }: { node: any, dep
 };
 
 export const Header = () => {
+  const { t } = useTranslation();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isMobileSearchOpen, setIsMobileSearchOpen] = useState(false);
   const [menus, setMenus] = useState<
@@ -254,15 +257,16 @@ export const Header = () => {
 
           {/* Actions */}
           <div className="flex items-center gap-4">
+            <LanguageSwitcher />
             <Link
               to="/account"
               className="text-right hidden lg:block hover:text-brand-primary"
             >
               <span className="block text-[10px] uppercase text-slate-400 font-bold tracking-widest">
-                Account
+                {t('nav.account')}
               </span>
               <span className="text-sm font-semibold text-slate-900">
-                {user ? `Hi, ${user.first_name || 'Doc'}` : 'Sign In'}
+                {user ? `Hi, ${user.first_name || 'Doc'}` : t('nav.account')}
               </span>
             </Link>
 
@@ -499,7 +503,7 @@ export const Header = () => {
                   onClick={() => setIsMenuOpen(false)}
                   className="text-base font-normal flex items-center gap-2"
                 >
-                  <User size={18} /> {user ? `My Account (${user.first_name})` : 'Account Login'}
+                  <User size={18} /> {user ? `My ${t('nav.account')} (${user.first_name})` : t('nav.account') + ' Login'}
                 </Link>
               </div>
             </motion.div>

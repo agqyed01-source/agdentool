@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Microscope, Activity, Scissors, Zap, Shield, ClipboardCheck, MessageCircle } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { wooApi, WooCategory } from '../services/woo';
 
 const getCategoryIcon = (idx: number) => {
@@ -52,6 +53,7 @@ export const FeaturedCategories = () => {
 };
 
 export const Footer = () => {
+  const { t } = useTranslation();
   return (
     <footer className="bg-slate-50 border-t border-slate-200 pt-16 pb-24 md:pb-8">
       <div className="container mx-auto px-4">
@@ -83,12 +85,12 @@ export const Footer = () => {
           </div>
 
           <div>
-             <h4 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-6">Company</h4>
+             <h4 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-6">{t('footer.quick_links')}</h4>
             <ul className="space-y-3 text-sm text-slate-600 font-medium">
-              <li><Link to="/about" className="hover:text-brand-primary transition-colors">About Us</Link></li>
-              <li><Link to="/contact" className="hover:text-brand-primary transition-colors">Contact Us</Link></li>
-              <li><Link to="/shipping" className="hover:text-brand-primary transition-colors">Shipping Policy</Link></li>
-              <li><Link to="/terms" className="hover:text-brand-primary transition-colors">Terms of Service</Link></li>
+              <li><Link to="/about" className="hover:text-brand-primary transition-colors">{t('nav.about')}</Link></li>
+              <li><Link to="/contact" className="hover:text-brand-primary transition-colors">{t('nav.contact')}</Link></li>
+              <li><Link to="/shipping" className="hover:text-brand-primary transition-colors">{t('footer.shipping_policy')}</Link></li>
+              <li><Link to="/terms" className="hover:text-brand-primary transition-colors">{t('footer.terms')}</Link></li>
             </ul>
           </div>
 

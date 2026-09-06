@@ -1,0 +1,37 @@
+{
+  "nav": {
+    "home": "Início",
+    "shop": "Loja",
+    "categories": "Categorias",
+    "about": "Sobre nós",
+    "contact": "Contato",
+    "account": "Conta",
+    "logout": "Sair",
+    "search": "Buscar produtos..."
+  },
+  "cart": {
+    "cart": "Carrinho",
+    "checkout": "Finalizar compra",
+    "add_to_cart": "Adicionar",
+    "out_of_stock": "Esgotado",
+    "total": "Total",
+    "empty": "Seu carrinho está vazio",
+    "buy_now": "Comprar agora"
+  },
+  "footer": {
+    "copyright": "Todos os direitos reservados.",
+    "privacy_policy": "Política de Privacidade",
+    "terms": "Termos de Serviço",
+    "shipping_policy": "Política de Envio",
+    "return_policy": "Política de Devolução",
+    "quick_links": "Links Rápidos",
+    "customer_service": "Atendimento",
+    "compliance": "Conformidade"
+  },
+  "general": {
+    "loading": "Carregando...",
+    "error": "Ocorreu um erro",
+    "language": "Idioma",
+    "read_more": "Leia mais"
+  }
+}
