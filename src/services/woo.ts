@@ -8,6 +8,9 @@
  */
 
 export interface WooVariation {
+  stock_status?: string;
+  manage_stock?: boolean;
+  stock_quantity?: number;
   id: number;
   weight?: string;
   price: string;
@@ -23,6 +26,9 @@ export interface WooVariation {
 }
 
 export interface WooProduct {
+  stock_status?: string;
+  manage_stock?: boolean;
+  stock_quantity?: number;
   id: number;
   weight?: string;
   shipping_class?: string;
