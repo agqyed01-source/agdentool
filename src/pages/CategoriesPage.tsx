@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { ChevronRight, Box, Syringe, Scissors, Shield, Activity, Sparkles, Layers, Microscope, Wrench } from "lucide-react";
@@ -6,6 +7,7 @@ import { wooApi, WooCategory } from "../services/woo";
 import { decodeHtmlEntities } from "../utils/format";
 
 export const CategoriesPage = () => {
+  const { i18n } = useTranslation();
   const [categories, setCategories] = useState<WooCategory[]>([]);
   const [catImages, setCatImages] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);

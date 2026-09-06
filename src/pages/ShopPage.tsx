@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { useTranslation } from 'react-i18next';
 import { Link, useParams, useSearchParams } from "react-router-dom";
 import { Search, Grid, List as ListIcon, ChevronDown, Filter, X } from "lucide-react";
 import { Seo } from "../components/Seo";
@@ -65,6 +66,7 @@ const CategoryNode = ({ node, depth = 0, currentCategorySlug }: { node: any, dep
 };
 
 export const ShopPage = () => {
+  const { i18n } = useTranslation();
   const { slug } = useParams<{ slug?: string }>();
   const [searchParams, setSearchParams] = useSearchParams();
   const searchQuery = searchParams.get("search") || "";
@@ -107,7 +109,7 @@ export const ShopPage = () => {
 
   useEffect(() => {
     wooApi.getCategories().then(setCategories).catch(console.error);
-  }, []);
+  }, [i18n.language]);
 
   useEffect(() => {
     setShowMobileSidebar(false);

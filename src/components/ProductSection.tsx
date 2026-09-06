@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import React, { useEffect, useState } from "react";
 import { ShoppingCart, Heart, Star, Box, ChevronRight, Syringe, Scissors, Shield, Activity, Sparkles, Layers, Microscope, Wrench } from "lucide-react";
 import { motion } from "motion/react";

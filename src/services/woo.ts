@@ -1,3 +1,4 @@
+import i18n from '../i18n/config';
 /**
  * WooCommerce REST API Service
  *
@@ -240,6 +241,13 @@ async function fetchWoo(
   bodyData?: any,
   includeHeaders: boolean = false
 ) {
+  if (i18n && i18n.language) {
+    const lang = i18n.language.split("-")[0];
+    if (lang !== "en") {
+      queryParams = { ...queryParams, lang };
+    }
+  }
+
   let fetchOptions: RequestInit;
   let url = "";
 

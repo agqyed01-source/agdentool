@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import React, { useEffect, useState, useRef } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { Seo } from '../components/Seo';
@@ -8,6 +9,7 @@ import { ProductReviews } from '../components/ProductReviews';
 import { WhatsAppAgents } from '../components/FooterAndNav';
 
 export const ProductPage = () => {
+  const { i18n } = useTranslation();
   const { slug } = useParams<{ slug: string }>();
   const [product, setProduct] = useState<WooProduct | null>(null);
   const [loading, setLoading] = useState(true);
@@ -103,7 +105,7 @@ export const ProductPage = () => {
         setLoading(false);
       });
     }
-  }, [slug]);
+  }, [slug, i18n.language]);
 
   // Find current variation based on selected attributes
   const currentVariation = React.useMemo(() => {
