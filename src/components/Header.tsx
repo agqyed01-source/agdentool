@@ -196,7 +196,7 @@ export const Header = () => {
                   setSearchQuery(e.target.value);
                   setShowSuggestions(true);
                 }}
-                placeholder="Search 15,000+ dental products (implants, kits, hygiene...)"
+                placeholder={t('nav.search')}
                 className="w-full pl-6 pr-12 py-3 bg-slate-100 border-none focus:ring-2 focus:ring-brand-primary rounded-full text-sm transition-all outline-none"
               />
               <button
@@ -298,7 +298,7 @@ export const Header = () => {
           to="/shop"
           className="text-brand-primary flex items-center gap-1 shrink-0"
         >
-          <span>☰</span> All Categories
+          <span>☰</span> {t('nav.categories')}
         </Link>
         {menus.slice(0, 6).map((menu) => (
           <Link
@@ -313,7 +313,7 @@ export const Header = () => {
           to="/category/sale"
           className="text-brand-accent hover:opacity-80 transition-opacity shrink-0"
         >
-          Sale %
+          {t('nav.sale', 'Sale %')}
         </Link>
       </nav>
 

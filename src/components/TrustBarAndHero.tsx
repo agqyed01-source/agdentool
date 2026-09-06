@@ -29,7 +29,10 @@ export const TrustBar = () => {
   );
 };
 
+import { useTranslation } from 'react-i18next';
+
 export const Hero = () => {
+  const { t } = useTranslation();
   return (
     <section className="relative bg-slate-900 rounded-2xl md:rounded-3xl mx-4 my-6 overflow-hidden min-h-[350px] md:min-h-[450px]">
       {/* Abstract Background pattern */}
@@ -38,13 +41,13 @@ export const Hero = () => {
       <div className="container mx-auto px-10 h-full relative z-20 flex flex-col justify-center py-12 md:py-20 lg:py-24">
         <div className="max-w-2xl">
           <div className="inline-flex items-center gap-2 px-2 py-1 bg-brand-primary text-white text-[10px] font-black uppercase tracking-tighter mb-4 rounded">
-            New Inventory Just Arrived
+            {t('hero.new_inventory', 'New Inventory Just Arrived')}
           </div>
           <h1 className="text-3xl md:text-5xl lg:text-6xl font-bold text-white leading-[1.1] mb-5 tracking-tight">
-             Premium Surgical <br /><span className="text-blue-400">Precision Implements</span>
+             {t('hero.premium_surgical', 'Premium Surgical')} <br /><span className="text-blue-400">{t('hero.precision_implements', 'Precision Implements')}</span>
           </h1>
           <p className="text-sm md:text-lg text-slate-300 mb-8 max-w-md leading-relaxed">
-            German-engineered precision for the modern professional. In stock and ready for immediate global dispatch.
+            {t('hero.description', 'German-engineered precision for the modern professional. In stock and ready for immediate global dispatch.')}
           </p>
           <div className="flex flex-wrap gap-4">
             <Link to="/shop" className="bg-white hover:bg-slate-100 text-slate-900 font-bold px-8 py-3.5 rounded-full text-sm transition-all transform active:scale-95 shadow-xl text-center">

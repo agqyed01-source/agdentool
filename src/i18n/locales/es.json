@@ -2,12 +2,21 @@
   "nav": {
     "home": "Inicio",
     "shop": "Tienda",
-    "categories": "Categorías",
+    "categories": "Todas las Categorías",
     "about": "Sobre nosotros",
     "contact": "Contacto",
     "account": "Cuenta",
     "logout": "Cerrar sesión",
-    "search": "Buscar productos..."
+    "search": "Buscar más de 15,000 productos dentales (implantes, kits...)",
+    "sale": "Rebajas %"
+  },
+  "hero": {
+    "new_inventory": "Nuevo Inventario Recién Llegado",
+    "premium_surgical": "Instrumentos Quirúrgicos",
+    "precision_implements": "De Precisión",
+    "description": "Precisión de ingeniería alemana para el profesional moderno. En stock y listos para envío global inmediato.",
+    "shop_collection": "Comprar Colección",
+    "view_catalog": "Ver Catálogo Digital"
   },
   "cart": {
     "cart": "Carrito",

@@ -2,12 +2,21 @@
   "nav": {
     "home": "Home",
     "shop": "Shop",
-    "categories": "Categories",
+    "categories": "All Categories",
     "about": "About Us",
     "contact": "Contact Us",
     "account": "Account",
     "logout": "Logout",
-    "search": "Search for products..."
+    "search": "Search 15,000+ dental products (implants, kits, hygiene...)",
+    "sale": "Sale %"
+  },
+  "hero": {
+    "new_inventory": "New Inventory Just Arrived",
+    "premium_surgical": "Premium Surgical",
+    "precision_implements": "Precision Implements",
+    "description": "German-engineered precision for the modern professional. In stock and ready for immediate global dispatch.",
+    "shop_collection": "Shop Collection",
+    "view_catalog": "View Digital Catalog"
   },
   "cart": {
     "cart": "Cart",

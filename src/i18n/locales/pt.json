@@ -2,12 +2,21 @@
   "nav": {
     "home": "Início",
     "shop": "Loja",
-    "categories": "Categorias",
+    "categories": "Todas as Categorias",
     "about": "Sobre nós",
     "contact": "Contato",
     "account": "Conta",
     "logout": "Sair",
-    "search": "Buscar produtos..."
+    "search": "Pesquise mais de 15.000 produtos odontológicos...",
+    "sale": "Promoção %"
+  },
+  "hero": {
+    "new_inventory": "Novo Estoque Chegou",
+    "premium_surgical": "Instrumentos Cirúrgicos",
+    "precision_implements": "De Precisão",
+    "description": "Precisão de engenharia alemã para o profissional moderno. Em estoque e pronto para envio global imediato.",
+    "shop_collection": "Comprar Coleção",
+    "view_catalog": "Ver Catálogo Digital"
   },
   "cart": {
     "cart": "Carrinho",
