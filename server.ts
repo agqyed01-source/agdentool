@@ -245,18 +245,8 @@ async function startServer() {
       
       let baseUrl = WOO_URL.replace(/\/$/, '');
       
-      // Handle TranslatePress URL structure if lang parameter is provided
-      let langSlug = '';
-      if (queryParams && queryParams.lang && queryParams.lang !== 'en') {
-        langSlug = `/${queryParams.lang}`;
-        delete queryParams.lang; // Remove it so it doesn't get added to the query string
-      }
-      
       if (!baseUrl.includes('/wp-json')) {
-        baseUrl = `${baseUrl}${langSlug}/wp-json/wc/v3`;
-      } else {
-        const parts = baseUrl.split('/wp-json');
-        baseUrl = `${parts[0]}${langSlug}/wp-json${parts[1] || ''}`;
+        baseUrl = `${baseUrl}/wp-json/wc/v3`;
       }
 
       // Try searching for customer by email first (to get billing/shipping)
@@ -345,18 +335,8 @@ async function startServer() {
 
       let baseUrl = WOO_URL.replace(/\/$/, '');
       
-      // Handle TranslatePress URL structure if lang parameter is provided
-      let langSlug = '';
-      if (queryParams && queryParams.lang && queryParams.lang !== 'en') {
-        langSlug = `/${queryParams.lang}`;
-        delete queryParams.lang; // Remove it so it doesn't get added to the query string
-      }
-      
       if (!baseUrl.includes('/wp-json')) {
-        baseUrl = `${baseUrl}${langSlug}/wp-json/wc/v3`;
-      } else {
-        const parts = baseUrl.split('/wp-json');
-        baseUrl = `${parts[0]}${langSlug}/wp-json${parts[1] || ''}`;
+        baseUrl = `${baseUrl}/wp-json/wc/v3`;
       }
 
       const url = new URL(`${baseUrl}/${endpoint.replace(/^\//, '')}`);
@@ -469,18 +449,8 @@ async function startServer() {
 
       let baseUrl = WOO_URL.replace(/\/$/, '');
       
-      // Handle TranslatePress URL structure if lang parameter is provided
-      let langSlug = '';
-      if (queryParams && queryParams.lang && queryParams.lang !== 'en') {
-        langSlug = `/${queryParams.lang}`;
-        delete queryParams.lang; // Remove it so it doesn't get added to the query string
-      }
-      
       if (!baseUrl.includes('/wp-json')) {
-        baseUrl = `${baseUrl}${langSlug}/wp-json/wc/v3`;
-      } else {
-        const parts = baseUrl.split('/wp-json');
-        baseUrl = `${parts[0]}${langSlug}/wp-json${parts[1] || ''}`;
+        baseUrl = `${baseUrl}/wp-json/wc/v3`;
       }
 
       const url = new URL(`${baseUrl}/${endpoint.replace(/^\//, '')}`);
