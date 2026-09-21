@@ -45,6 +45,10 @@
   },
   "product": {
     "select_options": "Выбрать опции",
+    "unavailable": "Недоступно",
+    "combination_unavailable": "Эта комбинация недоступна. Пожалуйста, выберите другие параметры.",
+    "clear_selection": "Очистить",
+    "clear_all": "Очистить всё",
     "reviews": "Отзывы",
     "details": "О товаре"
   }

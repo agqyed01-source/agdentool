@@ -592,6 +592,10 @@ export const wooApi = {
             reject(new Error("Product is out of stock"));
             return;
           }
+          if (product.type === 'variable' && !variation_id) {
+            reject(new Error("Please select a valid product variation before adding to cart"));
+            return;
+          }
           const varString = variations ? JSON.stringify(variations) : '{}';
           const existingItem = mockCartState.items.find(
             (i) => i.id === product!.id && JSON.stringify(i.variations || {}) === varString,

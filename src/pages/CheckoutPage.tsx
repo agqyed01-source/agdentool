@@ -352,8 +352,8 @@ groups[itemShippingClass].subtotal += itemSubtotal;
       const order = await wooApi.clearCartAndCreateOrder({
         billing,
         shipping: billing, // simplified, just copy billing for now
-        payment_method: 'checkout',
-        payment_method_title: 'Create order',
+        
+        
         shipping_lines: selectedShippingMethod ? [{
           method_id: selectedShippingMethod.method_id,
           method_title: selectedShippingMethod.title,

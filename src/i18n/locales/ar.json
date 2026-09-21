@@ -45,6 +45,10 @@
   },
   "product": {
     "select_options": "تحديد الخيارات",
+    "unavailable": "غير متوفر",
+    "combination_unavailable": "هذه التشكيلة غير متوفرة. يرجى اختيار خيارات أخرى.",
+    "clear_selection": "مسح",
+    "clear_all": "مسح الكل",
     "reviews": "التقييمات",
     "details": "تفاصيل المنتج"
   }

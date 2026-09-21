@@ -45,6 +45,10 @@
   },
   "product": {
     "select_options": "Seleccionar opciones",
+    "unavailable": "No disponible",
+    "combination_unavailable": "Esta combinación no está disponible. Por favor, elija otra opción.",
+    "clear_selection": "Limpiar",
+    "clear_all": "Limpiar todo",
     "reviews": "Opiniones",
     "details": "Detalles del producto"
   }
