@@ -47,6 +47,8 @@ export const ProductPage = () => {
   const [showStickyAdd, setShowStickyAdd] = useState(false);
   const [showStickyHeader, setShowStickyHeader] = useState(false);
   const [isAdded, setIsAdded] = useState(false);
+  const [selectionError, setSelectionError] = useState<string | null>(null);
+  const [showSuccessToast, setShowSuccessToast] = useState(false);
   const addToCartRef = useRef<HTMLDivElement>(null);
   const imgRef = useRef<HTMLImageElement>(null);
   const imageGalleryRef = useRef<HTMLDivElement>(null);
@@ -300,6 +302,67 @@ export const ProductPage = () => {
     }
     return isOutOfStock || !currentPrice || parseFloat(currentPrice) <= 0;
   }, [product, allAttributesSelected, isInvalidCombination, currentVariation, isOutOfStock, currentPrice]);
+
+  const handleAddToCart = async () => {
+    setSelectionError(null);
+    if (!product) return;
+
+    if (product.type === "variable") {
+      if (!allAttributesSelected) {
+        const missingAttributes = variationAttributes.filter(a => a && a.name && !selectedVariations[a.name]);
+        setSelectionError(`Please select: ${missingAttributes.map(a => a.name).join(", ")}`);
+        if (addToCartRef.current) {
+          addToCartRef.current.scrollIntoView({ behavior: "smooth", block: "center" });
+        }
+        return;
+      }
+      if (!currentVariation) {
+        setSelectionError(t("product.combination_unavailable", "This combination is unavailable. Please choose another option."));
+        return;
+      }
+    }
+
+    const priceNum = parseFloat(String(currentPrice || product.price || "0").replace(/[^0-9.]/g, ""));
+    if (priceNum <= 0) {
+      setSelectionError("This product is currently unavailable for purchase (no price set).");
+      return;
+    }
+
+    try {
+      await wooApi.addToCart({ 
+        ...product, 
+        price: currentPrice || product.price,
+        images: currentVariation?.image?.src 
+          ? [{ id: currentVariation.image.id || 0, src: currentVariation.image.src, alt: currentVariation.image.alt || "" }] 
+          : (product.images || [])
+      }, quantity, selectedVariations, currentVariation?.id);
+
+      setIsAdded(true);
+      setShowSuccessToast(true);
+      setTimeout(() => setIsAdded(false), 2500);
+      setTimeout(() => setShowSuccessToast(false), 5000);
+
+      if (typeof window !== "undefined" && (window as any).gtag) {
+        try {
+          (window as any).gtag("event", "add_to_cart", {
+            currency: "USD",
+            value: priceNum * quantity,
+            items: [{
+              item_id: String(product.id || ""),
+              item_name: product.name || "",
+              price: priceNum,
+              quantity: quantity
+            }]
+          });
+        } catch (gtagErr) {
+          console.warn("Analytics event failed", gtagErr);
+        }
+      }
+    } catch (err: any) {
+      console.error("Error adding to cart:", err);
+      setSelectionError(err.message || "Failed to add to cart. Please try again.");
+    }
+  };
 
   const getAddToCartText = () => {
     if (product?.type === 'variable') {
@@ -678,57 +741,17 @@ export const ProductPage = () => {
                 <input type="number" min="1" value={quantity} onChange={e => setQuantity(parseInt(e.target.value) || 1)} className="w-full text-center font-bold text-slate-900 outline-none" />
                 <button onClick={() => setQuantity(quantity + 1)} className="px-4 py-3 text-slate-500 hover:bg-slate-50 transition-colors font-bold cursor-pointer">+</button>
               </div>
+              {selectionError && (
+                <div className="w-full p-3 bg-red-50 border border-red-200 text-red-600 rounded-lg text-sm font-medium mb-3 flex items-center justify-between">
+                  <span>{selectionError}</span>
+                  <button type="button" onClick={() => setSelectionError(null)} className="text-red-400 hover:text-red-700 ml-2 font-bold">×</button>
+                </div>
+              )}
               <button 
                 id="add-btn"
                 type="button"
                 disabled={isAddToCartDisabled}
-                onClick={async () => {
-                  if (isAddToCartDisabled) return;
-                  if (product.type === 'variable') {
-                    if (!allAttributesSelected) {
-                      const missingAttributes = variationAttributes.filter(a => a && a.name && !selectedVariations[a.name]);
-                      alert(`Please select: ${missingAttributes.map(a => a.name).join(', ')}`);
-                      return;
-                    }
-                    if (!currentVariation) {
-                      alert(t('product.combination_unavailable', 'This combination is unavailable. Please choose another option.'));
-                      return;
-                    }
-                  }
-                  if (!currentPrice || parseFloat(currentPrice) <= 0) {
-                    alert("This product is currently unavailable for purchase (no price set).");
-                    return;
-                  }
-
-                  try {
-                    await wooApi.addToCart({ 
-                      ...product, 
-                      price: currentPrice,
-                      images: currentVariation?.image?.src 
-                        ? [{ id: currentVariation.image.id || 0, src: currentVariation.image.src, alt: currentVariation.image.alt || '' }] 
-                        : (product.images || [])
-                    }, quantity, selectedVariations, currentVariation?.id);
-
-                    setIsAdded(true);
-                    setTimeout(() => setIsAdded(false), 2000);
-
-                    if (typeof window !== 'undefined' && (window as any).gtag) {
-                      (window as any).gtag('event', 'add_to_cart', {
-                        currency: 'USD',
-                        value: parseFloat(currentPrice || '0') * quantity,
-                        items: [{
-                          item_id: product.id.toString(),
-                          item_name: product.name,
-                          price: parseFloat(currentPrice || '0'),
-                          quantity: quantity
-                        }]
-                      });
-                    }
-                  } catch (err: any) {
-                    console.error('Error adding to cart:', err);
-                    alert(err.message || 'Failed to add to cart. Please try again.');
-                  }
-                }}
+                onClick={handleAddToCart}
                 className={`flex-grow font-bold text-lg rounded-lg shadow-sm transition-all flex items-center justify-center gap-2 py-4 cursor-pointer ${
                   isAddToCartDisabled
                     ? 'bg-slate-200 text-slate-400 cursor-not-allowed border border-slate-300/50 shadow-none'
@@ -816,11 +839,13 @@ export const ProductPage = () => {
           </div>
           <button 
             type="button"
-            disabled={isAddToCartDisabled}
+            disabled={isAddToCartDisabled && allAttributesSelected}
             onClick={() => {
-               if (addToCartRef.current) {
-                 addToCartRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
-               }
+              if (allAttributesSelected) {
+                handleAddToCart();
+              } else if (addToCartRef.current) {
+                addToCartRef.current.scrollIntoView({ behavior: "smooth", block: "center" });
+              }
             }}
             className={`font-bold px-6 py-3 rounded-lg shadow-sm whitespace-nowrap cursor-pointer transition-colors ${
               isAddToCartDisabled
@@ -834,6 +859,19 @@ export const ProductPage = () => {
           </button>
         </div>
       </div>
+      {showSuccessToast && (
+        <div className="fixed top-20 left-1/2 -translate-x-1/2 z-50 bg-emerald-600 text-white px-5 py-3.5 rounded-xl shadow-2xl flex items-center gap-4 text-sm font-semibold max-w-md w-[92%] border border-emerald-500">
+          <Check size={20} className="shrink-0 text-white stroke-[3]" />
+          <span className="flex-1 truncate">{t("cart.added", "Added to Cart")}!</span>
+          <Link to="/cart" className="bg-white text-emerald-800 px-3 py-1.5 rounded-lg text-xs font-bold hover:bg-emerald-50 transition-colors shrink-0">
+            {t("cart.view_cart", "View Cart")}
+          </Link>
+          <Link to="/checkout" className="bg-emerald-950 text-white px-3 py-1.5 rounded-lg text-xs font-bold hover:bg-emerald-900 transition-colors shrink-0">
+            {t("cart.checkout", "Checkout")}
+          </Link>
+          <button type="button" onClick={() => setShowSuccessToast(false)} className="text-emerald-200 hover:text-white p-1">✕</button>
+        </div>
+      )}
     </div>
     <WhatsAppAgents />
     </>

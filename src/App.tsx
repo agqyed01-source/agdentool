@@ -39,49 +39,51 @@ function ScrollToTop() {
 
 export default function App() {
   return (
-    <div className="min-h-screen flex flex-col bg-slate-50">
-      <ScrollToTop />
-      <Analytics />
-      <RegistrationPopup />
-      {/* Navigation */}
-      <Header />
-      
-      <main className="flex-grow">
-        <ErrorBoundary>
-          <Routes>
-            <Route path="/" element={<Home />} />
-            <Route path="/shop" element={<ShopPage />} />
-            <Route path="/categories" element={<CategoriesPage />} />
-            <Route path="/product/:slug" element={<ProductPage />} />
-            <Route path="/category/:slug" element={<ShopPage />} />
-            <Route path="/cart" element={<CartPage />} />
-            <Route path="/checkout" element={<CheckoutPage />} />
-            <Route path="/account" element={<AccountPage />} />
-            <Route path="/order/:id" element={<OrderPage />} />
-            <Route path="/about" element={<AboutUs />} />
-            <Route path="/shipping" element={<ShippingPolicy />} />
-            <Route path="/terms" element={<TermsOfService />} />
-            <Route path="/contact" element={<ContactUs />} />
-            <Route path="/privacy" element={<PrivacyPolicy />} />
-            <Route path="/compliance" element={<Compliance />} />
-            <Route path="/cookies" element={<CookiePolicy />} />
-          </Routes>
-        </ErrorBoundary>
-      </main>
+    <ErrorBoundary>
+      <div className="min-h-screen flex flex-col bg-slate-50">
+        <ScrollToTop />
+        <Analytics />
+        <RegistrationPopup />
+        {/* Navigation */}
+        <Header />
+        
+        <main className="flex-grow">
+          <ErrorBoundary>
+            <Routes>
+              <Route path="/" element={<Home />} />
+              <Route path="/shop" element={<ShopPage />} />
+              <Route path="/categories" element={<CategoriesPage />} />
+              <Route path="/product/:slug" element={<ProductPage />} />
+              <Route path="/category/:slug" element={<ShopPage />} />
+              <Route path="/cart" element={<CartPage />} />
+              <Route path="/checkout" element={<CheckoutPage />} />
+              <Route path="/account" element={<AccountPage />} />
+              <Route path="/order/:id" element={<OrderPage />} />
+              <Route path="/about" element={<AboutUs />} />
+              <Route path="/shipping" element={<ShippingPolicy />} />
+              <Route path="/terms" element={<TermsOfService />} />
+              <Route path="/contact" element={<ContactUs />} />
+              <Route path="/privacy" element={<PrivacyPolicy />} />
+              <Route path="/compliance" element={<Compliance />} />
+              <Route path="/cookies" element={<CookiePolicy />} />
+            </Routes>
+          </ErrorBoundary>
+        </main>
 
-      {/* Footer */}
-      <Footer />
-      
-      {/* Mobile-only Bottom Navigation */}
-      <MobileBottomNav />
+        {/* Footer */}
+        <Footer />
+        
+        {/* Mobile-only Bottom Navigation */}
+        <MobileBottomNav />
 
-      {/* Global Toast / Chat placeholder */}
-      <div className="fixed bottom-20 right-4 z-50 md:bottom-8 md:right-8">
-        <a href="https://wa.me/447856364969" target="_blank" rel="noopener noreferrer" className="block bg-[#25D366] text-white p-4 rounded-full shadow-lg hover:bg-[#128C7E] hover:scale-110 active:scale-95 transition-all text-center flex items-center justify-center" aria-label="Chat support on WhatsApp">
-           <svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
-        </a>
+        {/* Global Toast / Chat placeholder */}
+        <div className="fixed bottom-20 right-4 z-50 md:bottom-8 md:right-8">
+          <a href="https://wa.me/447856364969" target="_blank" rel="noopener noreferrer" className="block bg-[#25D366] text-white p-4 rounded-full shadow-lg hover:bg-[#128C7E] hover:scale-110 active:scale-95 transition-all text-center flex items-center justify-center" aria-label="Chat support on WhatsApp">
+             <svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
+          </a>
+        </div>
       </div>
-    </div>
+    </ErrorBoundary>
   );
 }
 

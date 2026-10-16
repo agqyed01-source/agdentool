@@ -83,15 +83,30 @@ export const Header = () => {
 
     wooApi.getCategories().then(setCategories).catch(console.error);
 
-    // Poll cart just for demo purposes or fetch once
-    wooApi.getCart().then((cart) => setCartCount(cart.totals.total_items));
-    wooApi.getCurrentUser().then(setUser);
+    const refreshCart = () => {
+      wooApi.getCart()
+        .then((cart) => {
+          if (cart?.totals?.total_items !== undefined) {
+            setCartCount(cart.totals.total_items);
+          }
+        })
+        .catch((err) => console.error("Cart fetch error in header", err));
+    };
 
-    // Create an interval to frequently check cart in this simplified setup
-    const intervalId = setInterval(() => {
-      wooApi.getCart().then((cart) => setCartCount(cart.totals.total_items));
-      wooApi.getCurrentUser().then(setUser);
-    }, 2000);
+    refreshCart();
+    wooApi.getCurrentUser().then(setUser).catch(console.error);
+
+    const intervalId = setInterval(refreshCart, 4000);
+
+    const handleCartUpdated = (e: any) => {
+      const count = e?.detail?.totals?.total_items;
+      if (typeof count === 'number') {
+        setCartCount(count);
+      } else {
+        refreshCart();
+      }
+    };
+    window.addEventListener('cart-updated', handleCartUpdated);
 
     const handleToggleSearch = () => {
       setIsMobileSearchOpen((prev) => !prev);
@@ -101,6 +116,7 @@ export const Header = () => {
 
     return () => {
       clearInterval(intervalId);
+      window.removeEventListener('cart-updated', handleCartUpdated);
       window.removeEventListener('toggleMobileSearch', handleToggleSearch);
     };
   }, []);

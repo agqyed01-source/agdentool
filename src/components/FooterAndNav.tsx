@@ -51,11 +51,33 @@ export const MobileBottomNav = () => {
   const [cartCount, setCartCount] = useState(0);
 
   useEffect(() => {
-    wooApi.getCart().then(cart => setCartCount(cart.totals.total_items));
-    const intervalId = setInterval(() => {
-      wooApi.getCart().then(cart => setCartCount(cart.totals.total_items));
-    }, 2000);
-    return () => clearInterval(intervalId);
+    const updateCount = () => {
+      wooApi.getCart()
+        .then(cart => {
+          if (cart?.totals?.total_items !== undefined) {
+            setCartCount(cart.totals.total_items);
+          }
+        })
+        .catch(console.error);
+    };
+
+    updateCount();
+    const intervalId = setInterval(updateCount, 4000);
+
+    const handleCartUpdated = (e: any) => {
+      const count = e?.detail?.totals?.total_items;
+      if (typeof count === 'number') {
+        setCartCount(count);
+      } else {
+        updateCount();
+      }
+    };
+    window.addEventListener('cart-updated', handleCartUpdated);
+
+    return () => {
+      clearInterval(intervalId);
+      window.removeEventListener('cart-updated', handleCartUpdated);
+    };
   }, []);
 
   return (

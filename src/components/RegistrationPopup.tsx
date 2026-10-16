@@ -17,8 +17,8 @@ export function RegistrationPopup() {
 
   useEffect(() => {
     const handleShowPopup = (e: any) => {
-      if (e.detail?.type === 'cart') {
-        setPopupType('cart');
+      if (e.detail?.type === 'coupon' || e.detail?.type === 'manual') {
+        setPopupType('timer');
         setIsOpen(true);
       }
     };

@@ -236,13 +236,14 @@ export const ProductCard = ({ product }: { product: WooProduct }) => {
               type="button"
               onClick={(e) => {
                 e.preventDefault();
-                if (!product.price || parseFloat(product.price) <= 0) {
-                  alert("This product is currently unavailable for purchase (no price set).");
+                const priceNum = parseFloat(String(product.price || '0').replace(/[^0-9.]/g, ''));
+                if (priceNum <= 0) {
                   return;
                 }
-                wooApi.addToCart(product, 1).catch(console.error);
-                setIsAdded(true);
-                setTimeout(() => setIsAdded(false), 2000);
+                wooApi.addToCart(product, 1).then(() => {
+                  setIsAdded(true);
+                  setTimeout(() => setIsAdded(false), 2000);
+                }).catch(console.error);
               }}
               className={`p-2 rounded-lg transition-colors shadow-sm cursor-pointer ${
                 isAdded 

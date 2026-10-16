@@ -123,8 +123,8 @@ export const CartPage = () => {
           <h2 className="text-lg font-bold text-slate-900 mb-6">Order Summary</h2>
           
           <div className="flex justify-between mb-4 text-slate-600 font-medium">
-            <span>Subtotal ({cart.totals.total_items} items)</span>
-            <span>${(parseFloat(cart.totals.total_price) + parseFloat(cart.totals.total_discount || '0')).toFixed(2)}</span>
+            <span>Subtotal ({cart.totals?.total_items || 0} items)</span>
+            <span>${(parseFloat(cart.totals?.total_price || '0') + parseFloat(cart.totals?.total_discount || '0')).toFixed(2)}</span>
           </div>
 
           {cart.coupons && cart.coupons.length > 0 && (
@@ -148,7 +148,7 @@ export const CartPage = () => {
           
           <div className="border-t border-slate-200 pt-4 mb-8 flex justify-between items-center text-lg font-black text-slate-900">
             <span>Total</span>
-            <span>${cart.totals.total_price}</span>
+            <span>${cart.totals?.total_price || '0.00'}</span>
           </div>
 
           <form onSubmit={handleApplyCoupon} className="mb-6">

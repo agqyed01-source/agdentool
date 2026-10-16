@@ -625,8 +625,8 @@ export const wooApi = {
           }
           recalculateCart();
           
-          if (typeof window !== 'undefined' && !mockCurrentUser) {
-            window.dispatchEvent(new CustomEvent('show-registration-popup', { detail: { type: 'cart' } }));
+          if (typeof window !== 'undefined') {
+            window.dispatchEvent(new CustomEvent('cart-updated', { detail: { ...mockCartState } }));
           }
         }
         resolve({ ...mockCartState });
@@ -1317,45 +1317,79 @@ let mockCartState: WooCart = {
   coupons: [],
   totals: { total_items: 0, total_price: "0.00", total_discount: "0.00" },
 };
+
 if (typeof localStorage !== 'undefined') {
-  mockCartState = JSON.parse(
-    localStorage.getItem(CART_STORAGE_KEY) || "null",
-  ) || mockCartState;
+  try {
+    const raw = localStorage.getItem(CART_STORAGE_KEY);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (parsed && typeof parsed === 'object') {
+        mockCartState = {
+          items: Array.isArray(parsed.items) ? parsed.items : [],
+          coupons: Array.isArray(parsed.coupons) ? parsed.coupons : [],
+          totals: {
+            total_items: Number(parsed.totals?.total_items) || 0,
+            total_price: String(parsed.totals?.total_price || '0.00'),
+            total_discount: String(parsed.totals?.total_discount || '0.00')
+          }
+        };
+      }
+    }
+  } catch (err) {
+    console.warn("Failed to parse cached cart", err);
+  }
 }
 
 let mockCurrentUser: WooUser | null = null;
 if (typeof localStorage !== 'undefined') {
-  mockCurrentUser = JSON.parse(
-    localStorage.getItem(USER_STORAGE_KEY) || "null",
-  );
+  try {
+    mockCurrentUser = JSON.parse(
+      localStorage.getItem(USER_STORAGE_KEY) || "null",
+    );
+  } catch (err) {
+    console.warn("Failed to parse cached user", err);
+  }
 }
 
 function saveCart() {
   if (typeof localStorage !== 'undefined') {
-    localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(mockCartState));
+    try {
+      localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(mockCartState));
+    } catch (err) {
+      console.warn("Failed to persist cart to localStorage", err);
+    }
   }
 }
 
 function saveUser() {
-  if (mockCurrentUser) {
-    localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(mockCurrentUser));
-  } else {
-    localStorage.removeItem(USER_STORAGE_KEY);
+  if (typeof localStorage !== 'undefined') {
+    try {
+      if (mockCurrentUser) {
+        localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(mockCurrentUser));
+      } else {
+        localStorage.removeItem(USER_STORAGE_KEY);
+      }
+    } catch (err) {
+      console.warn("Failed to persist user to localStorage", err);
+    }
   }
 }
 
 function recalculateCart() {
+  if (!mockCartState.items || !Array.isArray(mockCartState.items)) {
+    mockCartState.items = [];
+  }
   const totalItems = mockCartState.items.reduce(
-    (acc, item) => acc + item.quantity,
+    (acc, item) => acc + (item.quantity || 1),
     0,
   );
   const subtotal = mockCartState.items.reduce(
-    (acc, item) => acc + parseFloat(item.price || "0") * item.quantity,
+    (acc, item) => acc + parseFloat(String(item.price || "0").replace(/[^0-9.]/g, '') || "0") * (item.quantity || 1),
     0,
   );
 
   let totalDiscount = 0;
-  if (mockCartState.coupons) {
+  if (mockCartState.coupons && Array.isArray(mockCartState.coupons)) {
     let validCoupons: any[] = [];
     let isAnyIndividual = false;
     
@@ -1400,4 +1434,8 @@ function recalculateCart() {
     total_discount: totalDiscount.toFixed(2),
   };
   saveCart();
+
+  if (typeof window !== 'undefined') {
+    window.dispatchEvent(new CustomEvent('cart-updated', { detail: { ...mockCartState } }));
+  }
 }
