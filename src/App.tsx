@@ -25,6 +25,7 @@ import { ContactUs } from './pages/ContactUs';
 import { PrivacyPolicy } from './pages/PrivacyPolicy';
 import { Compliance } from './pages/Compliance';
 import { CookiePolicy } from './pages/CookiePolicy';
+import { ErrorBoundary } from './components/ErrorBoundary';
 
 function ScrollToTop() {
   const { pathname } = useLocation();
@@ -35,8 +36,6 @@ function ScrollToTop() {
 
   return null;
 }
-
-import { ErrorBoundary } from './components/ErrorBoundary';
 
 export default function App() {
   return (

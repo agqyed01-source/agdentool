@@ -505,7 +505,7 @@ export const ProductPage = () => {
               key={currentImageSrc}
               ref={imgRef}
               src={currentImageSrc} 
-              alt={product.images[selectedImageIndex]?.alt || decodeHtmlEntities(product.name)} 
+              alt={(product.images || [])[selectedImageIndex]?.alt || decodeHtmlEntities(product.name)} 
               className={`max-w-full max-h-full object-contain transition-opacity duration-300 ${isImageLoading ? 'opacity-0' : 'opacity-100'}`}
               referrerPolicy="no-referrer"
               onLoad={() => {
@@ -516,17 +516,17 @@ export const ProductPage = () => {
               }}
             />
           </div>
-          {product.images.length > 1 && (
+          {(product.images || []).length > 1 && (
             <div className="flex gap-4 overflow-x-auto pb-2 scrollbar-hide">
-              {product.images.map((image, idx) => (
+              {(product.images || []).map((image, idx) => (
                 <button
-                  key={image.id || idx}
+                  key={image?.id || idx}
                   onClick={() => setSelectedImageIndex(idx)}
                   className={`flex-shrink-0 w-20 h-20 rounded-lg overflow-hidden border-2 transition-all ${selectedImageIndex === idx ? 'border-brand-primary' : 'border-transparent hover:border-slate-300'}`}
                 >
                   <img
-                    src={image.src}
-                    alt={image.alt || `${decodeHtmlEntities(product.name)} - Image ${idx + 1}`}
+                    src={image?.src}
+                    alt={image?.alt || `${decodeHtmlEntities(product.name)} - Image ${idx + 1}`}
                     className="w-full h-full object-cover"
                     referrerPolicy="no-referrer"
                   />
@@ -538,9 +538,11 @@ export const ProductPage = () => {
 
         {/* Product Info */}
         <div className="flex flex-col min-w-0">
-          <span className="text-xs font-bold text-brand-primary uppercase tracking-widest mb-2">
-            {decodeHtmlEntities(product.categories[0]?.name)}
-          </span>
+          {product.categories?.[0]?.name && (
+            <span className="text-xs font-bold text-brand-primary uppercase tracking-widest mb-2">
+              {decodeHtmlEntities(product.categories[0].name)}
+            </span>
+          )}
           <h1 className="text-3xl md:text-4xl font-bold text-slate-900 mb-4 leading-tight">
             {decodeHtmlEntities(product.name)}
           </h1>

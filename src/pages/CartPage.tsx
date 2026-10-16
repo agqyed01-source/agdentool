@@ -173,10 +173,10 @@ export const CartPage = () => {
 
           <button 
             onClick={() => {
-              if (window.gtag) {
-                window.gtag('event', 'begin_checkout', {
+              if (typeof window !== 'undefined' && (window as any).gtag) {
+                (window as any).gtag('event', 'begin_checkout', {
                   currency: 'USD',
-                  value: parseFloat(cart.totals.total_price),
+                  value: parseFloat(cart.totals?.total_price || '0'),
                   items: cart.items.map(item => ({
                     item_id: item.id.toString(),
                     item_name: item.name,
