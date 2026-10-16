@@ -22,7 +22,23 @@ export class ErrorBoundary extends Component<Props, State> {
 
   public componentDidCatch(error: Error, errorInfo: ErrorInfo) {
     console.error('Uncaught error in component tree:', error, errorInfo);
+    try {
+      fetch('/api/client-error', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          message: error?.message,
+          stack: error?.stack,
+          componentStack: errorInfo?.componentStack,
+          url: typeof window !== 'undefined' ? window.location.href : '',
+        }),
+      }).catch(() => {});
+    } catch {}
   }
+
+  private handleRetry = () => {
+    this.setState({ hasError: false, error: null });
+  };
 
   private handleReload = () => {
     window.location.reload();
@@ -53,8 +69,15 @@ export class ErrorBoundary extends Component<Props, State> {
             <div className="flex flex-col sm:flex-row gap-3 justify-center">
               <button
                 type="button"
-                onClick={this.handleReload}
+                onClick={this.handleRetry}
                 className="px-5 py-2.5 bg-brand-primary text-white text-sm font-semibold rounded-lg hover:bg-brand-secondary transition-colors cursor-pointer"
+              >
+                Try Again
+              </button>
+              <button
+                type="button"
+                onClick={this.handleReload}
+                className="px-5 py-2.5 border border-slate-200 text-slate-700 text-sm font-semibold rounded-lg hover:bg-slate-50 transition-colors cursor-pointer"
               >
                 Reload Page
               </button>
@@ -66,6 +89,14 @@ export class ErrorBoundary extends Component<Props, State> {
                 Return to Home
               </button>
             </div>
+            {this.state.error?.message && (
+              <details className="mt-4 text-left bg-slate-50 border border-slate-100 p-3 rounded-lg text-xs text-slate-500">
+                <summary className="cursor-pointer font-medium hover:text-slate-800">
+                  Technical Details
+                </summary>
+                <p className="mt-2 font-mono text-red-600 break-words">{this.state.error.message}</p>
+              </details>
+            )}
           </div>
         </div>
       );

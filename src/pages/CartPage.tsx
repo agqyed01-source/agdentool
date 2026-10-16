@@ -94,7 +94,7 @@ export const CartPage = () => {
                     <Trash2 size={18} />
                   </button>
                 </div>
-                <div className="text-sm font-bold text-slate-900 mb-auto">${item.price}</div>
+                <div className="text-sm font-bold text-slate-900 mb-auto">${parseFloat(String(item.price || '0').replace(/[^0-9.]/g, '') || '0').toFixed(2)}</div>
                 <div className="flex justify-between pt-4 mt-auto border-t border-slate-50">
                   <div className="flex items-center gap-3">
                     <span className="text-xs text-slate-500 font-bold uppercase">Qty:</span>
@@ -111,7 +111,7 @@ export const CartPage = () => {
                     </div>
                   </div>
                   <div className="text-sm font-black text-brand-primary flex items-center">
-                    ${(parseFloat(item.price) * item.quantity).toFixed(2)}
+                    ${(parseFloat(String(item.price || '0').replace(/[^0-9.]/g, '') || '0') * (item.quantity || 1)).toFixed(2)}
                   </div>
                 </div>
               </div>
@@ -124,7 +124,7 @@ export const CartPage = () => {
           
           <div className="flex justify-between mb-4 text-slate-600 font-medium">
             <span>Subtotal ({cart.totals?.total_items || 0} items)</span>
-            <span>${(parseFloat(cart.totals?.total_price || '0') + parseFloat(cart.totals?.total_discount || '0')).toFixed(2)}</span>
+            <span>${(parseFloat(String(cart.totals?.total_price || '0').replace(/[^0-9.]/g, '') || '0') + parseFloat(String(cart.totals?.total_discount || '0').replace(/[^0-9.]/g, '') || '0')).toFixed(2)}</span>
           </div>
 
           {cart.coupons && cart.coupons.length > 0 && (
@@ -148,7 +148,7 @@ export const CartPage = () => {
           
           <div className="border-t border-slate-200 pt-4 mb-8 flex justify-between items-center text-lg font-black text-slate-900">
             <span>Total</span>
-            <span>${cart.totals?.total_price || '0.00'}</span>
+            <span>${parseFloat(String(cart.totals?.total_price || '0').replace(/[^0-9.]/g, '') || '0').toFixed(2)}</span>
           </div>
 
           <form onSubmit={handleApplyCoupon} className="mb-6">

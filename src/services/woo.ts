@@ -584,7 +584,9 @@ export const wooApi = {
     return new Promise((resolve, reject) =>
       setTimeout(() => {
         if (product) {
-          if (!product.price || parseFloat(product.price) <= 0) {
+          const cleanPrice = String(product.price || "0").replace(/[^0-9.]/g, '') || "0";
+          const priceNum = parseFloat(cleanPrice);
+          if (priceNum <= 0) {
             reject(new Error("Product has no price set"));
             return;
           }
@@ -612,7 +614,7 @@ export const wooApi = {
               id: product.id,
               variation_id: variation_id,
               name: `${product.name}${nameSuffix}`,
-              price: product.price || "0",
+              price: cleanPrice,
               quantity: quantity,
               image:
                 product.images && product.images[0]?.src
@@ -1149,6 +1151,9 @@ export const wooApi = {
         totals: { total_items: 0, total_price: "0.00", total_discount: "0.00" },
       };
       saveCart();
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('cart-updated', { detail: { ...mockCartState } }));
+      }
       return newOrder;
     } catch (err: any) {
       console.error("Failed to create live order", err);

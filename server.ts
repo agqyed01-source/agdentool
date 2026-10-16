@@ -411,6 +411,12 @@ async function startServer() {
     }
   });
 
+  // Client runtime error logger
+  app.post('/api/client-error', (req, res) => {
+    console.error('[CLIENT RUNTIME ERROR]:', JSON.stringify(req.body, null, 2));
+    res.json({ received: true });
+  });
+
   // API routing for WooCommerce GET requests directly mapped to path
   app.get('/api/woo/get/*', async (req, res) => {
     res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');

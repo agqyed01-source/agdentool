@@ -521,7 +521,7 @@ export const ProductPage = () => {
              </span>
           ) : currentVariation ? (
              <span className="text-sm text-brand-primary font-bold mt-1 truncate">
-                 {currentVariation.attributes?.filter(a => a?.option).map(a => a.option).join(', ') || ''}
+                 {Array.isArray(currentVariation?.attributes) ? currentVariation.attributes.filter(a => a?.option).map(a => a.option).join(', ') : ''}
              </span>
           ) : (
              <span className="text-sm text-slate-500 mt-1 truncate">

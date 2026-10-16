@@ -103,7 +103,7 @@ export const CheckoutPage = () => {
         if (!isMounted) return;
         setShippingError('');
         
-        const subtotal = cart?.totals?.total_price ? parseFloat(cart.totals.total_price) : 0;
+        const subtotal = cart?.totals?.total_price ? parseFloat(String(cart.totals.total_price).replace(/[^0-9.]/g, '') || '0') : 0;
         
         interface GroupData {
            weight: number;
@@ -120,9 +120,11 @@ export const CheckoutPage = () => {
              try {
                  if (item.variation_id) {
                     const variations = await wooApi.getProductVariations(item.id);
-                    const variation = variations.find((v: any) => v.id === item.variation_id);
-                    if (variation && variation.weight) {
-                       itemWeight = parseFloat(variation.weight);
+                    if (Array.isArray(variations)) {
+                      const variation = variations.find((v: any) => v && v.id === item.variation_id);
+                      if (variation && variation.weight) {
+                         itemWeight = parseFloat(variation.weight);
+                      }
                     }
                  }
                  if (!itemWeight || !itemShippingClass) {
@@ -549,26 +551,30 @@ groups[itemShippingClass].subtotal += itemSubtotal;
             <h2 className="text-lg font-bold text-slate-900 mb-6">Order Summary</h2>
             
             <div className="space-y-4 mb-6">
-              {cart.items.map(item => (
-                <div key={item.key} className="flex gap-4 items-center">
-                  <div className="w-16 h-16 bg-slate-50 rounded border border-slate-100 overflow-hidden shrink-0">
-                    <img src={item.image} alt={item.name} className="w-full h-full object-cover" />
+              {cart.items.map(item => {
+                const itemPriceNum = parseFloat(String(item.price || '0').replace(/[^0-9.]/g, '') || '0');
+                const itemTotal = (itemPriceNum * (item.quantity || 1)).toFixed(2);
+                return (
+                  <div key={item.key} className="flex gap-4 items-center">
+                    <div className="w-16 h-16 bg-slate-50 rounded border border-slate-100 overflow-hidden shrink-0">
+                      <img src={item.image} alt={item.name} className="w-full h-full object-cover" />
+                    </div>
+                    <div className="flex-grow text-sm">
+                      <div className="font-bold text-slate-900 line-clamp-1">{item.name}</div>
+                      <div className="text-slate-500 font-medium">Qty: {item.quantity}</div>
+                    </div>
+                    <div className="font-black text-slate-900">
+                      ${itemTotal}
+                    </div>
                   </div>
-                  <div className="flex-grow text-sm">
-                    <div className="font-bold text-slate-900 line-clamp-1">{item.name}</div>
-                    <div className="text-slate-500 font-medium">Qty: {item.quantity}</div>
-                  </div>
-                  <div className="font-black text-slate-900">
-                    ${(parseFloat(item.price) * item.quantity).toFixed(2)}
-                  </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
 
             <div className="border-t border-slate-100 pt-4 space-y-4 text-sm font-medium text-slate-600 mb-6">
               <div className="flex justify-between">
                 <span>Subtotal</span>
-                <span>${(parseFloat(cart.totals.total_price) + parseFloat(cart.totals.total_discount || '0')).toFixed(2)}</span>
+                <span>${(parseFloat(String(cart.totals?.total_price || '0').replace(/[^0-9.]/g, '') || '0') + parseFloat(String(cart.totals?.total_discount || '0').replace(/[^0-9.]/g, '') || '0')).toFixed(2)}</span>
               </div>
               
               {cart.coupons && cart.coupons.length > 0 && (
@@ -619,7 +625,7 @@ groups[itemShippingClass].subtotal += itemSubtotal;
 
               <div className="flex justify-between text-lg font-black text-slate-900 pt-4 border-t border-slate-100">
                 <span>Total</span>
-                <span>${(parseFloat(cart.totals.total_price) + (selectedShippingMethod?.settings?.cost?.value ? parseFloat(selectedShippingMethod.settings.cost.value) : 0)).toFixed(2)}</span>
+                <span>${(parseFloat(String(cart.totals?.total_price || '0').replace(/[^0-9.]/g, '') || '0') + (selectedShippingMethod?.settings?.cost?.value ? parseFloat(selectedShippingMethod.settings.cost.value) : 0)).toFixed(2)}</span>
               </div>
             </div>
 
@@ -659,7 +665,7 @@ groups[itemShippingClass].subtotal += itemSubtotal;
                 </>
               ) : shippingMethods.length === 0 ? (
                 'Shipping Not Available'
-              ) : `Create order ($${(parseFloat(cart.totals.total_price) + (selectedShippingMethod?.settings?.cost?.value ? parseFloat(selectedShippingMethod.settings.cost.value) : 0)).toFixed(2)})`}
+              ) : `Create order ($${(parseFloat(String(cart.totals?.total_price || '0').replace(/[^0-9.]/g, '') || '0') + (selectedShippingMethod?.settings?.cost?.value ? parseFloat(selectedShippingMethod.settings.cost.value) : 0)).toFixed(2)})`}
             </button>
           </div>
         </div>

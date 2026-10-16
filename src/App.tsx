@@ -43,7 +43,9 @@ export default function App() {
       <div className="min-h-screen flex flex-col bg-slate-50">
         <ScrollToTop />
         <Analytics />
-        <RegistrationPopup />
+        <ErrorBoundary fallback={null}>
+          <RegistrationPopup />
+        </ErrorBoundary>
         {/* Navigation */}
         <Header />
         
