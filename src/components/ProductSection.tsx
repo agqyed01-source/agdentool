@@ -1,6 +1,6 @@
 import { useTranslation } from 'react-i18next';
 import React, { useEffect, useState } from "react";
-import { ShoppingCart, Heart, Star, Box, ChevronRight, Syringe, Scissors, Shield, Activity, Sparkles, Layers, Microscope, Wrench } from "lucide-react";
+import { ShoppingCart, Check, Heart, Star, Box, ChevronRight, Syringe, Scissors, Shield, Activity, Sparkles, Layers, Microscope, Wrench } from "lucide-react";
 import { motion } from "motion/react";
 import { Link, useParams, useSearchParams } from "react-router-dom";
 import { wooApi, WooProduct, WooCategory } from "../services/woo";
@@ -143,6 +143,8 @@ export const CategoryBar = () => {
 };
 
 export const ProductCard = ({ product }: { product: WooProduct }) => {
+  const [isAdded, setIsAdded] = useState(false);
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 10 }}
@@ -231,7 +233,7 @@ export const ProductCard = ({ product }: { product: WooProduct }) => {
             </Link>
           ) : (
             <button
-              id={`add-btn-${product.id}`}
+              type="button"
               onClick={(e) => {
                 e.preventDefault();
                 if (!product.price || parseFloat(product.price) <= 0) {
@@ -239,16 +241,16 @@ export const ProductCard = ({ product }: { product: WooProduct }) => {
                   return;
                 }
                 wooApi.addToCart(product, 1).catch(console.error);
-                const btn = document.getElementById(`add-btn-${product.id}`);
-                if (btn) {
-                  const original = btn.innerHTML;
-                  btn.innerHTML = `<svg class="w-3.5 h-3.5 stroke-[3]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"></path></svg>`;
-                  setTimeout(() => (btn.innerHTML = original), 2000);
-                }
+                setIsAdded(true);
+                setTimeout(() => setIsAdded(false), 2000);
               }}
-              className="bg-brand-primary text-white p-2 rounded-lg hover:bg-brand-secondary transition-colors shadow-sm"
+              className={`p-2 rounded-lg transition-colors shadow-sm cursor-pointer ${
+                isAdded 
+                  ? 'bg-emerald-600 text-white' 
+                  : 'bg-brand-primary hover:bg-brand-secondary text-white'
+              }`}
             >
-              <ShoppingCart size={14} strokeWidth={3} />
+              {isAdded ? <Check size={14} strokeWidth={3} /> : <ShoppingCart size={14} strokeWidth={3} />}
             </button>
           )}
         </div>

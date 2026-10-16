@@ -4,12 +4,12 @@ import { useParams, Link } from 'react-router-dom';
 import { Seo } from '../components/Seo';
 import { wooApi, WooProduct, WooVariation } from '../services/woo';
 import { decodeHtmlEntities } from '../utils/format';
-import { ShoppingCart, Star, ShieldCheck, Truck } from 'lucide-react';
+import { ShoppingCart, Star, ShieldCheck, Truck, Check } from 'lucide-react';
 import { ProductReviews } from '../components/ProductReviews';
 import { WhatsAppAgents } from '../components/FooterAndNav';
 
-const normalizeAttrVal = (val?: string): string => {
-  if (!val) return '';
+const normalizeAttrVal = (val?: string | null): string => {
+  if (!val || typeof val !== 'string') return '';
   return val
     .replace(/&nbsp;/g, ' ')
     .replace(/\u00a0/g, ' ')
@@ -19,14 +19,17 @@ const normalizeAttrVal = (val?: string): string => {
     .replace(/[^a-z0-9]/g, '');
 };
 
-const getCanonicalAttrName = (attr: { id?: number; name: string }, productAttributes?: any[]): string => {
-  if (!productAttributes) return attr.name;
+const getCanonicalAttrName = (attr?: { id?: number; name?: string }, productAttributes?: any[]): string => {
+  if (!attr || !attr.name) return '';
+  if (!productAttributes || !Array.isArray(productAttributes)) return attr.name;
   const parent = productAttributes.find(pa => 
-    (attr.id && pa.id !== 0 && pa.id === attr.id) ||
-    normalizeAttrVal(pa.name) === normalizeAttrVal(attr.name) ||
-    normalizeAttrVal(`pa_${pa.name}`) === normalizeAttrVal(attr.name)
+    pa && (
+      (attr.id && pa.id !== 0 && pa.id === attr.id) ||
+      normalizeAttrVal(pa.name) === normalizeAttrVal(attr.name) ||
+      normalizeAttrVal(`pa_${pa.name}`) === normalizeAttrVal(attr.name)
+    )
   );
-  return parent ? parent.name : attr.name;
+  return parent && parent.name ? parent.name : attr.name;
 };
 
 export const ProductPage = () => {
@@ -43,19 +46,15 @@ export const ProductPage = () => {
   const [loadedImages, setLoadedImages] = useState<Record<string, boolean>>({});
   const [showStickyAdd, setShowStickyAdd] = useState(false);
   const [showStickyHeader, setShowStickyHeader] = useState(false);
+  const [isAdded, setIsAdded] = useState(false);
   const addToCartRef = useRef<HTMLDivElement>(null);
   const imgRef = useRef<HTMLImageElement>(null);
   const imageGalleryRef = useRef<HTMLDivElement>(null);
 
-  const currentImageSrc = product?.images[selectedImageIndex]?.src || product?.images[0]?.src || '';
-  const isImageLoading = currentImageSrc ? !loadedImages[currentImageSrc] : false;
-
   useEffect(() => {
     const observerAdd = new IntersectionObserver(
       ([entry]) => {
-        // Show sticky button only when the target is NOT visible,
-        // which means top of screen is past it or we haven't scrolled to it.
-        // Actually, since we want this on mobile when add to cart is not in view:
+        // Show sticky button only when the target is NOT visible
         setShowStickyAdd(!entry.isIntersecting);
       },
       { threshold: 0 }
@@ -103,25 +102,28 @@ export const ProductPage = () => {
              data.default_attributes.forEach(attr => {
                const canonicalName = getCanonicalAttrName(attr, data.attributes);
                let exactOption = attr.option;
-               const parentAttr = data.attributes.find(pa => (attr.id && pa.id !== 0 && pa.id === attr.id) || normalizeAttrVal(pa.name) === normalizeAttrVal(attr.name));
+               const parentAttr = data.attributes?.find(pa => pa && ((attr.id && pa.id !== 0 && pa.id === attr.id) || normalizeAttrVal(pa.name) === normalizeAttrVal(attr.name)));
                if (parentAttr && parentAttr.options) {
                   const normOption = normalizeAttrVal(attr.option);
                   const match = parentAttr.options.find(opt => normalizeAttrVal(opt) === normOption);
                   if (match) exactOption = match;
                }
-               initialVars[canonicalName] = exactOption;
+               if (canonicalName) {
+                 initialVars[canonicalName] = exactOption;
+               }
              });
            }
            setSelectedVariations(initialVars);
            wooApi.getProductVariations(data.id).then(vars => {
-             setVariationsData(vars);
+             const safeVars = Array.isArray(vars) ? vars : [];
+             setVariationsData(safeVars);
              // Validate if initialVars actually matches a real configured variation
-             if (vars && vars.length > 0 && Object.keys(initialVars).length > 0) {
-               const isValid = vars.some(v => 
-                 v.attributes.every(attr => {
-                   if (attr.option === "") return true;
+             if (safeVars.length > 0 && Object.keys(initialVars).length > 0) {
+               const isValid = safeVars.some(v => 
+                 v && Array.isArray(v.attributes) && v.attributes.every(attr => {
+                   if (!attr || attr.option === "") return true;
                    const canonical = getCanonicalAttrName(attr, data.attributes);
-                   const sel = initialVars[canonical] || initialVars[attr.name];
+                   const sel = initialVars[canonical] || (attr.name ? initialVars[attr.name] : undefined);
                    return sel && normalizeAttrVal(sel) === normalizeAttrVal(attr.option);
                  })
                );
@@ -129,6 +131,9 @@ export const ProductPage = () => {
                  setSelectedVariations({});
                }
              }
+           }).catch(err => {
+             console.error("Failed to load variations:", err);
+             setVariationsData([]);
            });
         }
         setLoading(false);
@@ -140,8 +145,8 @@ export const ProductPage = () => {
   }, [slug, i18n.language]);
 
   const variationAttributes = React.useMemo(() => {
-    if (product?.type !== 'variable' || !product.attributes) return [];
-    return product.attributes.filter(a => a.variation);
+    if (product?.type !== 'variable' || !product.attributes || !Array.isArray(product.attributes)) return [];
+    return product.attributes.filter(a => a && a.variation && Array.isArray(a.options) && a.options.length > 0);
   }, [product]);
 
   // Check if a specific option is available given current selections of other attributes
@@ -150,8 +155,11 @@ export const ProductPage = () => {
     const normOpt = normalizeAttrVal(optVal);
 
     return variationsData.some(v => {
+      if (!v || !v.attributes || !Array.isArray(v.attributes)) return false;
+
       // Must match optVal for this attribute
       const thisAttrMatch = v.attributes.find(va => {
+        if (!va) return false;
         const canonical = getCanonicalAttrName(va, product?.attributes);
         return normalizeAttrVal(canonical) === normalizeAttrVal(attrName);
       });
@@ -162,11 +170,13 @@ export const ProductPage = () => {
 
       // Must also be compatible with all OTHER selected attributes
       for (const otherAttr of variationAttributes) {
+        if (!otherAttr || !otherAttr.name) continue;
         if (normalizeAttrVal(otherAttr.name) === normalizeAttrVal(attrName)) continue;
         const selectedVal = currentSelections[otherAttr.name];
         if (!selectedVal) continue;
 
         const otherAttrMatch = v.attributes.find(va => {
+          if (!va) return false;
           const canonical = getCanonicalAttrName(va, product?.attributes);
           return normalizeAttrVal(canonical) === normalizeAttrVal(otherAttr.name);
         });
@@ -215,17 +225,18 @@ export const ProductPage = () => {
 
     // Ensure all required attributes are selected first
     if (variationAttributes.length > 0) {
-      const isMissing = variationAttributes.some(a => !selectedVariations[a.name]);
+      const isMissing = variationAttributes.some(a => a && a.name && !selectedVariations[a.name]);
       if (isMissing) return null;
     }
 
     return variationsData.find(v => {
+      if (!v || !v.attributes || !Array.isArray(v.attributes)) return false;
       // Check if every attribute in the variation matches the selected variations
       return v.attributes.every(attr => {
-        if (attr.option === "") return true; // Means Any option
+        if (!attr || attr.option === "") return true; // Means Any option
         
         const canonicalName = getCanonicalAttrName(attr, product.attributes);
-        const selected = selectedVariations[canonicalName] || selectedVariations[attr.name];
+        const selected = selectedVariations[canonicalName] || (attr.name ? selectedVariations[attr.name] : undefined);
         
         if (!selected) return false;
 
@@ -234,25 +245,23 @@ export const ProductPage = () => {
     }) || null;
   }, [variationsData, selectedVariations, product, variationAttributes]);
 
+  const currentImageSrc = 
+    currentVariation?.image?.src || 
+    product?.images?.[selectedImageIndex]?.src || 
+    product?.images?.[0]?.src || 
+    '';
+  const isImageLoading = currentImageSrc ? !loadedImages[currentImageSrc] : false;
+
   useEffect(() => {
-    if (currentVariation?.image?.src && product) {
-      const idx = product.images.findIndex(img => img.src === currentVariation.image?.src || img.id === currentVariation.image?.id);
+    if (currentVariation?.image?.src && product?.images && Array.isArray(product.images)) {
+      const idx = product.images.findIndex(img => 
+        img && (img.src === currentVariation.image?.src || (img.id && img.id === currentVariation.image?.id))
+      );
       if (idx !== -1) {
         setSelectedImageIndex(idx);
-      } else {
-        // If the image is not in the gallery, add it temporarily so it can be selected
-        setProduct((prev) => {
-          if (!prev) return prev;
-          if (prev.images.some(img => img.src === currentVariation.image!.src)) return prev;
-          return {
-            ...prev,
-            images: [...prev.images, currentVariation.image!]
-          };
-        });
-        setSelectedImageIndex(product.images.length);
       }
     }
-  }, [currentVariation, product]);
+  }, [currentVariation]);
 
   const allAttributesSelected = React.useMemo(() => {
     if (product?.type !== 'variable') return true;
@@ -391,37 +400,41 @@ export const ProductPage = () => {
       <div className="container mx-auto px-4 py-8 md:py-12">
         <Seo 
           title={decodeHtmlEntities(product.name)}
-          description={product.short_description.replace(/<[^>]+>/g, '')}
+          description={(product.short_description || product.description || '').replace(/<[^>]+>/g, '').slice(0, 160)}
           type="product"
-        image={product.images[0]?.src}
-        jsonLd={{
-          "@context": "https://schema.org/",
-          "@type": "Product",
-          "name": product.name,
-          "image": product.images.map(img => img.src),
-          "description": product.short_description.replace(/<[^>]+>/g, ''),
-          "sku": product.id.toString(),
-          "offers": {
-            "@type": "Offer",
-            "url": `https://yourdentalsite.com/product/${product.slug}`,
-            "priceCurrency": "USD",
-            "price": currentPrice,
-            "availability": "https://schema.org/InStock"
-          },
-          "aggregateRating": {
-            "@type": "AggregateRating",
-            "ratingValue": product.average_rating,
-            "reviewCount": product.rating_count
-          }
-        }}
-      />
+          image={product.images?.[0]?.src || ''}
+          jsonLd={{
+            "@context": "https://schema.org/",
+            "@type": "Product",
+            "name": product.name,
+            "image": (product.images || []).map(img => img?.src).filter(Boolean),
+            "description": (product.short_description || product.description || '').replace(/<[^>]+>/g, '').slice(0, 300),
+            "sku": product.id ? product.id.toString() : '',
+            "offers": {
+              "@type": "Offer",
+              "url": typeof window !== 'undefined' ? window.location.href : '',
+              "priceCurrency": "USD",
+              "price": currentPrice || product.price || "0",
+              "availability": isOutOfStock ? "https://schema.org/OutOfStock" : "https://schema.org/InStock"
+            },
+            "aggregateRating": {
+              "@type": "AggregateRating",
+              "ratingValue": product.average_rating || "5.0",
+              "reviewCount": product.rating_count || 1
+            }
+          }}
+        />
 
       <div className="mb-6 text-sm text-slate-500 font-medium">
         <Link to="/" className="hover:text-brand-primary">{t('nav.home', 'Home')}</Link>
         <span className="mx-2">/</span>
-        <Link to={`/category/${product.categories[0]?.slug}`} className="hover:text-brand-primary">
-          {decodeHtmlEntities(product.categories[0]?.name)}
-        </Link>
+        {product.categories?.[0] ? (
+          <Link to={`/category/${product.categories[0].slug}`} className="hover:text-brand-primary">
+            {decodeHtmlEntities(product.categories[0].name)}
+          </Link>
+        ) : (
+          <Link to="/shop" className="hover:text-brand-primary">{t('nav.shop', 'Shop')}</Link>
+        )}
         <span className="mx-2">/</span>
         <span className="text-slate-900">{decodeHtmlEntities(product.name)}</span>
       </div>
@@ -445,11 +458,11 @@ export const ProductPage = () => {
              </span>
           ) : currentVariation ? (
              <span className="text-sm text-brand-primary font-bold mt-1 truncate">
-                 {currentVariation.attributes.filter(a => a.option).map(a => a.option).join(', ')}
+                 {currentVariation.attributes?.filter(a => a?.option).map(a => a.option).join(', ') || ''}
              </span>
           ) : (
              <span className="text-sm text-slate-500 mt-1 truncate">
-                 {Object.values(selectedVariations).filter(v => v).join(', ') || t('product.select_options', 'Select options')}
+                 {Object.values(selectedVariations).filter(Boolean).join(', ') || t('product.select_options', 'Select options')}
              </span>
           )}
           <div className="font-bold text-slate-900 mt-1">
@@ -630,7 +643,7 @@ export const ProductPage = () => {
                       )}
                     </div>
                     <div className="flex flex-wrap gap-2">
-                       {attr.options.map(opt => {
+                       {(attr.options || []).map(opt => {
                          const isSelected = selectedVariations[attr.name] === opt;
                          const isAvailable = isOptionAvailable(attr.name, opt, selectedVariations);
                          return (
@@ -665,12 +678,13 @@ export const ProductPage = () => {
               </div>
               <button 
                 id="add-btn"
+                type="button"
                 disabled={isAddToCartDisabled}
-                onClick={() => {
+                onClick={async () => {
                   if (isAddToCartDisabled) return;
                   if (product.type === 'variable') {
                     if (!allAttributesSelected) {
-                      const missingAttributes = variationAttributes.filter(a => !selectedVariations[a.name]);
+                      const missingAttributes = variationAttributes.filter(a => a && a.name && !selectedVariations[a.name]);
                       alert(`Please select: ${missingAttributes.map(a => a.name).join(', ')}`);
                       return;
                     }
@@ -683,15 +697,21 @@ export const ProductPage = () => {
                     alert("This product is currently unavailable for purchase (no price set).");
                     return;
                   }
-                  wooApi.addToCart({ 
-                    ...product, 
-                    price: currentPrice,
-                    images: currentVariation?.image?.src 
-                      ? [{ id: currentVariation.image.id, src: currentVariation.image.src, alt: currentVariation.image.alt || '' }] 
-                      : product.images
-                  }, quantity, selectedVariations, currentVariation?.id).then(() => {
-                    if (window.gtag) {
-                      window.gtag('event', 'add_to_cart', {
+
+                  try {
+                    await wooApi.addToCart({ 
+                      ...product, 
+                      price: currentPrice,
+                      images: currentVariation?.image?.src 
+                        ? [{ id: currentVariation.image.id || 0, src: currentVariation.image.src, alt: currentVariation.image.alt || '' }] 
+                        : (product.images || [])
+                    }, quantity, selectedVariations, currentVariation?.id);
+
+                    setIsAdded(true);
+                    setTimeout(() => setIsAdded(false), 2000);
+
+                    if (typeof window !== 'undefined' && (window as any).gtag) {
+                      (window as any).gtag('event', 'add_to_cart', {
                         currency: 'USD',
                         value: parseFloat(currentPrice || '0') * quantity,
                         items: [{
@@ -702,22 +722,30 @@ export const ProductPage = () => {
                         }]
                       });
                     }
-                  }).catch(console.error);
-                  // Simple feedback
-                  const btn = document.getElementById('add-btn');
-                  if (btn) {
-                    const original = btn.innerHTML;
-                    btn.innerHTML = `<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg> Added`;
-                    setTimeout(() => { if (btn) btn.innerHTML = original; }, 2000);
+                  } catch (err: any) {
+                    console.error('Error adding to cart:', err);
+                    alert(err.message || 'Failed to add to cart. Please try again.');
                   }
                 }}
-                className={`flex-grow font-bold text-lg rounded-lg shadow-sm transition-all flex items-center justify-center gap-2 py-4 ${
+                className={`flex-grow font-bold text-lg rounded-lg shadow-sm transition-all flex items-center justify-center gap-2 py-4 cursor-pointer ${
                   isAddToCartDisabled
                     ? 'bg-slate-200 text-slate-400 cursor-not-allowed border border-slate-300/50 shadow-none'
-                    : 'bg-brand-primary text-white shadow-[0_4px_14px_0_rgba(37,99,235,0.39)] hover:shadow-[0_6px_20px_rgba(37,99,235,0.23)] hover:-translate-y-0.5'
+                    : isAdded
+                      ? 'bg-emerald-600 text-white shadow-[0_4px_14px_0_rgba(16,185,129,0.39)]'
+                      : 'bg-brand-primary text-white shadow-[0_4px_14px_0_rgba(37,99,235,0.39)] hover:shadow-[0_6px_20px_rgba(37,99,235,0.23)] hover:-translate-y-0.5'
                 }`}
               >
-                <ShoppingCart size={20} /> {getAddToCartText()}
+                {isAdded ? (
+                  <>
+                    <Check size={20} className="stroke-[3]" />
+                    <span>{t('cart.added', 'Added to Cart')}</span>
+                  </>
+                ) : (
+                  <>
+                    <ShoppingCart size={20} />
+                    <span>{getAddToCartText()}</span>
+                  </>
+                )}
               </button>
             </div>
           </div>
@@ -761,7 +789,7 @@ export const ProductPage = () => {
         {activeTab === 'description' && (
           <div 
             className="prose prose-slate max-w-none px-2 break-words overflow-x-auto"
-            dangerouslySetInnerHTML={{ __html: product.description }}
+            dangerouslySetInnerHTML={{ __html: product.description || '' }} 
           />
         )}
 
@@ -785,19 +813,22 @@ export const ProductPage = () => {
             </span>
           </div>
           <button 
+            type="button"
             disabled={isAddToCartDisabled}
             onClick={() => {
                if (addToCartRef.current) {
                  addToCartRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
                }
             }}
-            className={`font-bold px-6 py-3 rounded-lg shadow-sm whitespace-nowrap ${
+            className={`font-bold px-6 py-3 rounded-lg shadow-sm whitespace-nowrap cursor-pointer transition-colors ${
               isAddToCartDisabled
                 ? 'bg-slate-200 text-slate-400 cursor-not-allowed'
-                : 'bg-brand-primary text-white'
+                : isAdded
+                  ? 'bg-emerald-600 text-white'
+                  : 'bg-brand-primary text-white'
             }`}
           >
-            {getAddToCartText()}
+            {isAdded ? t('cart.added', 'Added to Cart') : getAddToCartText()}
           </button>
         </div>
       </div>

@@ -36,6 +36,8 @@ function ScrollToTop() {
   return null;
 }
 
+import { ErrorBoundary } from './components/ErrorBoundary';
+
 export default function App() {
   return (
     <div className="min-h-screen flex flex-col bg-slate-50">
@@ -46,24 +48,26 @@ export default function App() {
       <Header />
       
       <main className="flex-grow">
-        <Routes>
-          <Route path="/" element={<Home />} />
-          <Route path="/shop" element={<ShopPage />} />
-          <Route path="/categories" element={<CategoriesPage />} />
-          <Route path="/product/:slug" element={<ProductPage />} />
-          <Route path="/category/:slug" element={<ShopPage />} />
-          <Route path="/cart" element={<CartPage />} />
-          <Route path="/checkout" element={<CheckoutPage />} />
-          <Route path="/account" element={<AccountPage />} />
-          <Route path="/order/:id" element={<OrderPage />} />
-          <Route path="/about" element={<AboutUs />} />
-          <Route path="/shipping" element={<ShippingPolicy />} />
-          <Route path="/terms" element={<TermsOfService />} />
-          <Route path="/contact" element={<ContactUs />} />
-          <Route path="/privacy" element={<PrivacyPolicy />} />
-          <Route path="/compliance" element={<Compliance />} />
-          <Route path="/cookies" element={<CookiePolicy />} />
-        </Routes>
+        <ErrorBoundary>
+          <Routes>
+            <Route path="/" element={<Home />} />
+            <Route path="/shop" element={<ShopPage />} />
+            <Route path="/categories" element={<CategoriesPage />} />
+            <Route path="/product/:slug" element={<ProductPage />} />
+            <Route path="/category/:slug" element={<ShopPage />} />
+            <Route path="/cart" element={<CartPage />} />
+            <Route path="/checkout" element={<CheckoutPage />} />
+            <Route path="/account" element={<AccountPage />} />
+            <Route path="/order/:id" element={<OrderPage />} />
+            <Route path="/about" element={<AboutUs />} />
+            <Route path="/shipping" element={<ShippingPolicy />} />
+            <Route path="/terms" element={<TermsOfService />} />
+            <Route path="/contact" element={<ContactUs />} />
+            <Route path="/privacy" element={<PrivacyPolicy />} />
+            <Route path="/compliance" element={<Compliance />} />
+            <Route path="/cookies" element={<CookiePolicy />} />
+          </Routes>
+        </ErrorBoundary>
       </main>
 
       {/* Footer */}

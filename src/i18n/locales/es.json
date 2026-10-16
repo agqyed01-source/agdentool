@@ -25,7 +25,8 @@
     "out_of_stock": "Agotado",
     "total": "Total",
     "empty": "Tu carrito está vacío",
-    "buy_now": "Comprar ahora"
+    "buy_now": "Comprar ahora",
+    "added": "Añadido al carrito"
   },
   "footer": {
     "copyright": "Todos los derechos reservados.",
