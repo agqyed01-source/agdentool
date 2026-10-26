@@ -7,14 +7,16 @@ export const AboutUs = () => {
   return (
     <>
       <Seo title="About Us | AGDentool" description="Learn more about AGDentool's mission, history, and commitment to quality." />
-      
-      {/* Hero Section */}
+            {/* Hero Section */}
       <div className="relative bg-slate-900 text-white py-24 lg:py-32 overflow-hidden">
         <div className="absolute inset-0 z-0">
            <img 
              src="https://images.unsplash.com/photo-1606811841689-23dfddce3e95?auto=format&fit=crop&q=80&w=2000" 
              alt="Dental equipment" 
              className="w-full h-full object-cover opacity-20"
+             loading="eager"
+             fetchPriority="high"
+             decoding="async"
            />
            <div className="absolute inset-0 bg-gradient-to-r from-slate-900 to-transparent"></div>
         </div>
@@ -38,6 +40,8 @@ export const AboutUs = () => {
                   src="https://images.unsplash.com/photo-1588776814546-1ffcf47267a5?auto=format&fit=crop&q=80&w=1000" 
                   alt="Professional setup" 
                   className="rounded-2xl shadow-2xl"
+                  loading="lazy"
+                  decoding="async"
                 />
                 <div className="absolute -bottom-6 -right-6 bg-brand-primary p-6 rounded-xl shadow-xl hidden md:block">
                   <p className="text-white font-bold text-3xl">25+</p>

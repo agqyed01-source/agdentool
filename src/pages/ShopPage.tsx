@@ -6,6 +6,7 @@ import { Seo } from "../components/Seo";
 import { wooApi, WooProduct, WooCategory } from "../services/woo";
 import { ProductCard } from "../components/ProductSection";
 import { decodeHtmlEntities } from "../utils/format";
+import { OptimizedImage } from "../components/OptimizedImage";
 
 const CategoryNode = ({ node, depth = 0, currentCategorySlug }: { node: any, depth?: number, currentCategorySlug?: string }) => {
   const isActive = currentCategorySlug === node.slug;
@@ -375,7 +376,13 @@ export const ShopPage = () => {
                            {product.sale_price && (
                              <span className="absolute top-1 left-1 sm:top-2 sm:left-2 z-10 text-[9px] font-black bg-brand-primary text-white px-1.5 sm:px-1.5 py-0.5 rounded uppercase tracking-tighter">Sale</span>
                            )}
-                           <img src={product.images[0]?.src} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" alt="" referrerPolicy="no-referrer" />
+                           <OptimizedImage
+                             src={product.images[0]?.src}
+                             widthParam={350}
+                             className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                             containerClassName="w-full h-full"
+                             alt={decodeHtmlEntities(product.name)}
+                           />
                         </Link>
                         <div className="flex-1 flex flex-col min-w-0">
                            <span className="text-[10px] sm:text-xs font-bold text-brand-primary uppercase tracking-wider mb-1">{decodeHtmlEntities(product.categories[0]?.name)}</span>
@@ -410,7 +417,6 @@ export const ShopPage = () => {
                                  onClick={(e) => {
                                    e.preventDefault();
                                    if (!product.price || parseFloat(product.price) <= 0) {
-                                     alert("This product is currently unavailable for purchase (no price set).");
                                      return;
                                    }
                                    wooApi.addToCart(product, 1).catch(console.error);

@@ -3,6 +3,7 @@ import { useParams, Link } from 'react-router-dom';
 import { wooApi } from '../services/woo';
 import { Seo } from '../components/Seo';
 import { Loader2, ArrowLeft, Package, Clock, MapPin, Truck } from 'lucide-react';
+import { getOptimizedImageUrl } from '../utils/image';
 
 export const OrderPage = () => {
   const { id } = useParams();
@@ -123,7 +124,13 @@ export const OrderPage = () => {
                 <div key={item.id} className="p-6 flex flex-wrap sm:flex-nowrap gap-4 items-center">
                   {item.image && item.image.src && (
                      <div className="w-20 h-20 bg-slate-50 rounded-lg border border-slate-100 overflow-hidden shrink-0">
-                       <img src={item.image.src} alt={item.name} className="w-full h-full object-cover" />
+                       <img 
+                         src={getOptimizedImageUrl(item.image.src, 160)} 
+                         alt={item.name} 
+                         className="w-full h-full object-cover"
+                         loading="lazy"
+                         decoding="async" 
+                       />
                      </div>
                   )}
                   <div className="flex-grow">

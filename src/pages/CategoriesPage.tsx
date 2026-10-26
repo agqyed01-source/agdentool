@@ -5,6 +5,7 @@ import { ChevronRight, Box, Syringe, Scissors, Shield, Activity, Sparkles, Layer
 import { Seo } from "../components/Seo";
 import { wooApi, WooCategory } from "../services/woo";
 import { decodeHtmlEntities } from "../utils/format";
+import { OptimizedImage } from "../components/OptimizedImage";
 
 export const CategoriesPage = () => {
   const { i18n } = useTranslation();
@@ -160,11 +161,12 @@ export const CategoriesPage = () => {
                       {/* Image Area - Different on mobile vs desktop */}
                       <div className={`w-14 h-14 md:w-full md:aspect-square md:mb-5 shrink-0 flex items-center justify-center rounded-lg transition-colors overflow-hidden ${imgSrc ? 'bg-slate-50 md:bg-transparent' : fallback.bg}`}>
                         {imgSrc ? (
-                          <img
+                          <OptimizedImage
                             src={imgSrc}
+                            widthParam={300}
                             alt={decodeHtmlEntities(cat.name)}
                             className="w-full h-full object-contain md:object-cover mix-blend-multiply md:mix-blend-normal p-1 md:p-0 transition-transform duration-500 group-hover:scale-105"
-                            referrerPolicy="no-referrer"
+                            containerClassName="w-full h-full"
                           />
                         ) : (
                           <div className={`${fallback.color} w-7 h-7 md:w-16 md:h-16 transition-transform duration-500 group-hover:scale-110 flex items-center justify-center`}>

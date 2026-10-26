@@ -4,16 +4,147 @@ import path from 'path';
 import dotenv from 'dotenv';
 import fs from 'fs';
 import multer from 'multer';
+import crypto from 'crypto';
+import sharp from 'sharp';
 
 dotenv.config();
 
 const upload = multer({ storage: multer.memoryStorage() });
+
+// Image cache setup
+const IMAGE_CACHE_DIR = path.join(process.cwd(), '.cache', 'images');
+try {
+  if (!fs.existsSync(IMAGE_CACHE_DIR)) {
+    fs.mkdirSync(IMAGE_CACHE_DIR, { recursive: true });
+  }
+} catch (e) {
+  console.warn('[Image Optimizer] Failed to create cache directory:', e);
+}
+
+const pendingOptimizations = new Map<string, Promise<Buffer>>();
 
 async function startServer() {
   const app = express();
   const PORT = process.env.VPS_PORT ? parseInt(process.env.VPS_PORT) : 3000;
 
   app.use(express.json());
+
+  // High-performance Image Optimizer & WebP Converter with Persistent Disk Cache
+  app.get('/api/img', async (req, res) => {
+    const rawUrl = req.query.url as string;
+    if (!rawUrl) {
+      return res.status(400).send('Missing url parameter');
+    }
+
+    let imageUrl = rawUrl.trim();
+    if (!imageUrl.startsWith('http://') && !imageUrl.startsWith('https://')) {
+      return res.status(400).send('Invalid image URL');
+    }
+
+    const widthParam = parseInt(req.query.w as string, 10);
+    const targetWidth = !isNaN(widthParam) && widthParam > 0 ? Math.min(1600, Math.max(50, widthParam)) : null;
+
+    const qualityParam = parseInt(req.query.q as string, 10);
+    const targetQuality = !isNaN(qualityParam) && qualityParam >= 30 && qualityParam <= 100 ? qualityParam : 80;
+
+    const cacheKey = crypto
+      .createHash('md5')
+      .update(`${imageUrl}_w${targetWidth || 'orig'}_q${targetQuality}`)
+      .digest('hex');
+    const etag = `"${cacheKey}"`;
+    const cacheFile = path.join(IMAGE_CACHE_DIR, `${cacheKey}.webp`);
+
+    // HTTP 304 Not Modified
+    if (req.headers['if-none-match'] === etag) {
+      res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
+      res.setHeader('ETag', etag);
+      return res.status(304).end();
+    }
+
+    // Disk Cache Hit
+    if (fs.existsSync(cacheFile)) {
+      res.setHeader('Content-Type', 'image/webp');
+      res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
+      res.setHeader('ETag', etag);
+      return fs.createReadStream(cacheFile).pipe(res);
+    }
+
+    // In-flight request deduplication
+    try {
+      let optimizePromise = pendingOptimizations.get(cacheKey);
+
+      if (!optimizePromise) {
+        optimizePromise = (async () => {
+          const controller = new AbortController();
+          const timeout = setTimeout(() => controller.abort(), 12000);
+
+          try {
+            const fetchRes = await fetch(imageUrl, {
+              signal: controller.signal,
+              headers: {
+                'User-Agent':
+                  'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+                Accept: 'image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8',
+              },
+            });
+
+            if (!fetchRes.ok) {
+              throw new Error(`Failed to fetch origin image: HTTP ${fetchRes.status}`);
+            }
+
+            const arrayBuf = await fetchRes.arrayBuffer();
+            const inputBuffer = Buffer.from(arrayBuf);
+
+            let pipeline = sharp(inputBuffer).rotate();
+
+            if (targetWidth) {
+              pipeline = pipeline.resize({
+                width: targetWidth,
+                withoutEnlargement: true,
+                fit: 'inside',
+              });
+            }
+
+            const optimized = await pipeline
+              .webp({
+                quality: targetQuality,
+                effort: 4,
+              })
+              .toBuffer();
+
+            // Write to cache file atomically
+            const tempFile = `${cacheFile}.${Date.now()}.tmp`;
+            try {
+              fs.writeFileSync(tempFile, optimized);
+              fs.renameSync(tempFile, cacheFile);
+            } catch (writeErr) {
+              try {
+                if (fs.existsSync(tempFile)) fs.unlinkSync(tempFile);
+              } catch {}
+            }
+
+            return optimized;
+          } finally {
+            clearTimeout(timeout);
+          }
+        })();
+
+        pendingOptimizations.set(cacheKey, optimizePromise);
+      }
+
+      const outputBuffer = await optimizePromise;
+      pendingOptimizations.delete(cacheKey);
+
+      res.setHeader('Content-Type', 'image/webp');
+      res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
+      res.setHeader('ETag', etag);
+      return res.send(outputBuffer);
+    } catch (err: any) {
+      pendingOptimizations.delete(cacheKey);
+      console.warn(`[Image Optimizer] Failed to optimize ${imageUrl}: ${err.message}. Redirecting to original.`);
+      return res.redirect(302, imageUrl);
+    }
+  });
 
   // Review proxy with multipart/form-data support
   app.post('/api/woo/reviews/submit', upload.any(), async (req, res) => {

@@ -5,6 +5,7 @@ import { motion } from "motion/react";
 import { Link, useParams, useSearchParams } from "react-router-dom";
 import { wooApi, WooProduct, WooCategory } from "../services/woo";
 import { decodeHtmlEntities } from "../utils/format";
+import { OptimizedImage } from "./OptimizedImage";
 
 export const ShopByCategoryBlock = () => {
   const [categories, setCategories] = useState<WooCategory[]>([]);
@@ -73,11 +74,12 @@ export const ShopByCategoryBlock = () => {
             >
               <div className={`w-16 h-16 md:w-full md:aspect-square md:mb-4 p-2 shrink-0 flex items-center justify-center rounded-lg transition-colors ${imgSrc ? 'bg-slate-50/50 group-hover:bg-slate-50' : fallback.bg}`}>
                 {imgSrc ? (
-                  <img
+                  <OptimizedImage
                     src={imgSrc}
+                    widthParam={180}
                     alt={decodeHtmlEntities(cat.name)}
                     className="w-full h-full object-contain group-hover:scale-105 transition-transform mix-blend-multiply"
-                    referrerPolicy="no-referrer"
+                    containerClassName="w-full h-full flex items-center justify-center"
                   />
                 ) : (
                   <div className={`${fallback.color} w-8 h-8 md:w-16 md:h-16 transition-transform group-hover:scale-110 flex items-center justify-center`}>
@@ -161,11 +163,12 @@ export const ProductCard = ({ product }: { product: WooProduct }) => {
             Sale
           </span>
         )}
-        <img
+        <OptimizedImage
           src={product.images[0]?.src}
+          widthParam={350}
           alt={product.images[0]?.alt || decodeHtmlEntities(product.name)}
           className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
-          referrerPolicy="no-referrer"
+          containerClassName="w-full h-full"
         />
         <button
           onClick={(e) => e.preventDefault()}

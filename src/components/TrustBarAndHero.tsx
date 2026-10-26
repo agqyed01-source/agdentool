@@ -66,6 +66,9 @@ export const Hero = () => {
           src="https://images.unsplash.com/photo-1588776814546-1ffcf47267a5?auto=format&fit=crop&q=80&w=800"
           className="w-full h-full object-cover opacity-50 grayscale hover:grayscale-0 transition-all duration-1000"
           alt="Professional Setup"
+          loading="eager"
+          fetchPriority="high"
+          decoding="async"
         />
       </div>
     </section>

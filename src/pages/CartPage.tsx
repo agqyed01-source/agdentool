@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { Seo } from '../components/Seo';
 import { wooApi, WooCart } from '../services/woo';
 import { Trash2, ShoppingBag } from 'lucide-react';
+import { getOptimizedImageUrl } from '../utils/image';
 
 export const CartPage = () => {
   const [cart, setCart] = useState<WooCart | null>(null);
@@ -82,7 +83,13 @@ export const CartPage = () => {
           {cart.items.map((item) => (
             <div key={item.key} className="flex gap-4 p-4 bg-white border border-slate-100 rounded-xl shadow-sm">
               <div className="w-24 h-24 bg-slate-50 rounded-lg shrink-0 flex items-center justify-center overflow-hidden">
-                <img src={item.image} alt={item.name} className="w-full h-full object-cover" />
+                <img 
+                  src={getOptimizedImageUrl(item.image, 160)} 
+                  alt={item.name} 
+                  className="w-full h-full object-cover"
+                  loading="lazy"
+                  decoding="async" 
+                />
               </div>
               <div className="flex flex-col flex-grow">
                 <div className="flex justify-between items-start mb-2">

@@ -4,6 +4,7 @@ import { useParams, Link } from 'react-router-dom';
 import { Seo } from '../components/Seo';
 import { wooApi, WooProduct, WooVariation } from '../services/woo';
 import { decodeHtmlEntities } from '../utils/format';
+import { getOptimizedImageUrl } from '../utils/image';
 import { ShoppingCart, Star, ShieldCheck, Truck, Check } from 'lucide-react';
 import { ProductReviews } from '../components/ProductReviews';
 import { WhatsAppAgents } from '../components/FooterAndNav';
@@ -508,9 +509,11 @@ export const ProductPage = () => {
       >
         <div className="w-[40%] aspect-square max-w-[160px] bg-slate-50 border border-slate-100 rounded-lg flex-shrink-0 flex items-center justify-center overflow-hidden">
           <img 
-            src={currentImageSrc} 
+            src={getOptimizedImageUrl(currentImageSrc, 160)} 
             alt="Current Variant" 
             className="w-full h-full object-contain"
+            loading="lazy"
+            decoding="async"
           />
         </div>
         <div className="flex flex-col min-w-0 flex-1 pt-1">
@@ -567,10 +570,12 @@ export const ProductPage = () => {
             <img 
               key={currentImageSrc}
               ref={imgRef}
-              src={currentImageSrc} 
+              src={getOptimizedImageUrl(currentImageSrc, 800)} 
               alt={(product.images || [])[selectedImageIndex]?.alt || decodeHtmlEntities(product.name)} 
               className={`max-w-full max-h-full object-contain transition-opacity duration-300 ${isImageLoading ? 'opacity-0' : 'opacity-100'}`}
               referrerPolicy="no-referrer"
+              fetchPriority="high"
+              decoding="async"
               onLoad={() => {
                 if (currentImageSrc) setLoadedImages(prev => ({ ...prev, [currentImageSrc]: true }));
               }}
@@ -579,6 +584,7 @@ export const ProductPage = () => {
               }}
             />
           </div>
+
           {(product.images || []).length > 1 && (
             <div className="flex gap-4 overflow-x-auto pb-2 scrollbar-hide">
               {(product.images || []).map((image, idx) => (
@@ -588,9 +594,11 @@ export const ProductPage = () => {
                   className={`flex-shrink-0 w-20 h-20 rounded-lg overflow-hidden border-2 transition-all ${selectedImageIndex === idx ? 'border-brand-primary' : 'border-transparent hover:border-slate-300'}`}
                 >
                   <img
-                    src={image?.src}
+                    src={getOptimizedImageUrl(image?.src, 120)}
                     alt={image?.alt || `${decodeHtmlEntities(product.name)} - Image ${idx + 1}`}
                     className="w-full h-full object-cover"
+                    loading="lazy"
+                    decoding="async"
                     referrerPolicy="no-referrer"
                   />
                 </button>

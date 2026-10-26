@@ -29,7 +29,13 @@ export const WhatsAppAgents = () => {
             >
               <div className="absolute top-0 right-0 w-12 h-12 lg:w-16 lg:h-16 bg-[#25D366]/5 rounded-bl-[100px] -z-10 group-hover:scale-150 transition-transform duration-500"></div>
               <div className="relative shrink-0">
-                <img src={agent.avatar} alt={agent.name} className="w-10 h-10 lg:w-12 lg:h-12 rounded-full object-cover border-2 border-white shadow-sm group-hover:scale-110 transition-transform duration-300" />
+                <img 
+                  src={agent.avatar} 
+                  alt={agent.name} 
+                  className="w-10 h-10 lg:w-12 lg:h-12 rounded-full object-cover border-2 border-white shadow-sm group-hover:scale-110 transition-transform duration-300"
+                  loading="lazy"
+                  decoding="async"
+                />
                 <div className="absolute bottom-0 right-0 w-3 lg:w-3.5 h-3 lg:h-3.5 bg-[#25D366] border-2 border-white rounded-full"></div>
               </div>
               <div className="flex-1 min-w-0">

@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { Star, UploadCloud, X, Loader2, CheckCircle } from 'lucide-react';
 import { wooApi, WooReview } from '../services/woo';
+import { getOptimizedImageUrl } from '../utils/image';
 
 export const ProductReviews = ({ productId, initialCount, averageRating }: { productId: number; initialCount: number; averageRating: string }) => {
   const [reviews, setReviews] = useState<WooReview[]>([]);
@@ -132,7 +133,7 @@ export const ProductReviews = ({ productId, initialCount, averageRating }: { pro
                        <div className="flex gap-2 mt-3 overflow-x-auto pb-2">
                          {review.images.map((img, idx) => (
                            <a key={idx} href={img} target="_blank" rel="noreferrer" className="flex-shrink-0 w-20 h-20 rounded-lg overflow-hidden border border-slate-200">
-                             <img src={img} alt="Review" className="w-full h-full object-cover" />
+                             <img src={getOptimizedImageUrl(img, 160)} alt="Review" className="w-full h-full object-cover" loading="lazy" decoding="async" />
                            </a>
                          ))}
                        </div>

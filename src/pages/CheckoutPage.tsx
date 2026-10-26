@@ -4,6 +4,7 @@ import { wooApi, WooCart } from '../services/woo';
 import { Lock, CreditCard, Loader2 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import shippingRules from '../data/shippingRules.json';
+import { getOptimizedImageUrl } from '../utils/image';
 
 import Select from 'react-select';
 
@@ -557,7 +558,13 @@ groups[itemShippingClass].subtotal += itemSubtotal;
                 return (
                   <div key={item.key} className="flex gap-4 items-center">
                     <div className="w-16 h-16 bg-slate-50 rounded border border-slate-100 overflow-hidden shrink-0">
-                      <img src={item.image} alt={item.name} className="w-full h-full object-cover" />
+                      <img 
+                        src={getOptimizedImageUrl(item.image, 160)} 
+                        alt={item.name} 
+                        className="w-full h-full object-cover"
+                        loading="lazy"
+                        decoding="async"
+                      />
                     </div>
                     <div className="flex-grow text-sm">
                       <div className="font-bold text-slate-900 line-clamp-1">{item.name}</div>

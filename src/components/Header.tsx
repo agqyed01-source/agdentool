@@ -6,6 +6,7 @@ import { useTranslation } from "react-i18next";
 import { LanguageSwitcher } from "./LanguageSwitcher";
 import { wooApi, WooProduct, WooUser, WooCategory } from "../services/woo";
 import { decodeHtmlEntities } from "../utils/format";
+import { getOptimizedImageUrl } from "../utils/image";
 
 const MobileCategoryNode = ({ node, depth = 0, setIsMenuOpen }: { node: any, depth?: number, setIsMenuOpen: (v: boolean) => void }) => {
   const [isExpanded, setIsExpanded] = useState(depth === 0);
@@ -248,7 +249,13 @@ export const Header = () => {
                           className="flex items-center gap-4 p-3 hover:bg-slate-50 border-b border-slate-50 transition-colors last:border-b-0 cursor-pointer"
                         >
                           {product.images?.[0] ? (
-                            <img src={product.images[0].src} alt={product.name} className="w-10 h-10 object-contain bg-white rounded" />
+                            <img 
+                              src={getOptimizedImageUrl(product.images[0].src, 80)} 
+                              alt={product.name} 
+                              className="w-10 h-10 object-contain bg-white rounded"
+                              loading="lazy"
+                              decoding="async" 
+                            />
                           ) : (
                             <div className="w-10 h-10 bg-slate-100 rounded" />
                           )}
@@ -396,7 +403,13 @@ export const Header = () => {
                             className="flex items-center gap-4 p-3 hover:bg-slate-50 border-b border-slate-50 transition-colors last:border-b-0 cursor-pointer"
                           >
                             {product.images?.[0] ? (
-                              <img src={product.images[0].src} alt={product.name} className="w-10 h-10 object-contain bg-white rounded" />
+                              <img 
+                                src={getOptimizedImageUrl(product.images[0].src, 80)} 
+                                alt={product.name} 
+                                className="w-10 h-10 object-contain bg-white rounded"
+                                loading="lazy"
+                                decoding="async" 
+                              />
                             ) : (
                               <div className="w-10 h-10 bg-slate-100 rounded" />
                             )}
