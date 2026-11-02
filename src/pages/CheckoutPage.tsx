@@ -192,7 +192,10 @@ groups[itemShippingClass].subtotal += itemSubtotal;
                  let failReason = "";
                  
                  if (condition.countries && Array.isArray(condition.countries) && condition.countries.length > 0) {
-                    if (!condition.countries.includes(billing.country)) { match = false; failReason = `Country ${billing.country} not in [${condition.countries}]`; }
+                    const countryCode = String(billing.country || "").trim().toUpperCase();
+                     const matchCode = condition.countries.map((c: any) => String(c).trim().toUpperCase()).includes(countryCode);
+                     const matchName = condition.country_names && Array.isArray(condition.country_names) && condition.country_names.map((n: any) => String(n).trim().toLowerCase()).includes(String(billing.country || "").trim().toLowerCase());
+                     if (!matchCode && !matchName) { match = false; failReason = `Country ${billing.country} not in [${condition.countries}]`; }
                  }
                  
                  if (match && condition.shipping_classes && Array.isArray(condition.shipping_classes) && condition.shipping_classes.length > 0) {
@@ -201,10 +204,14 @@ groups[itemShippingClass].subtotal += itemSubtotal;
                     if (!normalizedClasses.includes(normalizedSClass)) { match = false; failReason = `Class '${sClass}' not in [${condition.shipping_classes}]`; }
                  }
                  
-                 if (match && condition.min_amount !== undefined && group.subtotal < condition.min_amount) { match = false; }
-                 if (match && condition.max_amount !== undefined && group.subtotal > condition.max_amount) { match = false; }
-                 if (match && condition.min_weight !== undefined && group.weight < condition.min_weight) { match = false; }
-                 if (match && condition.max_weight !== undefined && group.weight > condition.max_weight) { match = false; }
+                 if (match && condition.metric !== "weight") {
+                     if (condition.min_amount !== undefined && group.subtotal < condition.min_amount) { match = false; }
+                     if (condition.max_amount !== undefined && group.subtotal > condition.max_amount) { match = false; }
+                  }
+                 if (match && condition.metric !== "amount") {
+                     if (condition.min_weight !== undefined && group.weight < condition.min_weight) { match = false; }
+                     if (condition.max_weight !== undefined && group.weight > condition.max_weight) { match = false; }
+                  }
                  if (match && condition.min_quantity !== undefined && group.qty < condition.min_quantity) { match = false; }
                  if (match && condition.max_quantity !== undefined && group.qty > condition.max_quantity) { match = false; }
                  
@@ -218,7 +225,9 @@ groups[itemShippingClass].subtotal += itemSubtotal;
                      switch (condition.operator) {
                          case '<': if (!(metricValue < ruleValue)) { match = false; } break;
                          case '<=': if (!(metricValue <= ruleValue)) { match = false; } break;
-                         case '>': if (!(metricValue > ruleValue)) { match = false; } break;
+                         case '>': 
+                              if (rule.shipping_fee === 0 ? !(metricValue >= ruleValue) : !(metricValue > ruleValue)) { match = false; }
+                              break;
                          case '>=': if (!(metricValue >= ruleValue)) { match = false; } break;
                          case '==': 
                          case '=': if (!(metricValue == ruleValue)) { match = false; } break;
