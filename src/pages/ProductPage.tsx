@@ -9,29 +9,55 @@ import { ShoppingCart, Star, ShieldCheck, Truck, Check } from 'lucide-react';
 import { ProductReviews } from '../components/ProductReviews';
 import { WhatsAppAgents } from '../components/FooterAndNav';
 
-const normalizeAttrVal = (val?: string | null): string => {
-  if (!val || typeof val !== 'string') return '';
-  return val
+export const getOptionLabel = (opt: any): string => {
+  if (opt === null || opt === undefined) return '';
+  if (typeof opt === 'object') {
+    return String(opt.name || opt.label || opt.value || opt.slug || '');
+  }
+  return String(opt);
+};
+
+export const normalizeAttrVal = (val?: any): string => {
+  if (val === null || val === undefined) return '';
+  const str = getOptionLabel(val);
+  return str
     .replace(/&nbsp;/g, ' ')
     .replace(/\u00a0/g, ' ')
     .replace(/%[0-9a-f]{2}/gi, '')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '') // remove diacritics / accents (e.g. ñ -> n, é -> e)
     .trim()
     .toLowerCase()
-    .replace(/[^a-z0-9]/g, '');
+    .replace(/[^a-z0-9\u00C0-\u024F\u1E00-\u1EFF\u0400-\u04FF\u0600-\u06FF\u4E00-\u9FFF]/g, '');
 };
 
-const getCanonicalAttrName = (attr?: { id?: number; name?: string }, productAttributes?: any[]): string => {
-  if (!attr || !attr.name) return '';
-  if (!productAttributes || !Array.isArray(productAttributes)) return attr.name;
+export const getCanonicalAttrName = (attr?: { id?: number; name?: string; slug?: string } | string, productAttributes?: any[]): string => {
+  if (!attr) return '';
+  const rawName = typeof attr === 'string' ? attr : (attr.name || attr.slug || '');
+  if (!rawName) return '';
+  if (!productAttributes || !Array.isArray(productAttributes)) return rawName;
+  const rawClean = rawName.replace(/^pa_/, '');
   const parent = productAttributes.find(pa => 
     pa && (
-      (attr.id && pa.id !== 0 && pa.id === attr.id) ||
-      normalizeAttrVal(pa.name) === normalizeAttrVal(attr.name) ||
-      normalizeAttrVal(`pa_${pa.name}`) === normalizeAttrVal(attr.name)
+      (typeof attr === 'object' && attr.id && pa.id !== 0 && pa.id === attr.id) ||
+      normalizeAttrVal(pa.name) === normalizeAttrVal(rawName) ||
+      normalizeAttrVal(pa.slug) === normalizeAttrVal(rawName) ||
+      normalizeAttrVal(pa.name) === normalizeAttrVal(rawClean) ||
+      normalizeAttrVal(pa.slug) === normalizeAttrVal(rawClean) ||
+      normalizeAttrVal(`pa_${pa.name}`) === normalizeAttrVal(rawName) ||
+      normalizeAttrVal(`pa_${pa.slug}`) === normalizeAttrVal(rawName)
     )
   );
-  return parent && parent.name ? parent.name : attr.name;
+  return parent && parent.name ? parent.name : rawName;
 };
+
+export const getSafeHtml = (desc: any): string => {
+  if (!desc) return '';
+  if (typeof desc === 'string') return desc;
+  if (typeof desc === 'object' && typeof desc.rendered === 'string') return desc.rendered;
+  return String(desc);
+};
+
 
 export const ProductPage = () => {
   const { t, i18n } = useTranslation();
@@ -153,7 +179,7 @@ export const ProductPage = () => {
   }, [product]);
 
   // Check if a specific option is available given current selections of other attributes
-  const isOptionAvailable = React.useCallback((attrName: string, optVal: string, currentSelections: Record<string, string>): boolean => {
+  const isOptionAvailable = React.useCallback((attrName: string, optVal: any, currentSelections: Record<string, string>): boolean => {
     if (!variationsData || variationsData.length === 0) return true;
     const normOpt = normalizeAttrVal(optVal);
 
@@ -194,7 +220,8 @@ export const ProductPage = () => {
   }, [variationsData, product, variationAttributes]);
 
   // Handle selecting / deselecting an option
-  const handleSelectOption = React.useCallback((attrName: string, opt: string) => {
+  const handleSelectOption = React.useCallback((attrName: string, rawOpt: any) => {
+    const opt = getOptionLabel(rawOpt);
     // If clicking the currently selected option, deselect it
     if (selectedVariations[attrName] === opt) {
       setSelectedVariations(prev => {
@@ -232,9 +259,9 @@ export const ProductPage = () => {
       if (isMissing) return null;
     }
 
-    return variationsData.find(v => {
+    // 1. Strict attribute matching
+    const strictMatch = variationsData.find(v => {
       if (!v || !v.attributes || !Array.isArray(v.attributes)) return false;
-      // Check if every attribute in the variation matches the selected variations
       return v.attributes.every(attr => {
         if (!attr || attr.option === "") return true; // Means Any option
         
@@ -245,7 +272,29 @@ export const ProductPage = () => {
 
         return normalizeAttrVal(selected) === normalizeAttrVal(attr.option);
       });
-    }) || null;
+    });
+
+    if (strictMatch) return strictMatch;
+
+    // 2. Loose fallback matching across option values
+    const selectedVals = Object.values(selectedVariations).map(normalizeAttrVal).filter(Boolean);
+    if (selectedVals.length > 0) {
+      const looseMatch = variationsData.find(v => {
+        if (!v || !v.attributes || !Array.isArray(v.attributes)) return false;
+        return v.attributes.every(attr => {
+          if (!attr || attr.option === "") return true;
+          return selectedVals.includes(normalizeAttrVal(attr.option));
+        });
+      });
+      if (looseMatch) return looseMatch;
+    }
+
+    // 3. If there is only one variation available, use it
+    if (variationsData.length === 1) {
+      return variationsData[0];
+    }
+
+    return null;
   }, [variationsData, selectedVariations, product, variationAttributes]);
 
   const currentImageSrc = 
@@ -294,14 +343,15 @@ export const ProductPage = () => {
     : product?.price;
 
   const isAddToCartDisabled = React.useMemo(() => {
+    const priceNum = parseFloat(String(currentPrice || product?.price || "0").replace(/[^0-9.]/g, ""));
     if (product?.type === 'variable') {
       if (!allAttributesSelected) return true;
       if (isInvalidCombination || !currentVariation) return true;
       if (isOutOfStock) return true;
-      if (!currentPrice || parseFloat(currentPrice) <= 0) return true;
+      if (isNaN(priceNum) || priceNum <= 0) return true;
       return false;
     }
-    return isOutOfStock || !currentPrice || parseFloat(currentPrice) <= 0;
+    return isOutOfStock || isNaN(priceNum) || priceNum <= 0;
   }, [product, allAttributesSelected, isInvalidCombination, currentVariation, isOutOfStock, currentPrice]);
 
   const handleAddToCart = async () => {
@@ -317,7 +367,7 @@ export const ProductPage = () => {
         }
         return;
       }
-      if (!currentVariation) {
+      if (!currentVariation && variationsData.length > 0) {
         setSelectionError(t("product.combination_unavailable", "This combination is unavailable. Please choose another option."));
         return;
       }
@@ -329,6 +379,10 @@ export const ProductPage = () => {
       return;
     }
 
+    const finalVariationId = currentVariation?.id || (
+      product.type === "variable" && variationsData.length === 1 ? variationsData[0].id : undefined
+    );
+
     try {
       await wooApi.addToCart({ 
         ...product, 
@@ -336,7 +390,7 @@ export const ProductPage = () => {
         images: currentVariation?.image?.src 
           ? [{ id: currentVariation.image.id || 0, src: currentVariation.image.src, alt: currentVariation.image.alt || "" }] 
           : (product.images || [])
-      }, quantity, selectedVariations, currentVariation?.id);
+      }, quantity, selectedVariations, finalVariationId);
 
       setIsAdded(true);
       setShowSuccessToast(true);
@@ -524,11 +578,11 @@ export const ProductPage = () => {
              </span>
           ) : currentVariation ? (
              <span className="text-sm text-brand-primary font-bold mt-1 truncate">
-                 {Array.isArray(currentVariation?.attributes) ? currentVariation.attributes.filter(a => a?.option).map(a => a.option).join(', ') : ''}
+                 {Array.isArray(currentVariation?.attributes) ? currentVariation.attributes.filter(a => a?.option).map(a => getOptionLabel(a.option)).join(', ') : ''}
              </span>
           ) : (
              <span className="text-sm text-slate-500 mt-1 truncate">
-                 {Object.values(selectedVariations).filter(Boolean).join(', ') || t('product.select_options', 'Select options')}
+                 {Object.values(selectedVariations).filter(Boolean).map(getOptionLabel).join(', ') || t('product.select_options', 'Select options')}
              </span>
           )}
           <div className="font-bold text-slate-900 mt-1">
@@ -541,7 +595,7 @@ export const ProductPage = () => {
                   <span className="text-xs text-slate-400 line-through font-bold">${currentVariation.regular_price}</span>
                 )}
               </div>
-            ) : product.price_html ? (
+            ) : typeof product.price_html === 'string' ? (
               <div 
                 className="woo-price text-lg"
                 dangerouslySetInnerHTML={{ __html: product.price_html.replace(/Price range/gi, '').replace(/가격 범위/g, '').replace(/范[围|圍][^<]*/g, '').replace(/价格[^<]*/g, '') }} 
@@ -653,7 +707,7 @@ export const ProductPage = () => {
                   <span className="text-lg text-slate-400 line-through font-bold ml-3">${currentVariation.regular_price}</span>
                 )}
               </>
-            ) : product.price_html ? (
+            ) : typeof product.price_html === 'string' ? (
               <div 
                 className="woo-price text-4xl"
                 dangerouslySetInnerHTML={{ __html: product.price_html.replace(/Price range/gi, '').replace(/가격 범위/g, '').replace(/范[围|圍][^<]*/g, '').replace(/价格[^<]*/g, '') }} 
@@ -670,7 +724,7 @@ export const ProductPage = () => {
 
           <div 
             className="prose prose-sm text-slate-600 mb-6 max-w-full break-words overflow-x-auto"
-            dangerouslySetInnerHTML={{ __html: product.short_description || '' }} 
+            dangerouslySetInnerHTML={{ __html: getSafeHtml(product.short_description) }} 
           />
 
           {/* Product Attributes / Variations */}
@@ -694,7 +748,7 @@ export const ProductPage = () => {
                     <div className="flex items-center justify-between mb-2">
                       <label className="text-sm font-semibold text-slate-900">
                         {attr.name}: {selectedVariations[attr.name] ? (
-                          <span className="font-normal text-slate-600 ml-1">{selectedVariations[attr.name]}</span>
+                          <span className="font-normal text-slate-600 ml-1">{getOptionLabel(selectedVariations[attr.name])}</span>
                         ) : (
                           <span className="text-xs font-normal text-amber-600 ml-1">({t('product.select_options', 'Select Options')})</span>
                         )}
@@ -716,12 +770,13 @@ export const ProductPage = () => {
                       )}
                     </div>
                     <div className="flex flex-wrap gap-2">
-                       {(attr.options || []).map(opt => {
+                       {(attr.options || []).map((rawOpt, optIdx) => {
+                         const opt = getOptionLabel(rawOpt);
                          const isSelected = selectedVariations[attr.name] === opt;
                          const isAvailable = isOptionAvailable(attr.name, opt, selectedVariations);
                          return (
                            <button
-                             key={opt}
+                             key={`${opt}_${optIdx}`}
                              type="button"
                              onClick={() => handleSelectOption(attr.name, opt)}
                              title={!isAvailable ? 'Unavailable with current selection' : undefined}
@@ -822,7 +877,7 @@ export const ProductPage = () => {
         {activeTab === 'description' && (
           <div 
             className="prose prose-slate max-w-none px-2 break-words overflow-x-auto"
-            dangerouslySetInnerHTML={{ __html: product.description || '' }} 
+            dangerouslySetInnerHTML={{ __html: getSafeHtml(product.description) }} 
           />
         )}
 

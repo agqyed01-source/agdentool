@@ -544,7 +544,12 @@ async function startServer() {
 
   // Client runtime error logger
   app.post('/api/client-error', (req, res) => {
-    console.error('[CLIENT RUNTIME ERROR]:', JSON.stringify(req.body, null, 2));
+    const errPayload = { timestamp: new Date().toISOString(), ...req.body };
+    console.error('[CLIENT RUNTIME ERROR]:', JSON.stringify(errPayload, null, 2));
+    try {
+      const logFile = path.join(process.cwd(), '.cache', 'client-errors.log');
+      fs.appendFileSync(logFile, JSON.stringify(errPayload) + '\n');
+    } catch {}
     res.json({ received: true });
   });
 

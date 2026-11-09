@@ -584,7 +584,8 @@ export const wooApi = {
     return new Promise((resolve, reject) =>
       setTimeout(() => {
         if (product) {
-          const cleanPrice = String(product.price || "0").replace(/[^0-9.]/g, '') || "0";
+          const rawPrice = product.price || (product as any).sale_price || (product as any).regular_price || "0";
+          const cleanPrice = String(rawPrice).replace(/[^0-9.]/g, '') || "0";
           const priceNum = parseFloat(cleanPrice);
           if (priceNum <= 0) {
             reject(new Error("Product has no price set"));
@@ -595,8 +596,12 @@ export const wooApi = {
             return;
           }
           if (product.type === 'variable' && !variation_id) {
-            reject(new Error("Please select a valid product variation before adding to cart"));
-            return;
+            if (product.variations && product.variations.length === 1) {
+              variation_id = product.variations[0];
+            } else {
+              reject(new Error("Please select product options before adding to cart"));
+              return;
+            }
           }
           const varString = variations ? JSON.stringify(variations) : '{}';
           const existingItem = mockCartState.items.find(
@@ -606,7 +611,7 @@ export const wooApi = {
             existingItem.quantity += quantity;
           } else {
             const nameSuffix = variations && Object.keys(variations).length > 0
-              ? ` - ${Object.values(variations).join(', ')}` 
+              ? ` - ${Object.values(variations).map((v: any) => typeof v === 'object' && v ? (v.name || v.label || v.value || String(v)) : String(v || '')).join(', ')}` 
               : '';
 
             mockCartState.items.push({

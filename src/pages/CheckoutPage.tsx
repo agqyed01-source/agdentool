@@ -86,9 +86,15 @@ export const CheckoutPage = () => {
   // Sync states when billing.country changes
   useEffect(() => {
     if (countries.length > 0 && billing.country) {
-      const country = countries.find((c: any) => c.code === billing.country);
-      if (country && country.states) {
+      const country = countries.find((c: any) => c && c.code === billing.country);
+      if (country && country.states && Array.isArray(country.states)) {
         setStates(country.states);
+      } else if (country && country.states && typeof country.states === 'object') {
+        const stateList = Object.entries(country.states).map(([code, name]) => ({
+          code: String(code),
+          name: String(name)
+        }));
+        setStates(stateList);
       } else {
         setStates([]);
       }
@@ -330,20 +336,27 @@ groups[itemShippingClass].subtotal += itemSubtotal;
   };
 
   const handleCountryChange = (selectedOption: any) => {
-    updateBilling('country', selectedOption ? selectedOption.value : '');
+    const code = selectedOption ? String(selectedOption.value || '') : '';
+    updateBilling('country', code);
     updateBilling('state', ''); // Reset state when country changes
     
     // Find states for selected country
-    const country = countries.find(c => c.code === (selectedOption?.value));
-    if (country && country.states) {
+    const country = countries.find(c => c && c.code === code);
+    if (country && country.states && Array.isArray(country.states)) {
       setStates(country.states);
+    } else if (country && country.states && typeof country.states === 'object') {
+      const stateList = Object.entries(country.states).map(([k, v]) => ({
+        code: String(k),
+        name: String(v)
+      }));
+      setStates(stateList);
     } else {
       setStates([]);
     }
   };
 
   const handleStateChange = (selectedOption: any) => {
-    updateBilling('state', selectedOption ? selectedOption.value : '');
+    updateBilling('state', selectedOption ? String(selectedOption.value || '') : '');
   };
 
   const handleCheckout = async (e: React.FormEvent) => {
@@ -357,6 +370,16 @@ groups[itemShippingClass].subtotal += itemSubtotal;
       return;
     }
 
+    if (!billing.country) {
+      setError('Please select a country.');
+      return;
+    }
+
+    if (!billing.first_name || !billing.last_name || !billing.email || !billing.phone || !billing.address_1 || !billing.city) {
+      setError('Please fill in all required shipping and contact details.');
+      return;
+    }
+
     setLoading(true);
     setError('');
     
@@ -364,13 +387,17 @@ groups[itemShippingClass].subtotal += itemSubtotal;
       const order = await wooApi.clearCartAndCreateOrder({
         billing,
         shipping: billing, // simplified, just copy billing for now
-        
-        
+        payment_method: 'ppcp_card',
+        payment_method_title: 'Credit/Debit Cards & PayPal',
         shipping_lines: selectedShippingMethod ? [{
           method_id: selectedShippingMethod.method_id,
           method_title: selectedShippingMethod.title,
           total: selectedShippingMethod.settings?.cost?.value || '0.00'
-        }] : []
+        }] : [{
+          method_id: 'standard',
+          method_title: 'Standard Shipping',
+          total: '0.00'
+        }]
       });
       
       if (order && order.id) {
@@ -391,6 +418,7 @@ groups[itemShippingClass].subtotal += itemSubtotal;
          setError('Failed to create order, please try again.');
       }
     } catch (err: any) {
+      console.error("Order creation error:", err);
       setError(err.message || 'An error occurred during checkout');
     } finally {
       setLoading(false);
@@ -509,12 +537,14 @@ groups[itemShippingClass].subtotal += itemSubtotal;
                 <div className="col-span-2">
                   <label className="block text-sm font-bold text-slate-700 mb-1">Country</label>
                   <Select
-                    options={countries.map((c: any) => ({ value: c.code, label: c.name }))}
-                    value={countries.find(c => c.code === billing.country) ? { value: billing.country, label: countries.find(c => c.code === billing.country)?.name } : null}
+                    options={(countries || []).filter((c: any) => c && c.code).map((c: any) => ({ value: String(c.code), label: String(c.name || c.code) }))}
+                    value={billing.country ? {
+                      value: billing.country,
+                      label: (countries || []).find((c: any) => c && c.code === billing.country)?.name || billing.country
+                    } : null}
                     onChange={handleCountryChange}
                     isSearchable
                     placeholder="Select a country..."
-                    required
                   />
                 </div>
                 <div className="col-span-2">
@@ -528,17 +558,19 @@ groups[itemShippingClass].subtotal += itemSubtotal;
                 </div>
                 <div>
                   <label className="block text-sm font-bold text-slate-700 mb-1">State / County</label>
-                  {states.length > 0 ? (
+                  {Array.isArray(states) && states.length > 0 ? (
                     <Select
-                      options={states.map(s => ({ value: s.code, label: s.name }))}
-                      value={states.find(s => s.code === billing.state) ? { value: billing.state, label: states.find(s => s.code === billing.state)?.name } : null}
+                      options={states.filter((s: any) => s && s.code).map((s: any) => ({ value: String(s.code), label: String(s.name || s.code) }))}
+                      value={billing.state ? {
+                        value: billing.state,
+                        label: states.find((s: any) => s && s.code === billing.state)?.name || billing.state
+                      } : null}
                       onChange={handleStateChange}
                       isSearchable
                       placeholder="Select a state..."
-                      required
                     />
                   ) : (
-                    <input type="text" required value={billing.state} onChange={e => updateBilling('state', e.target.value)} className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-lg outline-none focus:ring-2 focus:ring-brand-primary" />
+                    <input type="text" value={billing.state} onChange={e => updateBilling('state', e.target.value)} className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-lg outline-none focus:ring-2 focus:ring-brand-primary" placeholder="State / Province (optional)" />
                   )}
                 </div>
                 <div>
