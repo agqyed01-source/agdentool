@@ -20,15 +20,19 @@ export const getOptionLabel = (opt: any): string => {
 export const normalizeAttrVal = (val?: any): string => {
   if (val === null || val === undefined) return '';
   const str = getOptionLabel(val);
-  return str
-    .replace(/&nbsp;/g, ' ')
-    .replace(/\u00a0/g, ' ')
-    .replace(/%[0-9a-f]{2}/gi, '')
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '') // remove diacritics / accents (e.g. ñ -> n, é -> e)
-    .trim()
-    .toLowerCase()
-    .replace(/[^a-z0-9\u00C0-\u024F\u1E00-\u1EFF\u0400-\u04FF\u0600-\u06FF\u4E00-\u9FFF]/g, '');
+  try {
+    const normalized = typeof str.normalize === 'function' ? str.normalize('NFD') : str;
+    return normalized
+      .replace(/&nbsp;/g, ' ')
+      .replace(/\u00a0/g, ' ')
+      .replace(/%[0-9a-f]{2}/gi, '')
+      .replace(/[\u0300-\u036f]/g, '') // remove diacritics / accents
+      .trim()
+      .toLowerCase()
+      .replace(/[^a-z0-9\u00C0-\u024F\u1E00-\u1EFF\u0400-\u04FF\u0600-\u06FF\u4E00-\u9FFF]/g, '');
+  } catch {
+    return String(str).toLowerCase().trim();
+  }
 };
 
 export const getCanonicalAttrName = (attr?: { id?: number; name?: string; slug?: string } | string, productAttributes?: any[]): string => {
@@ -175,127 +179,178 @@ export const ProductPage = () => {
 
   const variationAttributes = React.useMemo(() => {
     if (product?.type !== 'variable' || !product.attributes || !Array.isArray(product.attributes)) return [];
-    return product.attributes.filter(a => a && a.variation && Array.isArray(a.options) && a.options.length > 0);
+    return product.attributes.filter(a => {
+      if (!a) return false;
+      const opts = Array.isArray(a.options)
+        ? a.options
+        : typeof a.options === 'string'
+          ? (a.options as string).split(/[|,]/).map(s => s.trim()).filter(Boolean)
+          : [];
+      return opts.length > 0;
+    }).map(a => {
+      const opts = Array.isArray(a.options)
+        ? a.options
+        : typeof a.options === 'string'
+          ? (a.options as string).split(/[|,]/).map(s => s.trim()).filter(Boolean)
+          : [];
+      return {
+        ...a,
+        options: opts
+      };
+    });
+  }, [product]);
+
+  // Helper to find selected value for an attribute in a tolerant, case-insensitive way
+  const findSelectedVal = React.useCallback((attr: any, selections: Record<string, string>): string | undefined => {
+    if (!attr) return undefined;
+    const canonicalName = getCanonicalAttrName(attr, product?.attributes);
+    const rawName = typeof attr === 'string' ? attr : (attr.name || attr.slug || '');
+
+    if (selections[canonicalName]) return selections[canonicalName];
+    if (rawName && selections[rawName]) return selections[rawName];
+
+    const normCanonical = normalizeAttrVal(canonicalName);
+    const normRaw = normalizeAttrVal(rawName);
+    for (const [k, val] of Object.entries(selections)) {
+      const normK = normalizeAttrVal(k);
+      if (normK === normCanonical || normK === normRaw || normK.replace(/^pa/, '') === normRaw.replace(/^pa/, '')) {
+        return val;
+      }
+    }
+    return undefined;
   }, [product]);
 
   // Check if a specific option is available given current selections of other attributes
   const isOptionAvailable = React.useCallback((attrName: string, optVal: any, currentSelections: Record<string, string>): boolean => {
-    if (!variationsData || variationsData.length === 0) return true;
-    const normOpt = normalizeAttrVal(optVal);
+    try {
+      if (!variationsData || variationsData.length === 0) return true;
+      const normOpt = normalizeAttrVal(optVal);
 
-    return variationsData.some(v => {
-      if (!v || !v.attributes || !Array.isArray(v.attributes)) return false;
+      return variationsData.some(v => {
+        if (!v || !v.attributes || !Array.isArray(v.attributes)) return false;
 
-      // Must match optVal for this attribute
-      const thisAttrMatch = v.attributes.find(va => {
-        if (!va) return false;
-        const canonical = getCanonicalAttrName(va, product?.attributes);
-        return normalizeAttrVal(canonical) === normalizeAttrVal(attrName);
-      });
-
-      if (thisAttrMatch && thisAttrMatch.option !== '' && normalizeAttrVal(thisAttrMatch.option) !== normOpt) {
-        return false;
-      }
-
-      // Must also be compatible with all OTHER selected attributes
-      for (const otherAttr of variationAttributes) {
-        if (!otherAttr || !otherAttr.name) continue;
-        if (normalizeAttrVal(otherAttr.name) === normalizeAttrVal(attrName)) continue;
-        const selectedVal = currentSelections[otherAttr.name];
-        if (!selectedVal) continue;
-
-        const otherAttrMatch = v.attributes.find(va => {
+        // Must match optVal for this attribute
+        const thisAttrMatch = v.attributes.find(va => {
           if (!va) return false;
           const canonical = getCanonicalAttrName(va, product?.attributes);
-          return normalizeAttrVal(canonical) === normalizeAttrVal(otherAttr.name);
+          return normalizeAttrVal(canonical) === normalizeAttrVal(attrName) || normalizeAttrVal(va.name) === normalizeAttrVal(attrName);
         });
 
-        if (otherAttrMatch && otherAttrMatch.option !== '' && normalizeAttrVal(otherAttrMatch.option) !== normalizeAttrVal(selectedVal)) {
+        if (thisAttrMatch && thisAttrMatch.option !== '' && normalizeAttrVal(thisAttrMatch.option) !== normOpt) {
           return false;
         }
-      }
 
+        // Must also be compatible with all OTHER selected attributes
+        for (const otherAttr of variationAttributes) {
+          if (!otherAttr || !otherAttr.name) continue;
+          if (normalizeAttrVal(otherAttr.name) === normalizeAttrVal(attrName)) continue;
+          const selectedVal = findSelectedVal(otherAttr, currentSelections);
+          if (!selectedVal) continue;
+
+          const otherAttrMatch = v.attributes.find(va => {
+            if (!va) return false;
+            const canonical = getCanonicalAttrName(va, product?.attributes);
+            return normalizeAttrVal(canonical) === normalizeAttrVal(otherAttr.name) || normalizeAttrVal(va.name) === normalizeAttrVal(otherAttr.name);
+          });
+
+          if (otherAttrMatch && otherAttrMatch.option !== '' && normalizeAttrVal(otherAttrMatch.option) !== normalizeAttrVal(selectedVal)) {
+            return false;
+          }
+        }
+
+        return true;
+      });
+    } catch (err) {
+      console.warn("isOptionAvailable check failed:", err);
       return true;
-    });
-  }, [variationsData, product, variationAttributes]);
+    }
+  }, [variationsData, product, variationAttributes, findSelectedVal]);
 
   // Handle selecting / deselecting an option
   const handleSelectOption = React.useCallback((attrName: string, rawOpt: any) => {
-    const opt = getOptionLabel(rawOpt);
-    // If clicking the currently selected option, deselect it
-    if (selectedVariations[attrName] === opt) {
-      setSelectedVariations(prev => {
-        const next = { ...prev };
-        delete next[attrName];
-        return next;
-      });
-      return;
-    }
-
-    const isAvail = isOptionAvailable(attrName, opt, selectedVariations);
-    if (isAvail) {
-      setSelectedVariations(prev => ({ ...prev, [attrName]: opt }));
-    } else {
-      // Incompatible with some other current selection:
-      // Keep only other selections compatible with opt, clear the conflicting ones
-      const nextSelections: Record<string, string> = { [attrName]: opt };
-      for (const [otherName, otherVal] of Object.entries(selectedVariations)) {
-        if (otherName === attrName) continue;
-        if (isOptionAvailable(otherName, otherVal, { [attrName]: opt })) {
-          nextSelections[otherName] = otherVal;
-        }
+    try {
+      const opt = getOptionLabel(rawOpt);
+      // If clicking the currently selected option, deselect it
+      if (selectedVariations[attrName] === opt) {
+        setSelectedVariations(prev => {
+          const next = { ...prev };
+          delete next[attrName];
+          return next;
+        });
+        return;
       }
-      setSelectedVariations(nextSelections);
+
+      const isAvail = isOptionAvailable(attrName, opt, selectedVariations);
+      if (isAvail) {
+        setSelectedVariations(prev => ({ ...prev, [attrName]: opt }));
+      } else {
+        // Incompatible with some other current selection:
+        // Keep only other selections compatible with opt, clear the conflicting ones
+        const nextSelections: Record<string, string> = { [attrName]: opt };
+        for (const [otherName, otherVal] of Object.entries(selectedVariations)) {
+          if (otherName === attrName) continue;
+          if (isOptionAvailable(otherName, otherVal, { [attrName]: opt })) {
+            nextSelections[otherName] = otherVal;
+          }
+        }
+        setSelectedVariations(nextSelections);
+      }
+    } catch (err) {
+      console.error("Failed to select option:", err);
     }
   }, [selectedVariations, isOptionAvailable]);
 
   // Find current variation based on selected attributes
   const currentVariation = React.useMemo(() => {
-    if (!variationsData || variationsData.length === 0 || !product || product.type !== 'variable') return null;
+    try {
+      if (!variationsData || variationsData.length === 0 || !product || product.type !== 'variable') return null;
 
-    // Ensure all required attributes are selected first
-    if (variationAttributes.length > 0) {
-      const isMissing = variationAttributes.some(a => a && a.name && !selectedVariations[a.name]);
-      if (isMissing) return null;
-    }
-
-    // 1. Strict attribute matching
-    const strictMatch = variationsData.find(v => {
-      if (!v || !v.attributes || !Array.isArray(v.attributes)) return false;
-      return v.attributes.every(attr => {
-        if (!attr || attr.option === "") return true; // Means Any option
-        
-        const canonicalName = getCanonicalAttrName(attr, product.attributes);
-        const selected = selectedVariations[canonicalName] || (attr.name ? selectedVariations[attr.name] : undefined);
-        
-        if (!selected) return false;
-
-        return normalizeAttrVal(selected) === normalizeAttrVal(attr.option);
-      });
-    });
-
-    if (strictMatch) return strictMatch;
-
-    // 2. Loose fallback matching across option values
-    const selectedVals = Object.values(selectedVariations).map(normalizeAttrVal).filter(Boolean);
-    if (selectedVals.length > 0) {
-      const looseMatch = variationsData.find(v => {
+      // 1. Strict attribute matching with tolerant key lookup
+      const strictMatch = variationsData.find(v => {
         if (!v || !v.attributes || !Array.isArray(v.attributes)) return false;
         return v.attributes.every(attr => {
-          if (!attr || attr.option === "") return true;
-          return selectedVals.includes(normalizeAttrVal(attr.option));
+          if (!attr || attr.option === "") return true; // Means Any option
+          const selected = findSelectedVal(attr, selectedVariations);
+          if (!selected) return false;
+          return normalizeAttrVal(selected) === normalizeAttrVal(attr.option);
         });
       });
-      if (looseMatch) return looseMatch;
-    }
 
-    // 3. If there is only one variation available, use it
-    if (variationsData.length === 1) {
-      return variationsData[0];
-    }
+      if (strictMatch) return strictMatch;
 
-    return null;
-  }, [variationsData, selectedVariations, product, variationAttributes]);
+      // 2. Loose fallback matching across option values
+      const selectedVals = Object.values(selectedVariations).map(normalizeAttrVal).filter(Boolean);
+      if (selectedVals.length > 0) {
+        const looseMatch = variationsData.find(v => {
+          if (!v || !v.attributes || !Array.isArray(v.attributes)) return false;
+          return v.attributes.every(attr => {
+            if (!attr || attr.option === "") return true;
+            return selectedVals.includes(normalizeAttrVal(attr.option));
+          });
+        });
+        if (looseMatch) return looseMatch;
+
+        // 3. Match against variation name or description
+        const nameMatch = variationsData.find(v => {
+          if (!v) return false;
+          const vName = normalizeAttrVal((v as any).name || '');
+          const vDesc = normalizeAttrVal((v as any).description || '');
+          return selectedVals.every(val => vName.includes(val) || vDesc.includes(val));
+        });
+        if (nameMatch) return nameMatch;
+      }
+
+      // 4. If there is only one variation available, use it
+      if (variationsData.length === 1) {
+        return variationsData[0];
+      }
+
+      return null;
+    } catch (err) {
+      console.error("Error evaluating current variation:", err);
+      return null;
+    }
+  }, [variationsData, selectedVariations, product, variationAttributes, findSelectedVal]);
 
   const currentImageSrc = 
     currentVariation?.image?.src || 
@@ -746,33 +801,43 @@ export const ProductPage = () => {
                 {variationAttributes.map(attr => (
                   <div key={attr.id || attr.name} className="flex flex-col">
                     <div className="flex items-center justify-between mb-2">
-                      <label className="text-sm font-semibold text-slate-900">
-                        {attr.name}: {selectedVariations[attr.name] ? (
-                          <span className="font-normal text-slate-600 ml-1">{getOptionLabel(selectedVariations[attr.name])}</span>
-                        ) : (
-                          <span className="text-xs font-normal text-amber-600 ml-1">({t('product.select_options', 'Select Options')})</span>
-                        )}
-                      </label>
-                      {selectedVariations[attr.name] && (
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setSelectedVariations(prev => {
-                              const next = { ...prev };
-                              delete next[attr.name];
-                              return next;
-                            });
-                          }}
-                          className="text-xs text-slate-400 hover:text-brand-primary cursor-pointer"
-                        >
-                          {t('product.clear_selection', 'Clear')}
-                        </button>
-                      )}
+                      {(() => {
+                        const selVal = findSelectedVal(attr, selectedVariations);
+                        return (
+                          <>
+                            <label className="text-sm font-semibold text-slate-900">
+                              {attr.name}: {selVal ? (
+                                <span className="font-normal text-slate-600 ml-1">{getOptionLabel(selVal)}</span>
+                              ) : (
+                                <span className="text-xs font-normal text-amber-600 ml-1">({t('product.select_options', 'Select Options')})</span>
+                              )}
+                            </label>
+                            {selVal && (
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setSelectedVariations(prev => {
+                                    const next = { ...prev };
+                                    delete next[attr.name];
+                                    const canonical = getCanonicalAttrName(attr, product?.attributes);
+                                    if (canonical) delete next[canonical];
+                                    return next;
+                                  });
+                                }}
+                                className="text-xs text-slate-400 hover:text-brand-primary cursor-pointer"
+                              >
+                                {t('product.clear_selection', 'Clear')}
+                              </button>
+                            )}
+                          </>
+                        );
+                      })()}
                     </div>
                     <div className="flex flex-wrap gap-2">
-                       {(attr.options || []).map((rawOpt, optIdx) => {
+                       {(Array.isArray(attr.options) ? attr.options : []).map((rawOpt: any, optIdx: number) => {
                          const opt = getOptionLabel(rawOpt);
-                         const isSelected = selectedVariations[attr.name] === opt;
+                         const selVal = findSelectedVal(attr, selectedVariations);
+                         const isSelected = selVal === opt || normalizeAttrVal(selVal) === normalizeAttrVal(opt);
                          const isAvailable = isOptionAvailable(attr.name, opt, selectedVariations);
                          return (
                            <button

@@ -362,13 +362,7 @@ groups[itemShippingClass].subtotal += itemSubtotal;
   const handleCheckout = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    // If the user already created an order and clicked back from the payment page,
-    // we can securely resume the payment redirection.
-    const pendingUrl = sessionStorage.getItem('woo_pending_payment_url');
-    if (pendingUrl) {
-      window.location.href = pendingUrl;
-      return;
-    }
+    sessionStorage.removeItem('woo_pending_payment_url');
 
     if (!billing.country) {
       setError('Please select a country.');
