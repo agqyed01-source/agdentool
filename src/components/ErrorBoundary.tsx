@@ -90,12 +90,10 @@ export class ErrorBoundary extends Component<Props, State> {
               </button>
             </div>
             {this.state.error?.message && (
-              <details className="mt-4 text-left bg-slate-50 border border-slate-100 p-3 rounded-lg text-xs text-slate-500">
-                <summary className="cursor-pointer font-medium hover:text-slate-800">
-                  Technical Details
-                </summary>
-                <p className="mt-2 font-mono text-red-600 break-words">{this.state.error.message}</p>
-              </details>
+              <div className="mt-4 text-left bg-slate-50 border border-slate-100 p-3 rounded-lg text-xs text-slate-500">
+                <span className="font-semibold text-slate-700 block mb-1">Details:</span>
+                <p className="font-mono text-red-600 break-words">{this.state.error.message}</p>
+              </div>
             )}
           </div>
         </div>

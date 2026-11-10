@@ -181,6 +181,7 @@ export const ProductPage = () => {
     if (product?.type !== 'variable' || !product.attributes || !Array.isArray(product.attributes)) return [];
     return product.attributes.filter(a => {
       if (!a) return false;
+      if (a.variation === false) return false;
       const opts = Array.isArray(a.options)
         ? a.options
         : typeof a.options === 'string'
@@ -270,11 +271,20 @@ export const ProductPage = () => {
   const handleSelectOption = React.useCallback((attrName: string, rawOpt: any) => {
     try {
       const opt = getOptionLabel(rawOpt);
+      const canonical = getCanonicalAttrName(attrName, product?.attributes);
+      const currentVal = findSelectedVal(attrName, selectedVariations);
+
       // If clicking the currently selected option, deselect it
-      if (selectedVariations[attrName] === opt) {
+      if (currentVal && (currentVal === opt || normalizeAttrVal(currentVal) === normalizeAttrVal(opt))) {
         setSelectedVariations(prev => {
           const next = { ...prev };
           delete next[attrName];
+          if (canonical) delete next[canonical];
+          for (const k of Object.keys(next)) {
+            if (normalizeAttrVal(k) === normalizeAttrVal(attrName) || (canonical && normalizeAttrVal(k) === normalizeAttrVal(canonical))) {
+              delete next[k];
+            }
+          }
           return next;
         });
         return;
@@ -282,13 +292,22 @@ export const ProductPage = () => {
 
       const isAvail = isOptionAvailable(attrName, opt, selectedVariations);
       if (isAvail) {
-        setSelectedVariations(prev => ({ ...prev, [attrName]: opt }));
+        setSelectedVariations(prev => {
+          const next = { ...prev, [attrName]: opt };
+          if (canonical && canonical !== attrName) {
+            next[canonical] = opt;
+          }
+          return next;
+        });
       } else {
         // Incompatible with some other current selection:
         // Keep only other selections compatible with opt, clear the conflicting ones
         const nextSelections: Record<string, string> = { [attrName]: opt };
+        if (canonical && canonical !== attrName) {
+          nextSelections[canonical] = opt;
+        }
         for (const [otherName, otherVal] of Object.entries(selectedVariations)) {
-          if (otherName === attrName) continue;
+          if (normalizeAttrVal(otherName) === normalizeAttrVal(attrName) || (canonical && normalizeAttrVal(otherName) === normalizeAttrVal(canonical))) continue;
           if (isOptionAvailable(otherName, otherVal, { [attrName]: opt })) {
             nextSelections[otherName] = otherVal;
           }
@@ -298,7 +317,7 @@ export const ProductPage = () => {
     } catch (err) {
       console.error("Failed to select option:", err);
     }
-  }, [selectedVariations, isOptionAvailable]);
+  }, [selectedVariations, isOptionAvailable, product, findSelectedVal]);
 
   // Find current variation based on selected attributes
   const currentVariation = React.useMemo(() => {
@@ -373,8 +392,8 @@ export const ProductPage = () => {
   const allAttributesSelected = React.useMemo(() => {
     if (product?.type !== 'variable') return true;
     if (variationAttributes.length === 0) return true;
-    return variationAttributes.every(a => !!selectedVariations[a.name]);
-  }, [product, variationAttributes, selectedVariations]);
+    return variationAttributes.every(a => !!findSelectedVal(a, selectedVariations));
+  }, [product, variationAttributes, selectedVariations, findSelectedVal]);
 
   const isInvalidCombination = React.useMemo(() => {
     if (product?.type !== 'variable') return false;
@@ -415,11 +434,13 @@ export const ProductPage = () => {
 
     if (product.type === "variable") {
       if (!allAttributesSelected) {
-        const missingAttributes = variationAttributes.filter(a => a && a.name && !selectedVariations[a.name]);
+        const missingAttributes = variationAttributes.filter(a => a && a.name && !findSelectedVal(a, selectedVariations));
         setSelectionError(`Please select: ${missingAttributes.map(a => a.name).join(", ")}`);
-        if (addToCartRef.current) {
-          addToCartRef.current.scrollIntoView({ behavior: "smooth", block: "center" });
-        }
+        try {
+          if (addToCartRef.current) {
+            addToCartRef.current.scrollIntoView({ behavior: "smooth", block: "center" });
+          }
+        } catch {}
         return;
       }
       if (!currentVariation && variationsData.length > 0) {
@@ -967,12 +988,22 @@ export const ProductPage = () => {
           </div>
           <button 
             type="button"
-            disabled={isAddToCartDisabled && allAttributesSelected}
+            disabled={isAddToCartDisabled}
             onClick={() => {
-              if (allAttributesSelected) {
-                handleAddToCart();
-              } else if (addToCartRef.current) {
-                addToCartRef.current.scrollIntoView({ behavior: "smooth", block: "center" });
+              try {
+                if (allAttributesSelected) {
+                  handleAddToCart();
+                } else {
+                  const missing = variationAttributes.filter(a => a && a.name && !findSelectedVal(a, selectedVariations));
+                  setSelectionError(`Please select: ${missing.map(a => a.name).join(", ")}`);
+                  try {
+                    if (addToCartRef.current) {
+                      addToCartRef.current.scrollIntoView({ behavior: "smooth", block: "center" });
+                    }
+                  } catch {}
+                }
+              } catch (btnErr) {
+                console.error("Add to cart button click error:", btnErr);
               }
             }}
             className={`font-bold px-6 py-3 rounded-lg shadow-sm whitespace-nowrap cursor-pointer transition-colors ${
