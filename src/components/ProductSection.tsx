@@ -336,11 +336,29 @@ export const ProductGrid = ({
           ))}
         </div>
       ) : error ? (
-        <div className="py-12 text-center border border-red-200 bg-red-50 rounded-xl">
-          <h3 className="text-red-600 font-bold text-lg mb-2">
-            Error Loading Products
-          </h3>
-          <p className="text-red-500 max-w-lg mx-auto">{error}</p>
+        <div className="py-10 text-center border border-slate-200 bg-slate-50/80 rounded-xl p-6">
+          <p className="text-slate-600 font-medium text-sm mb-3">{error}</p>
+          <button
+            type="button"
+            onClick={() => {
+              setLoading(true);
+              setError(null);
+              wooApi
+                .getProducts({ category: targetCategory, search: searchQuery, per_page: limit, featured })
+                .then((res) => {
+                  setProducts(res.products);
+                  setLoading(false);
+                })
+                .catch((err) => {
+                  console.error(err);
+                  setError(err.message || "Failed to load products");
+                  setLoading(false);
+                });
+            }}
+            className="px-4 py-2 bg-brand-primary text-white text-xs font-bold rounded-lg hover:bg-brand-secondary transition-colors cursor-pointer"
+          >
+            Retry
+          </button>
         </div>
       ) : products.length === 0 ? (
         <div className="py-12 text-center text-slate-500 font-medium">

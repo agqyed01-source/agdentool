@@ -553,100 +553,187 @@ async function startServer() {
     res.json({ received: true });
   });
 
+  // Server-side In-Memory Cache & In-Flight Request Deduplication for WooCommerce GET queries
+  interface WooCacheEntry {
+    data: any;
+    headers?: Record<string, string>;
+    expiresAt: number;
+    staleUntil: number;
+  }
+  const wooGetCache = new Map<string, WooCacheEntry>();
+  const pendingWooRequests = new Map<string, Promise<{ data: any; headers?: Record<string, string>; status: number }>>();
+
+  setInterval(() => {
+    const now = Date.now();
+    for (const [key, entry] of wooGetCache.entries()) {
+      if (entry.staleUntil < now) {
+        wooGetCache.delete(key);
+      }
+    }
+  }, 60000);
+
   // API routing for WooCommerce GET requests directly mapped to path
   app.get('/api/woo/get/*', async (req, res) => {
     res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+    const rawUrl = req.originalUrl || req.url;
+    let endpoint = (req.params as any)[0] || '';
+    const queryParams: Record<string, string> = { ...(req.query as Record<string, string>) };
+    let includeHeaders = queryParams.includeHeaders === 'true';
+    delete queryParams.includeHeaders;
+
+    if (endpoint.includes('/-/')) {
+      const parts = endpoint.split('/-/');
+      endpoint = parts[0];
+      const paramsArray = parts[1].split('/');
+      for (let i = 0; i < paramsArray.length; i += 2) {
+        const key = decodeURIComponent(paramsArray[i]);
+        const value = decodeURIComponent(paramsArray[i+1] || '');
+        if (key === 'includeHeaders' && value === 'true') {
+          includeHeaders = true;
+        } else if (key) {
+          queryParams[key] = value;
+        }
+      }
+    }
+
+    // 1. Check in-memory fresh cache
+    const cacheKey = rawUrl;
+    const now = Date.now();
+    const cached = wooGetCache.get(cacheKey);
+    if (cached && cached.expiresAt > now) {
+      if (includeHeaders && cached.headers) {
+        return res.json({ data: cached.data, headers: cached.headers });
+      }
+      return res.json(cached.data);
+    }
+
+    // 2. In-flight request deduplication
     try {
-      let endpoint = (req.params as any)[0];
-      const queryParams: Record<string, string> = { ...(req.query as Record<string, string>) };
-      let includeHeaders = queryParams.includeHeaders === 'true';
-      delete queryParams.includeHeaders;
+      let pending = pendingWooRequests.get(cacheKey);
+      if (!pending) {
+        pending = (async () => {
+          const WOO_URL = process.env.VITE_WOO_API_URL;
+          const WOO_KEY = process.env.VITE_WOO_CONSUMER_KEY;
+          const WOO_SECRET = process.env.VITE_WOO_CONSUMER_SECRET;
 
-      if (endpoint.includes('/-/')) {
-        const parts = endpoint.split('/-/');
-        endpoint = parts[0];
-        const paramsArray = parts[1].split('/');
-        for (let i = 0; i < paramsArray.length; i += 2) {
-          const key = decodeURIComponent(paramsArray[i]);
-          const value = decodeURIComponent(paramsArray[i+1] || '');
-          if (key === 'includeHeaders' && value === 'true') {
-            includeHeaders = true;
-          } else if (key) {
-            queryParams[key] = value;
+          if (!WOO_URL || !WOO_KEY || !WOO_SECRET) {
+            throw new Error('WooCommerce API not configured on server');
           }
-        }
-      }
 
-      const WOO_URL = process.env.VITE_WOO_API_URL;
-      const WOO_KEY = process.env.VITE_WOO_CONSUMER_KEY;
-      const WOO_SECRET = process.env.VITE_WOO_CONSUMER_SECRET;
-
-      if (!WOO_URL || !WOO_KEY || !WOO_SECRET) {
-        return res.status(400).json({ error: 'WooCommerce API not configured on server' });
-      }
-
-      if (WOO_URL.includes('your-wordpress-site.com')) {
-         return res.status(400).json({ error: 'Please update default WooCommerce API settings in .env' });
-      }
-
-      let baseUrl = WOO_URL.replace(/\/$/, '');
-      
-      if (!baseUrl.includes('/wp-json')) {
-        baseUrl = `${baseUrl}/wp-json/wc/v3`;
-      }
-
-      const url = new URL(`${baseUrl}/${endpoint.replace(/^\//, '')}`);
-      url.searchParams.append('consumer_key', WOO_KEY);
-      url.searchParams.append('consumer_secret', WOO_SECRET);
-      
-      if (queryParams) {
-        for (const [k, v] of Object.entries(queryParams)) {
-          if (v !== undefined && v !== null) {
-            url.searchParams.append(k, String(v));
+          if (WOO_URL.includes('your-wordpress-site.com')) {
+            throw new Error('Please update default WooCommerce API settings in .env');
           }
-        }
+
+          let baseUrl = WOO_URL.replace(/\/$/, '');
+          if (!baseUrl.includes('/wp-json')) {
+            baseUrl = `${baseUrl}/wp-json/wc/v3`;
+          }
+
+          const url = new URL(`${baseUrl}/${endpoint.replace(/^\//, '')}`);
+          url.searchParams.append('consumer_key', WOO_KEY);
+          url.searchParams.append('consumer_secret', WOO_SECRET);
+
+          if (queryParams) {
+            for (const [k, v] of Object.entries(queryParams)) {
+              if (v !== undefined && v !== null) {
+                url.searchParams.append(k, String(v));
+              }
+            }
+          }
+
+          const fetchOptions: RequestInit = {
+            method: 'GET',
+            headers: {
+              'Accept': 'application/json',
+              'Cache-Control': 'no-cache, no-store, must-revalidate',
+              'Pragma': 'no-cache'
+            }
+          };
+
+          // Retry logic for transient gateway/network blips
+          let lastErr: any = null;
+          for (let attempt = 0; attempt < 2; attempt++) {
+            try {
+              if (attempt > 0) {
+                await new Promise(r => setTimeout(r, 600));
+              }
+              const wooRes = await fetch(url.toString(), fetchOptions);
+              const text = await wooRes.text();
+              let parsedData: any;
+              try {
+                parsedData = JSON.parse(text);
+              } catch (parseErr) {
+                console.warn(`[Woo API JSON parse attempt ${attempt+1}] URL: ${url.toString()} text snippet: ${text.slice(0, 80)}`);
+                if (attempt === 0) continue;
+                throw new Error('Invalid JSON from WooCommerce');
+              }
+
+              if (!wooRes.ok) {
+                if (wooRes.status >= 500 && attempt === 0) continue;
+                const errObj = new Error(parsedData?.message || `WooCommerce API Error (${wooRes.status})`);
+                (errObj as any).status = wooRes.status;
+                throw errObj;
+              }
+
+              const totalPages = wooRes.headers.get('x-wp-totalpages');
+              const total = wooRes.headers.get('x-wp-total');
+              const headersObj: Record<string, string> = {};
+              if (totalPages !== null) headersObj['x-wp-totalpages'] = totalPages;
+              if (total !== null) headersObj['x-wp-total'] = total;
+
+              return {
+                data: parsedData,
+                headers: Object.keys(headersObj).length > 0 ? headersObj : undefined,
+                status: 200
+              };
+            } catch (attErr) {
+              lastErr = attErr;
+            }
+          }
+          throw lastErr;
+        })();
+
+        pendingWooRequests.set(cacheKey, pending);
       }
 
-      const fetchOptions: RequestInit = {
-        method: 'GET',
-        headers: {
-          'Accept': 'application/json',
-          'Cache-Control': 'no-cache, no-store, must-revalidate',
-          'Pragma': 'no-cache'
-        }
-      };
-
-      const wooRes = await fetch(url.toString(), fetchOptions);
-      const text = await wooRes.text();
-      let data;
+      let result;
       try {
-        data = JSON.parse(text);
-      } catch (err) {
-        console.error('Woo API returned invalid JSON. URL:', url.toString(), 'Response:', text.slice(0, 100));
-        return res.status(502).json({ error: 'Invalid response from WooCommerce. Please verify your API URL and ensure REST API is enabled.' });
-      }
-      
-      if (!wooRes.ok) {
-        return res.status(wooRes.status).json({ error: data.message || 'Error from WooCommerce API' });
+        result = await pending;
+      } finally {
+        pendingWooRequests.delete(cacheKey);
       }
 
-      const totalPages = wooRes.headers.get('x-wp-totalpages');
-      const total = wooRes.headers.get('x-wp-total');
+      // Determine TTL: categories/metadata: 5 min, products/coupons: 90 sec
+      const isStatic = endpoint.includes('categories') || endpoint.includes('countries') || endpoint.includes('zones') || endpoint.includes('payment_gateways');
+      const ttlMs = isStatic ? 5 * 60 * 1000 : 90 * 1000;
+      wooGetCache.set(cacheKey, {
+        data: result.data,
+        headers: result.headers,
+        expiresAt: now + ttlMs,
+        staleUntil: now + (ttlMs * 4) // Stale data kept up to 4x TTL for emergency fallback
+      });
 
-      if (includeHeaders && (totalPages !== null)) {
-        return res.json({ 
-          data: data, 
-          headers: {
-            'x-wp-totalpages': totalPages,
-            'x-wp-total': total
-          }
-        });
+      if (includeHeaders && result.headers) {
+        return res.json({ data: result.data, headers: result.headers });
       }
-
-      return res.json(data);
+      return res.json(result.data);
     } catch (error: any) {
       console.error('Woo API Error:', error);
-      return res.status(500).json({ error: `Connection Error: ${error.message || 'Failed to fetch from WooCommerce'}. Verify your site is running and accessible.` });
+
+      // Stale cache fallback if available (prevents empty "Error Loading Products" during momentary outages)
+      const staleEntry = wooGetCache.get(cacheKey);
+      if (staleEntry && staleEntry.data) {
+        console.warn(`[Woo Proxy] Serving stale cache fallback for ${cacheKey}`);
+        if (includeHeaders && staleEntry.headers) {
+          return res.json({ data: staleEntry.data, headers: staleEntry.headers });
+        }
+        return res.json(staleEntry.data);
+      }
+
+      const statusCode = error.status || 500;
+      return res.status(statusCode).json({
+        error: error.message || 'Connection Error: Failed to fetch from WooCommerce. Please try again.'
+      });
     }
   });
 

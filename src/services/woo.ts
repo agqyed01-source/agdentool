@@ -239,7 +239,8 @@ async function fetchWoo(
   queryParams: Record<string, string> = {},
   method: string = "GET",
   bodyData?: any,
-  includeHeaders: boolean = false
+  includeHeaders: boolean = false,
+  retries: number = 2
 ) {
   if (i18n && i18n.language) {
     const lang = i18n.language.split("-")[0];
@@ -287,8 +288,13 @@ async function fetchWoo(
   const res = await fetch(url, fetchOptions);
 
   if (!res.ok) {
+    if (method === "GET" && retries > 0 && res.status >= 500) {
+      await new Promise(r => setTimeout(r, 600));
+      return fetchWoo(endpoint, queryParams, method, bodyData, includeHeaders, retries - 1);
+    }
     const errorData = await res.json().catch(() => ({}));
-    throw new Error(errorData.error || `Server Error: ${res.statusText}`);
+    const message = errorData.error || (res.status === 502 || res.status === 504 ? "Server is warming up. Please refresh in a moment." : `Server Error (${res.status || 'unknown'})`);
+    throw new Error(message);
   }
 
   return res.json();
@@ -296,6 +302,7 @@ async function fetchWoo(
 
 let categoriesCache: WooCategory[] | null = null;
 let categoriesCacheTime = 0;
+let categoriesPromise: Promise<WooCategory[]> | null = null;
 
 export const wooApi = {
   getProducts: async (params?: {
@@ -422,45 +429,55 @@ export const wooApi = {
     if (categoriesCache && Date.now() - categoriesCacheTime < 5 * 60 * 1000) {
       return categoriesCache;
     }
+    if (categoriesPromise) {
+      return categoriesPromise;
+    }
     
-    try {
-      let allCats: WooCategory[] = [];
-      let page = 1;
-      let hasMore = true;
-      
-      while (hasMore && page <= 5) {
-        const data = await fetchWoo("/products/categories", {
-          per_page: "100",
-          hide_empty: "false",
-          page: page.toString()
-        });
+    categoriesPromise = (async () => {
+      try {
+        let allCats: WooCategory[] = [];
+        let page = 1;
+        let hasMore = true;
         
-        if (!Array.isArray(data) || data.length === 0) {
-          if (page === 1 && !Array.isArray(data)) {
-            throw new Error(data.message || "WooCommerce API did not return an array of categories");
-          }
-          hasMore = false;
-        } else {
-          allCats = [...allCats, ...data];
-          if (data.length < 100) {
+        while (hasMore && page <= 3) {
+          const data = await fetchWoo("/products/categories", {
+            per_page: "100",
+            hide_empty: "false",
+            page: page.toString()
+          });
+          
+          if (!Array.isArray(data) || data.length === 0) {
+            if (page === 1 && !Array.isArray(data)) {
+              throw new Error(data.message || "WooCommerce API did not return an array of categories");
+            }
             hasMore = false;
           } else {
-            page++;
+            allCats = [...allCats, ...data];
+            if (data.length < 100) {
+              hasMore = false;
+            } else {
+              page++;
+            }
           }
         }
+        categoriesCache = allCats;
+        categoriesCacheTime = Date.now();
+        return allCats;
+      } catch (err: any) {
+        console.error(err);
+        if (categoriesCache && categoriesCache.length > 0) {
+          return categoriesCache;
+        }
+        if (!err.message?.includes("not configured")) {
+          throw err;
+        }
+        return mockCategories;
+      } finally {
+        categoriesPromise = null;
       }
-      categoriesCache = allCats;
-      categoriesCacheTime = Date.now();
-      return allCats;
-    } catch (err: any) {
-      console.error(err);
-      if (!err.message?.includes("not configured")) {
-        throw err;
-      }
-    }
-    return new Promise((resolve) =>
-      setTimeout(() => resolve(mockCategories), 300),
-    );
+    })();
+
+    return categoriesPromise;
   },
 
   getMenus: async (): Promise<{ id: number; title: string; url: string }[]> => {
